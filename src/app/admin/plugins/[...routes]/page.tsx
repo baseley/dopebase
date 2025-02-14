@@ -11,6 +11,7 @@ export default async function Page({
 }) {
   const user = await getCurrentUser()
   const { routes } = params
+  const routesArray = routes.split('/')
 
   // const searchParams = useSearchParams()
   // const search = searchParams.get('sdsadsa')
@@ -34,7 +35,6 @@ export default async function Page({
 
   const Component = (
     await import(
-      `../../../../plugins/` +
         `${pluginID}/admin/pages/${routes.slice(1).join('/')}`
     )
   ).default
