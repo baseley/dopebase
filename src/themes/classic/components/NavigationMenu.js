@@ -10,7 +10,7 @@ const NavigationMenu = () => {
           width="214.00000000000006"
           height="48.35874661857532"
           viewBox="0 0 369.66666666666663 83.33333333333334"
-          class="css-1j8o68f">
+          className="css-1j8o68f">
           <defs id="SvgjsDefs3564"></defs>
           <g
             id="SvgjsG3565"

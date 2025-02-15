@@ -3,7 +3,7 @@ import { getCurrentUser } from '../../../../admin/utils/getCurrentUserByCookies'
 import { findOne } from '../../../../core/db'
 import { CustomerDashboardContainer } from '../../components/CustomerDashboardContainer'
 
-export default async function Page() {
+export default async function Page(p0: { params: { routes: any; }; searchParams: any; }) {
   const user = await getCurrentUser();
   if (!user) {
     return <div>Access denied</div>;

@@ -3,41 +3,38 @@ import { getUserByID } from '../../core/db/users'
 
 const jwt = require('jsonwebtoken')
 
-export const getCurrentUserByCookies = async cookieStore => {
+export const getCurrentUserByCookies = async () => {
+  const cookieStore = await cookies() // Ensure it's awaited
   const tokenObj = cookieStore.get('dopebase.session-token')
   const token = tokenObj?.value
   const secretOrKey = process.env.JWT_SECRET
 
-  if (!tokenObj || !token || !secretOrKey) {
+  if (!token || !secretOrKey) {
     return null
   }
 
-  const bearerToken = `Bearer ${token}`
-  const decoded = jwt.verify(bearerToken.split(' ')[1], secretOrKey)
-  const userID = decoded.id
+  try {
+    const decoded = jwt.verify(token, secretOrKey)
+    const userID = decoded.id
 
-  if (!userID) {
+    if (!userID) {
+      return null
+    }
+
+    const user = await getUserByID(userID)
+
+    return user || null
+  } catch (error) {
+    console.error('JWT verification failed:', error)
     return null
   }
-
-  const user = await getUserByID(userID)
-
-  if (!user) {
-    return null
-  }
-
-  return user
 }
 
 export const getCurrentUser = async () => {
-  const user = await getCurrentUserByCookies(cookies())
-  return user
+  return await getCurrentUserByCookies()
 }
 
-export const getCurrentAdmin = async cookieStore => {
-  const user = await getCurrentUserByCookies(cookieStore)
-  if (user?.role == 'admin') {
-    return user
-  }
-  return null
+export const getCurrentAdmin = async () => {
+  const user = await getCurrentUserByCookies()
+  return user?.role === 'admin' ? user : null
 }

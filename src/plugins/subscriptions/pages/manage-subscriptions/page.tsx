@@ -4,7 +4,7 @@ import { findOne } from '@/core/db';
 import {CustomerDashboardContainer} from '@/plugins/subscriptions/components/CustomerDashboardContainer';
 import { getActiveSubscription } from '@/plugins/subscriptions/lib/subscriptions';
 
-export default async function Page() {
+export default async function Page(p0: { params: { routes: any; }; searchParams: any; }) {
   const user = await getCurrentUser();
   if (!user) {
     return <div>Access denied</div>;

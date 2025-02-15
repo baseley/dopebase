@@ -23,7 +23,7 @@ const HeaderSection = ({ title, description }) => {
           href="https://github.com/dopebase/dopebase"
           target="_blank"
           className={`${styles.ctaSecondary} ${styles.cta}`}>
-          <i class="fa fa-github"></i> Check out on Github
+          <i className="fa fa-github"></i> Check out on Github
         </a>
       </div>
       <div className={styles.previewContainer}>
