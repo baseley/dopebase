@@ -9,6 +9,7 @@ export const getComponentForRoutes = async (routes, searchParams) => {
   }
 
   const installedTheme = await getCurrentTheme()
+  console.log('Installed theme:', installedTheme)
   const slug = routes.join('/')
 
   const subscriptionsURL = await getSettingsValue(
@@ -16,7 +17,7 @@ export const getComponentForRoutes = async (routes, searchParams) => {
   )
   if (slug === subscriptionsURL) {
     // subscriptions home page
-    const src = `${installedTheme}/pages/subscriptions/Management`
+    const src = `${installedTheme}/pages/manage-subscriptions/page`
     try {
       const component = (await import(`../../../themes/` + src)).default
       return component({})

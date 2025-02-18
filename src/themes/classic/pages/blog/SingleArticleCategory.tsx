@@ -76,8 +76,7 @@ const SingleArticleCategory: React.FC<{
             seoTitle={unescapeString(seoTitle)}
             seoKeyword={unescapeString(seoTitle)}
             photo={unescapeString(logoURL)}
-            url={unescapeString(canonicalURL)}
-          />
+            url={unescapeString(canonicalURL)} websiteName={undefined} structuredData={undefined}          />
           <NavigationMenu />
           {/* <div className="article-category-container">
             <EmailSubscriptionHeader

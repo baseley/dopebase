@@ -25,8 +25,7 @@ const HomePage = ({}) => {
           seoTitle={seoConfig.seoTitle}
           seoKeyword={seoConfig.seoKeyword}
           photo={seoConfig?.coverPhotoURL}
-          websiteName={`Dopebase`}
-        />
+          websiteName={`Dopebase`} url={undefined} structuredData={undefined}        />
         <NavigationMenu />
         <HeaderSection
           title={`Build websites and mobile apps in record time`}
@@ -90,25 +89,25 @@ const HomePage = ({}) => {
         <BicameralSection
           title={`Scale to Millions of Users from Day 1`}
           description={`Battled tested by millions of users, Dopebase is built to scale. It's the perfect backend for your blog, mobile app or any website.`}
-          content={``}
+          items={``}
           interactiveChild={null}
         />
         <BicameralSection
           title={`No Code? No Problem!`}
           description={`Dopebase is a no-code app maker that also gives you access to the code if you want it. You can build your website or mobile app without writing a single line of code.`}
-          content={``}
+          items={``}
           interactiveChild={null}
         />
         <BicameralSection
           title={`Client SDKs & APIs`}
           description={`Dopebase comes with a set of client SDKs and APIs that allow you to build your own custom apps and websites. It's the perfect backend for your mobile app or website.`}
-          content={``}
+          items={``}
           interactiveChild={null}
         />
         <BicameralSection
           title={`Backend & Database Agnostic`}
           description={`Designed to work with any database, Dopebase can seamlessly integrate with your existing backend, Firebase, Supabase, PostgreSQL, etc.`}
-          content={``}
+          items={``}
           interactiveChild={null}
         />
         <Footer />
