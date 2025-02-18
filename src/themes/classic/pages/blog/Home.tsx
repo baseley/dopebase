@@ -27,8 +27,7 @@ const Home: React.FC<HomeProps> = ({ modules }) => {
           seoDescription={seoConfig.seoDescription}
           seoTitle={seoConfig.seoTitle}
           seoKeyword={seoConfig.seoKeyword}
-          photo={seoConfig?.coverPhotoURL}
-        />
+          photo={seoConfig?.coverPhotoURL} websiteName={undefined} url={undefined} structuredData={undefined}        />
         <NavigationMenu />
 
         <div>

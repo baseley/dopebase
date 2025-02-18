@@ -6,16 +6,17 @@ import styles from '../themes/admin.module.css'
 import { getCurrentUser } from '../utils/getCurrentUserByCookies'
 
 interface AdminAppContainerProps {
-  children: Node
-  params: any
+  children: React.ReactNode
+  params: { routes: string }
   searchParams: any
 }
 
-export const AdminAppContainer: React.FC = async (
-  props: AdminAppContainerProps,
-) => {
+export const AdminAppContainer: React.FC<AdminAppContainerProps> = async ({
+  children,
+  params,
+  searchParams,
+}) => {
   const user = await getCurrentUser()
-  const { children } = props
 
   if (user?.role === 'admin') {
     return (
@@ -24,10 +25,7 @@ export const AdminAppContainer: React.FC = async (
         <div className={styles.adminContent}>
           <div className={styles.MainMenu}>
             <Suspense fallback={<div>Loading...</div>}>
-              <AdminMenu
-                params={props.params}
-                searchParams={props.searchParams}
-              />
+              <AdminMenu params={params} searchParams={searchParams} />
             </Suspense>
           </div>
           <div className={styles.MainPanel}>{children}</div>

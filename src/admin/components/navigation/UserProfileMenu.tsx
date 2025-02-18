@@ -56,7 +56,7 @@ const Icon = () => {
         stroke-width="1.5"
         stroke="currentColor"
         aria-hidden="true"
-        class="h-4">
+        className="h-4">
         <path
           stroke-linecap="round"
           stroke-linejoin="round"

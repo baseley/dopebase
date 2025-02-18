@@ -57,6 +57,12 @@ export const getAllPluginsAndUpdateIfNeeded = async () => {
       const storedPlugin = storedPlugins.find(
         plugin => plugin.id === metadata.id,
       )
+
+      if (plugin === 'blog') {
+        const installed = await isInstalled(metadata.id)
+        console.log('Blog plugin installed:', installed)
+      }
+
       if (!storedPlugin) {
         // insert the plugin into the database
         await insertPluginToDB(metadata)

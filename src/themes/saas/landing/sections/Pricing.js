@@ -38,7 +38,7 @@ const MostPopularIcon = () => {
         stroke-width="1.5"
         stroke="currentColor"
         aria-hidden="true"
-        class="h-4 w-4 mr-1">
+        className="h-4 w-4 mr-1">
         <path
           stroke-linecap="round"
           stroke-linejoin="round"

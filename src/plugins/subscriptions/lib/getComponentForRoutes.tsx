@@ -9,6 +9,7 @@ export const getComponentForRoutes = async (routes, searchParams) => {
   }
 
   const installedTheme = await getCurrentTheme()
+  console.log('Installed theme:', installedTheme)
   const slug = routes.join('/')
 
   const subscriptionsURL = await getSettingsValue(
@@ -16,7 +17,7 @@ export const getComponentForRoutes = async (routes, searchParams) => {
   )
   if (slug === subscriptionsURL) {
     // subscriptions home page
-    const src = `${installedTheme}/pages/subscriptions/Management`
+    const src = `${installedTheme}/pages/manage-subscriptions/page`
     try {
       const component = (await import(`../../../themes/` + src)).default
       return component({})
@@ -35,8 +36,8 @@ export const getComponentForRoutes = async (routes, searchParams) => {
   if (routes[0] === 'subscribe') {
     // subscriptions home page
     try {
-      const component = (await import(`../pages/subscribe`)).default
-      return component({ params: { routes }, searchParams: searchParams })
+      const component = (await import(`@/plugins/subscriptions/pages/subscribe/page`)).default
+      return component({ searchParams: searchParams })
     } catch (error) {
       console.log(error)
       return <div>Subscribe page not set in plugin subscriptions.</div>
@@ -46,7 +47,7 @@ export const getComponentForRoutes = async (routes, searchParams) => {
   if (routes[0] === 'dashboard' && routes[1] === 'edit-profile') {
     // subscriptions home page
     try {
-      const component = (await import(`../pages/editProfile`)).default
+      const component = (await import(`@/plugins/subscriptions/pages/edit-profile/page`)).default
       return component({ params: { routes }, searchParams: searchParams })
     } catch (error) {
       console.log(error)
@@ -57,7 +58,7 @@ export const getComponentForRoutes = async (routes, searchParams) => {
   if (routes[0] === 'dashboard' && routes[1] === 'subscriptions') {
     // subscriptions home page
     try {
-      const component = (await import(`../pages/manageSubscriptions`)).default
+      const component = (await import(`@/plugins/subscriptions/pages/manage-subscriptions/page`)).default
       return component({ params: { routes }, searchParams: searchParams })
     } catch (error) {
       console.log(error)
@@ -70,7 +71,7 @@ export const getComponentForRoutes = async (routes, searchParams) => {
   if (routes[0] === 'dashboard') {
     // subscriptions home page
     try {
-      const component = (await import(`../pages/dashboard`)).default
+      const component = (await import(`@/plugins/subscriptions/pages/dashboard/page`)).default
       return component({ params: { routes }, searchParams: searchParams })
     } catch (error) {
       console.log(error)

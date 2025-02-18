@@ -1,18 +1,16 @@
 // @ts-nocheck
-import React, { Suspense } from 'react'
-import styles from '../../../admin/themes/admin.module.css'
-import AdminHeader from '../../../admin/components/AdminHeader'
-import CustomerDashboardMenu from './CustomerDashboardMenu'
+import React, { ReactNode, Suspense } from 'react';
+import styles from '@/admin/themes/admin.module.css';
+import AdminHeader from '@/admin/components/AdminHeader';
+import CustomerDashboardMenu from './CustomerDashboardMenu';
 
 interface CustomerDashboardContainerProps {
-  children: Node
+  children: ReactNode;
 }
 
-export const CustomerDashboardContainer: React.FC = async (
-  props: CustomerDashboardContainerProps,
-) => {
-  const { children } = props
-
+export const CustomerDashboardContainer: React.FC<CustomerDashboardContainerProps> = ({
+  children,
+}) => {
   return (
     <div className={styles.admin}>
       <AdminHeader />
@@ -25,5 +23,5 @@ export const CustomerDashboardContainer: React.FC = async (
         <div className={styles.MainPanel}>{children}</div>
       </div>
     </div>
-  )
-}
+  );
+};
