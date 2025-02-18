@@ -77,9 +77,9 @@ NEXTAUTH_URL=http://localhost:3000
 - Replace `<DATABASE_NAME>` with the name of your database.
 - Replace `<YOUR_GITHUB_CLIENT_ID>` and `<YOUR_GITHUB_CLIENT_SECRET>` with values from your GitHub OAuth app (found in GitHub Developer settings).
 
-### 5. Run Database Migrations (if applicable)
+### 5. Run Database Migrations 
 
-If your project uses Prisma or another ORM, run migrations:
+Since dopebase uses Prisma or another ORM, run migrations:
 
 ```bash
 npx prisma migrate dev
