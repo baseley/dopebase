@@ -3,19 +3,8 @@
 import React, { useEffect, useState } from 'react'
 import { Formik } from 'formik'
 import { ClipLoader } from 'react-spinners'
-import Editor from 'rich-markdown-editor'
 import dynamic from 'next/dynamic'
-const CodeMirror = dynamic(
-  () => {
-    import('codemirror')
-    import('codemirror/mode/javascript/javascript')
-    import('codemirror/mode/css/css')
-    import('codemirror/mode/htmlmixed/htmlmixed')
-    import('codemirror/mode/markdown/markdown')
-    return import('react-codemirror2').then(mod => mod.Controlled)
-  },
-  { ssr: false },
-)
+import ReactMarkdown from 'react-markdown'
 import IMDatePicker from '../../../../../admin/components/forms/IMDatePicker'
 import { LocationPicker } from '../../../../../admin/components/forms/locationPicker'
 import {
@@ -31,6 +20,7 @@ import {
   IMPhoto,
   IMModal,
   IMToggleSwitchComponent,
+  IMTextAreaComponent,
 } from '../../../../../admin/components/forms/fields'
 import styles from '../../../../../admin/themes/admin.module.css'
 
@@ -398,14 +388,17 @@ const AddNewCategoryView = () => {
 
                     <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
                         <label className={`${styles.FormLabel} FormLabel`}>Description</label>
-
                         <div className={`${styles.FormEditorContainer} FormEditorContainer`}>
-                          <Editor
-                            defaultValue={modifiedNonFormData.description}
-                            onChange={value => {
-                              onCodeChange(value(), 'description')
-                            }}
-                          />
+                            <IMTextAreaComponent
+                                value={modifiedNonFormData.description || ''}
+                                onChange={(value) => {
+                                    onCodeChange(value, 'description')
+                                }}
+                                placeholder="Write your markdown content here..."
+                            />
+                            <div className={styles.markdownPreview}>
+                                <ReactMarkdown>{modifiedNonFormData.description || ''}</ReactMarkdown>
+                            </div>
                         </div>
                         <p className={`${styles.ErrorMessage} ErrorMessage`}>
                             {errors.description && touched.description && errors.description}

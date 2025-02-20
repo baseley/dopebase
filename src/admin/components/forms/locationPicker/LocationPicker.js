@@ -1,5 +1,5 @@
 import React from 'react'
-import Geosuggest from 'react-geosuggest'
+import Geosuggest from '@ubilabs/react-geosuggest'
 
 /* Default position */
 const defaultPosition = {

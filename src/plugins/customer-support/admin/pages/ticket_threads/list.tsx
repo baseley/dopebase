@@ -3,7 +3,13 @@
 import React, { useMemo, useEffect, useState } from 'react'
 import { GetStaticProps } from 'next'
 import { useRouter } from 'next/navigation'
-import { useGlobalFilter, useTable, usePagination } from 'react-table'
+import {
+  useReactTable,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  flexRender,
+} from '@tanstack/react-table'
 import {
   IMLocationTableCell,
   IMSimpleLocationTableCell,
@@ -160,32 +166,17 @@ function TicketThreadsListView(props) {
 
   const columns = useMemo(() => TicketThreadsColumns, [])
 
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    prepareRow,
-    //pagination
-    page,
-    canPreviousPage,
-    canNextPage,
-    pageOptions,
-    pageCount,
-    gotoPage,
-    nextPage,
-    previousPage,
-    setPageSize,
-    // Get the state from the instance
-    state: { pageIndex, pageSize, globalFilter },
-    setGlobalFilter,
-  } = useTable(
-    {
-      columns,
-      data: TicketThreads,
+  const table = useReactTable({
+    data: TicketThreads,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    state: {
+      globalFilter,
     },
-    useGlobalFilter,
-    usePagination,
-  )
+    onGlobalFilterChange: setGlobalFilter,
+  })
 
   useEffect(() => {
     if (loading) {
@@ -219,7 +210,7 @@ function TicketThreadsListView(props) {
 
   useEffect(() => {
     setTicketThreads(data)
-  }, [pageIndex, pageSize, data])
+  }, [table.getState().pagination.pageIndex, table.getState().pagination.pageSize, data])
 
   return (
     <>
@@ -241,38 +232,37 @@ function TicketThreadsListView(props) {
                     className={`${styles.SearchInput} SearchInput`}
                     type="text"
                     placeholder="Search..."
-                    value={globalFilter || ''}
-                    onChange={e => setGlobalFilter(e.target.value)}
+                    value={table.getState().globalFilter || ''}
+                    onChange={e => table.setState({ globalFilter: e.target.value })}
                   />
-                  <table
-                    className={`${styles.Table} Table`}
-                    {...getTableProps()}>
+                  <table className={`${styles.Table} Table`}>
                     <thead>
-                      {headerGroups.map(headerGroup => (
-                        <tr {...headerGroup.getHeaderGroupProps()}>
-                          {headerGroup.headers.map(column => (
-                            <th {...column.getHeaderProps()}>
-                              {column.render('Header')}
+                      {table.getHeaderGroups().map(headerGroup => (
+                        <tr key={headerGroup.id}>
+                          {headerGroup.headers.map(header => (
+                            <th key={header.id}>
+                              {flexRender(
+                                header.column.columnDef.header,
+                                header.getContext()
+                              )}
                             </th>
                           ))}
                         </tr>
                       ))}
                     </thead>
-                    <tbody {...getTableBodyProps()}>
-                      {page.map((row, i) => {
-                        prepareRow(row)
-                        return (
-                          <tr {...row.getRowProps()}>
-                            {row.cells.map(cell => {
-                              return (
-                                <td {...cell.getCellProps()}>
-                                  {cell.render('Cell')}
-                                </td>
-                              )
-                            })}
-                          </tr>
-                        )
-                      })}
+                    <tbody>
+                      {table.getRowModel().rows.map(row => (
+                        <tr key={row.id}>
+                          {row.getVisibleCells().map(cell => (
+                            <td key={cell.id}>
+                              {flexRender(
+                                cell.column.columnDef.cell,
+                                cell.getContext()
+                              )}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
                       <tr>
                         {isLoading ? (
                           <td colSpan={TicketThreadsColumns.length - 1}>
@@ -280,9 +270,8 @@ function TicketThreadsListView(props) {
                           </td>
                         ) : (
                           <td colSpan={TicketThreadsColumns.length - 1}>
-                            <p
-                              className={`${styles.PaginationDetails} PaginationDetails`}>
-                              Showing {page.length} of {data.length} results
+                            <p className={`${styles.PaginationDetails} PaginationDetails`}>
+                              Showing {table.getRowModel().rows.length} of {data.length} results
                             </p>
                           </td>
                         )}
@@ -290,18 +279,17 @@ function TicketThreadsListView(props) {
                     </tbody>
                   </table>
                   <div className={`${styles.Pagination} Pagination`}>
-                    <div
-                      className={`${styles.LeftPaginationButtons} LeftPaginationButtons`}>
+                    <div className={`${styles.LeftPaginationButtons} LeftPaginationButtons`}>
                       <button
-                        onClick={() => gotoPage(0)}
+                        onClick={() => table.setPageIndex(0)}
                         className={`${styles.PaginationButton}`}
-                        disabled={!canPreviousPage}>
+                        disabled={!table.getCanPreviousPage()}>
                         <i className="fa fa-angle-double-left"></i>
-                      </button>{' '}
+                      </button>
                       <button
-                        onClick={() => previousPage()}
+                        onClick={() => table.previousPage()}
                         className={`${styles.PaginationButton}`}
-                        disabled={!canPreviousPage}>
+                        disabled={!table.getCanPreviousPage()}>
                         <i className="fa fa-angle-left"></i>
                       </button>
                     </div>
@@ -309,27 +297,26 @@ function TicketThreadsListView(props) {
                       <span>
                         Page{' '}
                         <strong>
-                          {pageIndex + 1} of {pageOptions.length}
-                        </strong>{' '}
+                          {table.getState().pagination.pageIndex + 1} of{' '}
+                          {table.getPageCount()}
+                        </strong>
                       </span>
                       <span>
                         | Go to page:{' '}
                         <input
                           type="number"
-                          defaultValue={pageIndex + 1}
+                          defaultValue={table.getState().pagination.pageIndex + 1}
                           onChange={e => {
-                            const page = e.target.value
-                              ? Number(e.target.value) - 1
-                              : 0
-                            gotoPage(page)
+                            const page = e.target.value ? Number(e.target.value) - 1 : 0
+                            table.setPageIndex(page)
                           }}
                           style={{ width: '100px' }}
                         />
-                      </span>{' '}
+                      </span>
                       <select
-                        value={pageSize}
+                        value={table.getState().pagination.pageSize}
                         onChange={e => {
-                          setPageSize(Number(e.target.value))
+                          table.setPageSize(Number(e.target.value))
                         }}>
                         {[10, 20, 30, 40, 50].map(pageSize => (
                           <option key={pageSize} value={pageSize}>
@@ -340,15 +327,15 @@ function TicketThreadsListView(props) {
                     </div>
                     <div className={`${styles.RightPaginationButtons}`}>
                       <button
-                        onClick={() => nextPage()}
+                        onClick={() => table.nextPage()}
                         className={`${styles.PaginationButton}`}
-                        disabled={!canNextPage}>
+                        disabled={!table.getCanNextPage()}>
                         <i className="fa fa-angle-right"></i>
-                      </button>{' '}
+                      </button>
                       <button
-                        onClick={() => gotoPage(pageCount - 1)}
+                        onClick={() => table.setPageIndex(table.getPageCount() - 1)}
                         className={`${styles.PaginationButton}`}
-                        disabled={!canNextPage}>
+                        disabled={!table.getCanNextPage()}>
                         <i className="fa fa-angle-double-right"></i>
                       </button>
                     </div>

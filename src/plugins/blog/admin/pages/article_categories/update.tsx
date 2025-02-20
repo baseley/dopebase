@@ -20,8 +20,9 @@ import {
   IMModal,
   IMToggleSwitchComponent,
 } from '../../../../../admin/components/forms/fields'
-import Editor from 'rich-markdown-editor'
 import dynamic from 'next/dynamic'
+import ReactMarkdown from 'react-markdown'
+import { TextareaAutosize } from '@mui/base'
 const CodeMirror = dynamic(
   () => {
     import('codemirror')
@@ -442,14 +443,16 @@ const UpdateCategoryView = props => {
 
     <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
         <label className={`${styles.FormLabel} FormLabel`}>Description</label>
-
         <div className={`${styles.FormEditorContainer} FormEditorContainer`}>
-          <Editor
-            defaultValue={modifiedNonFormData.description}
-            onChange={value => {
-              onCodeChange(value(), 'description')
-            }}
-          />
+            <TextareaAutosize
+                className={`${styles.FormTextField} FormTextField`}
+                minRows={3}
+                value={modifiedNonFormData.description || ''}
+                onChange={(e) => onCodeChange(e.target.value, 'description')}
+            />
+            <div className="markdown-preview">
+                <ReactMarkdown>{modifiedNonFormData.description || ''}</ReactMarkdown>
+            </div>
         </div>
         <p className={`${styles.ErrorMessage} ErrorMessage`}>
             {errors.description && touched.description && errors.description}
