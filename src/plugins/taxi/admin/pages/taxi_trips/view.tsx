@@ -13,19 +13,13 @@ import {
   IMToggleSwitchComponent,
   IMColorBoxComponent,
 } from '../../../../../admin/components/forms/fields'
-import Editor from 'rich-markdown-editor'
+import ReactMarkdown from 'react-markdown'
 import dynamic from 'next/dynamic'
-const CodeMirror = dynamic(
-  () => {
-    import('codemirror')
-    import('codemirror/mode/javascript/javascript')
-    import('codemirror/mode/css/css')
-    import('codemirror/mode/htmlmixed/htmlmixed')
-    import('codemirror/mode/markdown/markdown')
-    return import('react-codemirror2').then(mod => mod.Controlled)
-  },
-  { ssr: false },
-)
+import CodeMirror from '@uiw/react-codemirror'
+import { javascript } from '@codemirror/lang-javascript'
+import { css } from '@codemirror/lang-css'
+import { html } from '@codemirror/lang-html'
+import { markdown } from '@codemirror/lang-markdown'
 import styles from '../../../../../admin/themes/admin.module.css'
 
 const beautify_html = require('js-beautify').html
@@ -77,12 +71,11 @@ const DetailedTripsView = props => {
   }
 
   const editPath = './update?id=' + id
-
   return (
     <div className={`${styles.FormCard} ${styles.Card} Card FormCard`}>
       <div className={`${styles.CardBody} CardBody`}>
         <h1>
-          {originalData && originalData.name}
+          {originalData?.name}
           <a
             className={`${styles.Link} ${styles.EditLink} Link EditLink`}
             href={editPath}>
@@ -129,53 +122,46 @@ const DetailedTripsView = props => {
                 <label className={`${styles.FormLabel} FormLabel`}>Passenger ID</label>
                 <IMForeignKeyComponent id={originalData.passengerID} apiRouteName="admin/taxi/users" viewRoute="../users" titleKey="email" />
             </div>
-    
 
              <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
                 <label className={`${styles.FormLabel} FormLabel`}>Car Type</label>
                 <IMForeignKeyComponent id={originalData.carType} apiRouteName="admin/taxi/taxi_car_categories" viewRoute="../taxi_car_categories" titleKey="name" />
             </div>
-    
 
             <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
                 <label className={`${styles.FormLabel} FormLabel`}>Price Range</label>
                 <span className={`${styles.LockedFieldValue} LockedFieldValue`}>{originalData.priceRange}</span>
             </div>
-    
 
             <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
                 <label className={`${styles.FormLabel} FormLabel`}>Ride</label>
                 <span className={`${styles.FormArrayField} FormArrayField`}>
-                    { originalData.ride && Object.keys(originalData.ride).map( key => {
-                        if(typeof originalData.ride[key] === "string" || typeof originalData.ride[key] === "number") {
-                            return (<li>{key}: {originalData.ride[key]}</li>)}
+                    {originalData.ride && Object.keys(originalData.ride).map(key => {
+                        if (typeof originalData.ride[key] === "string" || typeof originalData.ride[key] === "number") {
+                            return (<li key={key}>{key}: {originalData.ride[key]}</li>)
                         }
-                    )}
+                        return null
+                    })}
                 </span>
             </div>
-    
 
             <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
                 <label className={`${styles.FormLabel} FormLabel`}>Current Location</label>
                 {originalData.carDrive && (
-                    <span className={`${styles.LockedFieldValue} LockedFieldValue`}>{originalData.carDrive.address ?? `Lat: ${originalData.carDrive.latitude} Long: ${originalData.carDrive.longitude}` }</span>
+                    <span className={`${styles.LockedFieldValue} LockedFieldValue`}>{originalData.carDrive.address ?? `Lat: ${originalData.carDrive.latitude} Long: ${originalData.carDrive.longitude}`}</span>
                 )}
             </div>
-    
 
             <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
                 <label className={`${styles.FormLabel} FormLabel`}>Created At</label>
                 <span className={`${styles.LockedFieldValue} LockedFieldValue`}>{originalData.createdAt && formatTimestamp(originalData.createdAt)}</span>
             </div>
-    
 
             <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
                 <label className={`${styles.FormLabel} FormLabel`}>Updated At</label>
                 <span className={`${styles.LockedFieldValue} LockedFieldValue`}>{originalData.updatedAt && formatTimestamp(originalData.updatedAt)}</span>
             </div>
-    
-
-      </div>
+        </div>
     </div>
   )
 }

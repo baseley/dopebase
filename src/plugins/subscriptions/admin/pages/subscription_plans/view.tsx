@@ -13,19 +13,10 @@ import {
   IMToggleSwitchComponent,
   IMColorBoxComponent,
 } from '../../../../../admin/components/forms/fields'
-import Editor from 'rich-markdown-editor'
-import dynamic from 'next/dynamic'
-const CodeMirror = dynamic(
-  () => {
-    import('codemirror')
-    import('codemirror/mode/javascript/javascript')
-    import('codemirror/mode/css/css')
-    import('codemirror/mode/htmlmixed/htmlmixed')
-    import('codemirror/mode/markdown/markdown')
-    return import('react-codemirror2').then(mod => mod.Controlled)
-  },
-  { ssr: false },
-)
+import ReactMarkdown from 'react-markdown'
+import CodeMirror from '@uiw/react-codemirror'
+import { html } from '@codemirror/lang-html'
+import { darcula } from '@uiw/codemirror-theme-darcula'
 import styles from '../../../../../admin/themes/admin.module.css'
 
 const beautify_html = require('js-beautify').html
@@ -100,10 +91,7 @@ const DetailedSubscriptionPlansView = props => {
             <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
                 <label className={`${styles.FormLabel} FormLabel`}>Basic Description</label>
                 <div className={`${styles.FormTextField} ${styles.markdownEditorReadOnly} markdownEditorReadOnly FormTextField`}>
-                  <Editor
-                    defaultValue={originalData?.basic_description ?? ''}
-                    readOnly={true}
-                  />
+                  <ReactMarkdown>{originalData?.basic_description ?? ''}</ReactMarkdown>
                 </div>
             </div>
     
@@ -111,18 +99,13 @@ const DetailedSubscriptionPlansView = props => {
             <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
                 <label className={`${styles.FormLabel} FormLabel`}>Detailed Description</label>
                 <CodeMirror
-                  className="editor FormTextField"
-                  type="detailed_description"
                   value={beautify_html(originalData.detailed_description, {
                     indent_size: 2,
                   })}
-                  name="detailed_description"
-                  options={{
-                    theme: 'darcula',
-                    lineNumbers: true,
-                    mode: 'htmlmixed',
-                    readonly: true,
-                  }}
+                  theme={darcula}
+                  extensions={[html()]}
+                  editable={false}
+                  className="editor FormTextField"
                 />
             </div>
     
