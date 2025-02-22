@@ -4,8 +4,8 @@ import React, { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Formik } from 'formik'
 import { ClipLoader } from 'react-spinners'
-import IMDatePicker from '../../../../../admin/components/forms/IMDatePicker'
-import { LocationPicker } from '../../../../../admin/components/forms/locationPicker'
+import IMDatePicker from '@/admin/components/forms/IMDatePicker'
+import { LocationPicker } from '@/admin/components/forms/locationPicker'
 import {
   TypeaheadComponent,
   IMColorPicker,
@@ -19,30 +19,24 @@ import {
   IMPhoto,
   IMModal,
   IMToggleSwitchComponent,
-} from '../../../../../admin/components/forms/fields'
-import Editor from 'rich-markdown-editor'
+} from '@/admin/components/forms/fields'
+import ReactMarkdown from 'react-markdown'
 import dynamic from 'next/dynamic'
-const CodeMirror = dynamic(
-  () => {
-    import('codemirror')
-    import('codemirror/mode/javascript/javascript')
-    import('codemirror/mode/css/css')
-    import('codemirror/mode/htmlmixed/htmlmixed')
-    import('codemirror/mode/markdown/markdown')
-    return import('react-codemirror2').then(mod => mod.Controlled)
-  },
-  { ssr: false },
-)
-import styles from '../../../../../admin/themes/admin.module.css'
+import CodeMirror from '@uiw/react-codemirror'
+import { javascript } from '@codemirror/lang-javascript'
+import { css } from '@codemirror/lang-css'
+import { html } from '@codemirror/lang-html'
+import { markdown } from '@codemirror/lang-markdown'
+import styles from '@/admin/themes/admin.module.css'
 
 /* Insert extra imports here */
 
 const beautify_html = require('js-beautify').html
-import { pluginsAPIURL } from '../../../../../config/config'
+import { pluginsAPIURL } from '@/config/config'
 import {
   authFetch,
   authPost,
-} from '../../../../../modules/auth/utils/authFetch'
+} from '@/modules/auth/utils/authFetch'
 const baseAPIURL = `${pluginsAPIURL}admin/blog/`
 
 const UpdateArticleTagView = props => {
@@ -450,12 +444,17 @@ const UpdateArticleTagView = props => {
         <label className={`${styles.FormLabel} FormLabel`}>Description</label>
 
         <div className={`${styles.FormEditorContainer} FormEditorContainer`}>
-          <Editor
-            defaultValue={modifiedNonFormData.description}
-            onChange={value => {
-              onCodeChange(value(), 'description')
+          <CodeMirror
+            value={modifiedNonFormData.description || ''}
+            height="200px"
+            extensions={[markdown()]}
+            onChange={(value) => {
+              onCodeChange(value, 'description')
             }}
           />
+          <div className="preview-markdown">
+            <ReactMarkdown>{modifiedNonFormData.description || ''}</ReactMarkdown>
+          </div>
         </div>
         <p className={`${styles.ErrorMessage} ErrorMessage`}>
             {errors.description && touched.description && errors.description}
