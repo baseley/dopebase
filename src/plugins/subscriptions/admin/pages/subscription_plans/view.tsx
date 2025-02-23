@@ -16,7 +16,7 @@ import {
 import ReactMarkdown from 'react-markdown'
 import CodeMirror from '@uiw/react-codemirror'
 import { html } from '@codemirror/lang-html'
-import { darcula } from '@uiw/codemirror-theme-darcula'
+import { EditorView } from '@codemirror/view'
 import styles from '../../../../../admin/themes/admin.module.css'
 
 const beautify_html = require('js-beautify').html
@@ -102,7 +102,7 @@ const DetailedSubscriptionPlansView = props => {
                   value={beautify_html(originalData.detailed_description, {
                     indent_size: 2,
                   })}
-                  theme={darcula}
+                  theme="dark"
                   extensions={[html()]}
                   editable={false}
                   className="editor FormTextField"
