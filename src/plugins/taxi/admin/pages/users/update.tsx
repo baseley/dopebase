@@ -20,9 +20,8 @@ import {
   IMModal,
   IMToggleSwitchComponent,
 } from '../../../../../admin/components/forms/fields'
-import Editor from 'rich-markdown-editor'
-import dynamic from 'next/dynamic'
 import ReactMarkdown from 'react-markdown'
+import dynamic from 'next/dynamic'
 import CodeMirror from '@uiw/react-codemirror'
 import { javascript } from '@codemirror/lang-javascript'
 import { css } from '@codemirror/lang-css'
@@ -266,9 +265,9 @@ const UpdateUserView = props => {
     setModifiedNonFormData(newData)
   }
 
-  const onMarkdownEditorChange = (value, fieldName) => {
+  const onMarkdownEditorChange = (event, fieldName) => {
     var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value
+    newData[fieldName] = event.target.value
     setModifiedNonFormData(newData)
   }
 

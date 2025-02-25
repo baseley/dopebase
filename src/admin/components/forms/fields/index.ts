@@ -16,3 +16,4 @@ export { default as IMObjectInputComponent } from './IMObjectInputComponent/IMOb
 export { default as IMColorPicker } from './IMColorPicker/IMColorPicker'
 export { default as IMColorPickerSketch } from './IMColorPickerSketch/IMColorPickerSketch'
 export { default as IMChartZoomable } from './IMChartZoomable/IMChartZoomable'
+export { default as IMTextAreaComponent } from './IMTextAreaComponent/IMTextAreaComponent'

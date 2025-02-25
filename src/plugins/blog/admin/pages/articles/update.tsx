@@ -23,13 +23,14 @@ import {
 import ReactMarkdown from 'react-markdown'
 import dynamic from 'next/dynamic'
 const CodeMirror = dynamic(
-  () => {
-    import('@uiw/react-codemirror')
-    import('@uiw/codemirror-theme-github')
-    import('@uiw/codemirror-extensions-langs')
-    return import('@uiw/react-codemirror')
+  async () => {
+    const { basicSetup } = await import('@uiw/codemirror-extensions-basic-setup')
+    const { markdown } = await import('@codemirror/lang-markdown')
+    const { EditorView } = await import('@codemirror/view')
+    const mod = await import('@uiw/react-codemirror')
+    return mod
   },
-  { ssr: false },
+  { ssr: false }
 )
 import styles from '@/admin/themes/admin.module.css'
 

@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@codemirror/lang-markdown": "^6.3.2",
     "@prisma/client": "5.2.0",
     "@sendgrid/mail": "8.1.4",
     "@stripe/stripe-js": "2.1.11",
@@ -52,6 +53,7 @@
     "stripe": "17.6.0",
     "styled-components": "6.1.15",
     "tailwindcss": "^4.0.7",
+    "tailwindcss-animate": "^1.0.7",
     "validator": "13.12.0",
     "victory": "37.3.6"
   },

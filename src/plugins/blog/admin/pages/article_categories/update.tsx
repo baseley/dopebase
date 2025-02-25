@@ -22,7 +22,6 @@ import {
 } from '@/admin/components/forms/fields'
 import dynamic from 'next/dynamic'
 import ReactMarkdown from 'react-markdown'
-import { TextareaAutosize } from '@mui/base'
 
 const CodeMirror = dynamic(
   () => import('@uiw/react-codemirror'),
@@ -438,11 +437,12 @@ const UpdateCategoryView = props => {
     <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
         <label className={`${styles.FormLabel} FormLabel`}>Description</label>
         <div className={`${styles.FormEditorContainer} FormEditorContainer`}>
-            <TextareaAutosize
+            <textarea
                 className={`${styles.FormTextField} FormTextField`}
-                minRows={3}
+                rows={3}
                 value={modifiedNonFormData.description || ''}
                 onChange={(e) => onCodeChange(e.target.value, 'description')}
+                style={{ minHeight: '100px', resize: 'vertical' }}
             />
             <div className="markdown-preview">
                 <ReactMarkdown>{modifiedNonFormData.description || ''}</ReactMarkdown>
