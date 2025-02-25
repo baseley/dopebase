@@ -6,11 +6,7 @@ import { ClipLoader } from 'react-spinners'
 import ReactMarkdown from 'react-markdown'
 import dynamic from 'next/dynamic'
 import CodeMirror from '@uiw/react-codemirror'
-import { javascript } from '@codemirror/lang-javascript'
-import { css } from '@codemirror/lang-css'
-import { html } from '@codemirror/lang-html'
-import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
-import { languages } from '@codemirror/language-data'
+import { markdown } from '@codemirror/lang-markdown'
 import IMDatePicker from '@/admin/components/forms/IMDatePicker'
 import { LocationPicker } from '@/admin/components/forms/locationPicker'
 import {
@@ -407,7 +403,7 @@ const AddNewArticleView = () => {
                           <CodeMirror
                             value={modifiedNonFormData.content || ''}
                             height="200px"
-                            extensions={[markdown({ base: markdownLanguage, codeLanguages: languages })]}
+                            extensions={[markdown()]}
                             onChange={(value) => {
                               onCodeChange(value, 'content')
                             }}
