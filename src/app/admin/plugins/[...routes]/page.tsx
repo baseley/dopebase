@@ -42,8 +42,7 @@ export default async function Page({
     const Component = (
       await import(`../../../../plugins/${pluginID}/admin/pages/${routesArray.slice(1).join('/')}`)
     ).default
-    console.log("Importing component from:", `../../../../plugins/${pluginID}/admin/pages/${routesArray.slice(1).join('/')}`)
-
+ 
     if (user && user.role !== 'admin') {
       return <>Access denied.</>
     }
