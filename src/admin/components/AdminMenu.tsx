@@ -43,7 +43,9 @@ const adminMenuItemsBottom = [
 const AdminMenu = async ({ params, searchParams }) => {
   const user = await getCurrentUser()
   const routes = params?.routes
-  const slug = routes?.join('/') ?? ''
+
+  // Ensure routes is an array before calling join()
+  const slug = Array.isArray(routes) ? routes.join('/') : ''
 
   const items = user?.role === 'admin' ? adminMenuItemsTop : []
   const menuItemsAfterApplyingHooks = HookSystem.getInstance().executeHook(
