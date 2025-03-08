@@ -32,7 +32,6 @@ import useCurrentUser from '../../../../../modules/auth/hooks/useCurrentUser'
 import { authPost } from '../../../../../modules/auth/utils/authFetch'
 import styles from '../../../../../admin/themes/admin.module.css'
 import GenerateIdeasForm from '../../components/GenerateIdeasForm'
-/* Insert extra imports for table cells here */
 
 const baseAPIURL = `${pluginsAPIURL}admin/blog/`
 
@@ -42,60 +41,72 @@ export const getStaticProps: GetStaticProps = async () => {
 
 const ArticleIdeasColumns = [
   {
-    Header: 'Title',
-    accessor: 'title',
+    id: 'title',
+    header: 'Title',
+    accessorKey: 'title',
   },
   {
-    Header: 'Sections',
-    accessor: 'sections',
+    id: 'sections',
+    header: 'Sections',
+    accessorKey: 'sections',
   },
   {
-    Header: 'Tags',
-    accessor: 'tags',
+    id: 'tags',
+    header: 'Tags',
+    accessorKey: 'tags',
   },
   {
-    Header: 'Status',
-    accessor: 'status',
+    id: 'status',
+    header: 'Status',
+    accessorKey: 'status',
   },
   {
-    Header: 'Extra Prompt',
-    accessor: 'extra_prompt',
+    id: 'extra_prompt',
+    header: 'Extra Prompt',
+    accessorKey: 'extra_prompt',
   },
   {
-    Header: 'Social Media',
-    accessor: 'social_media_post',
+    id: 'social_media_post',
+    header: 'Social Media',
+    accessorKey: 'social_media_post',
   },
   {
-    Header: 'SEO Description',
-    accessor: 'seo_description',
+    id: 'seo_description',
+    header: 'SEO Description',
+    accessorKey: 'seo_description',
   },
   {
-    Header: 'Summary',
-    accessor: 'summary',
+    id: 'summary',
+    header: 'Summary',
+    accessorKey: 'summary',
   },
   {
-    Header: 'Topic',
-    accessor: 'topic',
+    id: 'topic',
+    header: 'Topic',
+    accessorKey: 'topic',
   },
   {
-    Header: 'Category',
-    accessor: 'category',
+    id: 'category',
+    header: 'Category',
+    accessorKey: 'category',
   },
   {
-    Header: 'Created Date',
-    accessor: 'created_at',
-    Cell: data => <IMDateTableCell timestamp={data.value} />,
+    id: 'created_at',
+    header: 'Created Date',
+    accessorKey: 'created_at',
+    cell: data => <IMDateTableCell timestamp={data.getValue()} />,
   },
   {
-    Header: 'Updated Date',
-    accessor: 'updated_at',
-    Cell: data => <IMDateTableCell timestamp={data.value} />,
+    id: 'updated_at',
+    header: 'Updated Date',
+    accessorKey: 'updated_at',
+    cell: data => <IMDateTableCell timestamp={data.getValue()} />,
   },
-  ,
   {
-    Header: 'Actions',
-    accessor: 'actions',
-    Cell: data => <ActionsItemView data={data} />,
+    id: 'actions',
+    header: 'Actions',
+    accessorKey: 'actions',
+    cell: data => <ActionsItemView data={data} />,
   },
 ]
 
@@ -189,10 +200,8 @@ function ArticleIdeasListView(props) {
     )
       .then(response => response.json())
       .then(data => {
-        console.log(data)
         const article_ideas = data
         setData(article_ideas)
-
         setIsLoading(false)
       })
       .catch(err => {
