@@ -9,10 +9,12 @@ export default async function Page({
   params: { routes: string | string[] } // Handle both string and array cases
   searchParams: any
 }) {
+  // Ensure params is awaited properly
+  const awaitedParams = await params;
   const user = await getCurrentUser()
 
   // Ensure `routes` is always a string before calling `.split('/')`
-  const routes = Array.isArray(params.routes) ? params.routes.join('/') : params.routes || ''
+  const routes = Array.isArray(awaitedParams.routes) ? awaitedParams.routes.join('/') : awaitedParams.routes || ''
   const routesArray = routes.split('/') // Convert string to an array
 
   if (routesArray.length === 0 || !routesArray[0]) {
@@ -48,7 +50,7 @@ export default async function Page({
     }
 
     return (
-      <AdminAppContainer params={{ ...params, routes }} searchParams={searchParams}>
+      <AdminAppContainer params={{ ...awaitedParams, routes }} searchParams={searchParams}>
         <React.Suspense fallback={<div>Loading...</div>}>
           <Component />
         </React.Suspense>
