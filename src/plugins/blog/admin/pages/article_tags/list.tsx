@@ -42,58 +42,67 @@ export const getStaticProps: GetStaticProps = async () => {
 const ArticleCategoriesColumns = [
   
       {
-          Header: "Name",
-          accessor: "name",
+          id:"name",
+          header: "Name",
+          accessorKey: "name",
       },
-            {
-            Header: "Description",
-            accessor: "description",
-            Cell: data => (
-                <div className='markdownReadOnly'>{data?.value && data.value.substring(0, 100)}...</div>
-            )
-            },
       {
-          Header: "Published",
-          accessor: "published",
+          id:"description",  
+          header: "Description",
+          accessorKey: "description",
           Cell: data => (
-              <IMToggleSwitchComponent isChecked={data.value} disabled />
+              <div className='markdownReadOnly'>{data?.value && data.value.substring(0, 100)}...</div>
           )
       },
       {
-          Header: "SEO Title",
-          accessor: "seo_title",
+        id: "published", // Unique identifier for the column
+        header: "Published", // Ensure header is a string
+        accessorKey: "published", // Matches the key in your data
+        Cell: ({ getValue }) => (
+          <IMToggleSwitchComponent isChecked={row.original.published} disabled />
+        ),
+      },
+      {   
+          id:"seo_title",
+          header: "SEO Title",
+          accessorKey: "seo_title",
+      },
+      {   
+          id:"seo_description",
+          header: "SEO Description",
+          accessorKey: "seo_description",
       },
       {
-          Header: "SEO Description",
-          accessor: "seo_description",
+          id:"canonical_url",
+          header: "Canonical URL",
+          accessorKey: "canonical_url",
       },
       {
-          Header: "Canonical URL",
-          accessor: "canonical_url",
+          id:"slug",
+          header: "Slug",
+          accessorKey: "slug",
       },
       {
-          Header: "Slug",
-          accessor: "slug",
-      },
-      {
-          Header: "SEO Cover Image",
-          accessor: "seo_image_url",
+          id:"seo_image_url",
+          header: "SEO Cover Image",
+          accessorKey: "seo_image_url",
           Cell: data => (
               <IMImagesTableCell singleImageURL={data.value} />
           )
       },
       {
-          Header: "Created Date",
-          accessor: "created_at",
+          id:"created_at",
+          header: "Created Date",
+          accessorKey: "created_at",
           Cell: data => (
               <IMDateTableCell timestamp={data.value} />
           )
-      },,
-  {
-    Header: 'Actions',
-    accessor: 'actions',
-    Cell: data => <ActionsItemView data={data} />,
-  },
+      },
+      {
+        id:"actions",
+        header: 'Actions',
+        Cell: data => <ActionsItemView data={data} />,
+      },
 ]
 
 function ActionsItemView(props) {
@@ -178,12 +187,11 @@ function ArticleCategoriesListView(props) {
     const extraQueryParams = null
     setIsLoading(true)
 
-    fetch(
-      baseAPIURL +
-        'article_tags/list' +
-        (extraQueryParams ? extraQueryParams : ''),
-      config,
-    )
+    const url = extraQueryParams
+    ? `${baseAPIURL}article_tags/list${extraQueryParams}`
+    : `${baseAPIURL}article_tags/list`;
+  
+  fetch(url)
       .then(response => response.json())
       .then(data => {
         console.log(data)
@@ -197,10 +205,15 @@ function ArticleCategoriesListView(props) {
       })
   }, [loading])
 
-  useEffect(() => {
-    setArticleCategories(data)
-  }, [table.getState().pagination.pageIndex, table.getState().pagination.pageSize, data])
+      .catch(error => console.error("Error fetching data:", error));
 
+
+useEffect(() => {
+  if (data.length > 0) {
+    setArticleCategories(data)
+  }
+}, [data])
+      
   return (
     <>
       <div className={`${styles.adminContent} adminContent`}>
