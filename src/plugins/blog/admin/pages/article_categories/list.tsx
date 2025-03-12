@@ -42,66 +42,77 @@ export const getStaticProps: GetStaticProps = async () => {
 const ArticleCategoriesColumns = [
   
       {
-          Header: "Name",
-          accessor: "name",
-      },
-            {
-            Header: "Description",
-            accessor: "description",
-            Cell: data => (
-                <div className='markdownReadOnly'>{data?.value && data.value.substring(0, 100)}...</div>
-            )
-            },
-      {
-          Header: "Slug",
-          accessor: "slug",
+          id:"name",
+          header: "Name",
+          accessorKey: "name",
       },
       {
-          Header: "Logo",
-          accessor: "logo_url",
+          id:"description",
+          header: "Description",
+          accessorKey: "description",
+          Cell: data => (
+              <div className='markdownReadOnly'>{data?.value && data.value.substring(0, 100)}...</div>
+          )
+      },
+      {
+          id:"slug",
+          header: "Slug",
+          accessorKey: "slug",
+      },
+      {
+          id:"logo_url",
+          header: "Logo",
+          accessorKey: "logo_url",
           Cell: data => (
               <IMImagesTableCell singleImageURL={data.value} />
           )
       },
       {
-          Header: "SEO Title",
-          accessor: "seo_title",
+          id:"seo_title",
+          header: "SEO Title",
+          accessorKey: "seo_title",
       },
       {
-          Header: "SEO Description",
-          accessor: "seo_description",
+          id:"seo_description",
+          header: "SEO Description",
+          accessorKey: "seo_description",
       },
       {
-          Header: "Canonical URL",
-          accessor: "canonical_url",
+          id:"canonical_url",
+          header: "Canonical URL",
+          accessorKey: "canonical_url",
       },
       {
-          Header: "SEO Cover Image",
-          accessor: "seo_image_url",
+          id:"seo_image_url",
+          header: "SEO Cover Image",
+          accessorKey: "seo_image_url",
           Cell: data => (
               <IMImagesTableCell singleImageURL={data.value} />
           )
       },
       {
-          Header: "Published",
-          accessor: "published",
+          id:"published",
+          header: "Published",
+          accessorKey: "published",
           Cell: data => (
               <IMToggleSwitchComponent isChecked={data.value} disabled />
           )
       },
       {
-          Header: "Parent Category",
-          accessor: "parent_id",
+          id:"parent_id",
+          header: "Parent Category",
+          accessorKey: "parent_id",
           Cell: data => (
               <IMForeignKeyTableCell id={data.value} apiRouteName="admin/blog/article_categories" viewRoute="article_categories"
           titleKey="name" />
           )
       },,
-  {
-    Header: 'Actions',
-    accessor: 'actions',
-    Cell: data => <ActionsItemView data={data} />,
-  },
+      {
+        id: 'actions',
+        header: 'Actions',
+        accessorKey: 'actions',
+        Cell: data => <ActionsItemView data={data} />,
+      },
 ]
 
 function ActionsItemView(props) {
