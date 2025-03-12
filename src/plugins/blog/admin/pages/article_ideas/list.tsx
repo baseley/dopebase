@@ -94,19 +94,19 @@ const ArticleIdeasColumns = [
     id: 'created_at',
     header: 'Created Date',
     accessorKey: 'created_at',
-    cell: data => <IMDateTableCell timestamp={data.getValue()} />,
+    Cell: data => <IMDateTableCell timestamp={data.getValue()} />,
   },
   {
     id: 'updated_at',
     header: 'Updated Date',
     accessorKey: 'updated_at',
-    cell: data => <IMDateTableCell timestamp={data.getValue()} />,
+    Cell: data => <IMDateTableCell timestamp={data.getValue()} />,
   },
   {
     id: 'actions',
     header: 'Actions',
     accessorKey: 'actions',
-    cell: data => <ActionsItemView data={data} />,
+    Cell: data => <ActionsItemView data={data} />,
   },
 ]
 

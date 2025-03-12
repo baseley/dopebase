@@ -44,110 +44,128 @@ export const getStaticProps: GetStaticProps = async () => {
 const ArticlesColumns = [
   
       {
-          Header: "Title",
-          accessor: "title",
+          id:"title",
+          header: "Title",
+          accessorKey: "title",
       },
-            {
-            Header: "Content",
-            accessor: "content",
-            Cell: data => (
-                <div className='markdownReadOnly'>{data?.value && data.value.substring(0, 100)}...</div>
-            )
-            },
       {
-          Header: "Cover Photo",
-          accessor: "cover_photo",
+          id:"content",
+          header: "Content",
+          accessorkey: "content",
+          Cell: data => (
+              <div className='markdownReadOnly'>{data?.value && data.value.substring(0, 100)}...</div>
+          )
+      },
+      {
+          id:"cover_photo",
+          header: "Cover Photo",
+          accessorKey: "cover_photo",
           Cell: data => (
               <IMImagesTableCell singleImageURL={data.value} />
           )
       },
       {
-          Header: "Photos",
-          accessor: "photo_urls",
+          id:"photo_urls",
+          header: "Photos",
+          accessorKey: "photo_urls",
           Cell: data => (
               <IMImagesTableCell imageURLs={data.value} />
           )
       },
       {
-          Header: "Github URL",
-          accessor: "source_code_url",
+          id:"source_code_url",
+          header: "Github URL",
+          accessorKey: "source_code_url",
       },
       {
-          Header: "Canonical URL",
-          accessor: "canonical_url",
+          id:"canonical_url",
+          header: "Canonical URL",
+          accessorKey: "canonical_url",
       },
       {
-          Header: "Published",
-          accessor: "published",
+          id:"published",
+          header: "Published",
+          accessorKey: "published",
           Cell: data => (
               <IMToggleSwitchComponent isChecked={data.value} disabled />
           )
       },
       {
-          Header: "Outdated",
-          accessor: "outdated",
+          id:"outdated",
+          header: "Outdated",
+          accessorKey: "outdated",
           Cell: data => (
               <IMToggleSwitchComponent isChecked={data.value} disabled />
           )
       },
       {
-          Header: "Slug",
-          accessor: "slug",
+          id:"slug",
+          header: "Slug",
+          accessorKey: "slug",
       },
       {
-          Header: "SEO Title",
-          accessor: "seo_title",
+          id:"seo_title",
+          header: "SEO Title",
+          accessorKey: "seo_title",
       },
       {
-          Header: "SEO Description",
-          accessor: "seo_description",
+          id:"seo_description",
+          header: "SEO Description",
+          accessorKey: "seo_description",
       },
       {
-          Header: "SEO Keyword",
-          accessor: "seo_keyword",
+          id:"seo_keyword",
+          header: "SEO Keyword",
+          accessorKey: "seo_keyword",
       },
       {
-          Header: "Author",
-          accessor: "author_id",
+          id:"author_id",
+          header: "Author",
+          accessorKey: "author_id",
           Cell: data => (
               <IMForeignKeyTableCell id={data.value} apiRouteName="admin/blog/users" viewRoute="users"
           titleKey="title" />
           )
       },
       {
-          Header: "Category",
-          accessor: "category_id",
+          id:"category_id",
+          header: "Category",
+          accessorKey: "category_id",
           Cell: data => (
               <IMForeignKeyTableCell id={data.value} apiRouteName="admin/blog/article_categories" viewRoute="article_categories"
           titleKey="name" />
           )
       },
       {
-          Header: "ArticleTags",
-          accessor: "tags",
+          id:"tags",
+          header: "ArticleTags",
+          accessorKey: "tags",
           Cell: data => (
               <IMArticleTagsForeignKeysArrayIdTableCell tagsArray={data.value} />
           )
       },
       {
-          Header: "Created At",
-          accessor: "created_at",
+          id:"created_at",
+          header: "Created At",
+          accessorKey: "created_at",
           Cell: data => (
               <IMDateTableCell timestamp={data.value} />
           )
       },
       {
-          Header: "Updated At",
-          accessor: "updated_at",
+          id:"updated_at",
+          header: "Updated At",
+          accessorKey: "updated_at",
           Cell: data => (
               <IMDateTableCell timestamp={data.value} />
           )
       },,
-  {
-    Header: 'Actions',
-    accessor: 'actions',
-    Cell: data => <ActionsItemView data={data} />,
-  },
+      {
+        id: 'actions',
+        header: 'Actions',
+        accessorKey: 'actions',
+        Cell: data => <ActionsItemView data={data} />,
+      },
 ]
 
 function ActionsItemView(props) {
