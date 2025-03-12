@@ -42,70 +42,83 @@ export const getStaticProps: GetStaticProps = async () => {
 const UsersColumns = [
   
       {
-          Header: "Email",
-          accessor: "email",
+          id:"email",
+          header: "Email",
+          accessorKey: "email",
       },
       {
-          Header: "First Name",
-          accessor: "first_name",
+          id:"first_name",
+          header: "First Name",
+          accessorKey: "first_name",
       },
       {
-          Header: "Last Name",
-          accessor: "last_name",
+          id:"last_name",
+          header: "Last Name",
+          accessorKey: "last_name",
       },
       {
-          Header: "Phone",
-          accessor: "phone",
+          id:"phone",
+          header: "Phone",
+          accessorKey: "phone",
       },
       {
-          Header: "Role",
-          accessor: "role",
+          id:"role",
+          header: "Role",
+          accessorKey: "role",
       },
       {
-          Header: "Short Bio",
-          accessor: "bio_title",
-      },
-            {
-            Header: "Long Bio",
-            accessor: "bio_description",
-            Cell: data => (
-                <div className='markdownReadOnly'>{data?.value && data.value.substring(0, 100)}...</div>
-            )
-            },
-      {
-          Header: "Website URL",
-          accessor: "website_url",
+          id:"bio_title",
+          header: "Short Bio",
+          accessorKey: "bio_title",
       },
       {
-          Header: "Username",
-          accessor: "username",
+          id:"bio_description",
+          header: "Long Bio",
+          accessorKey: "bio_description",
+          Cell: data => (
+              <div className='markdownReadOnly'>{data?.value && data.value.substring(0, 100)}...</div>
+          )
       },
       {
-          Header: "Banned",
-          accessor: "banned",
+          id:"website_url",
+          header: "Website URL",
+          accessorKey: "website_url",
+      },
+      {
+          id:"username",
+          header: "Username",
+          accessorKey: "username",
+      },
+      {
+          id:"banned",
+          header: "Banned",
+          accessorKey: "banned",
           Cell: data => (
               <IMToggleSwitchComponent isChecked={data.value} disabled />
           )
       },
       {
-          Header: "Created At",
-          accessor: "created_at",
+          id:"created_at",
+          header: "Created At",
+          accessorKey: "created_at",
           Cell: data => (
               <IMDateTableCell timestamp={data.value} />
           )
       },
       {
-          Header: "Updated At",
-          accessor: "updated_at",
+          id:"updated_at",
+          header: "Updated At",
+          accessorKey: "updated_at",
           Cell: data => (
               <IMDateTableCell timestamp={data.value} />
           )
-      },,
-  {
-    Header: 'Actions',
-    accessor: 'actions',
-    Cell: data => <ActionsItemView data={data} />,
-  },
+      },
+      {
+          id:"actions",
+          header: 'Actions',
+          accessorKey: 'actions',
+          Cell: data => <ActionsItemView data={data} />,
+      },
 ]
 
 function ActionsItemView(props) {
