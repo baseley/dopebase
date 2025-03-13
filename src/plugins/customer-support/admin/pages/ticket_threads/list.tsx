@@ -40,73 +40,81 @@ export const getStaticProps: GetStaticProps = async () => {
 }
 
 const TicketThreadsColumns = [
-  
-      {
-          Header: "ID",
-          accessor: "id",
-      },
-      {
-          Header: "Number",
-          accessor: "number",
-      },
-      {
-          Header: "Author Email",
-          accessor: "author_email",
-      },
-      {
-          Header: "Author Name",
-          accessor: "author_name",
-      },
-      {
-          Header: "Message Count",
-          accessor: "message_count",
-      },
-      {
-          Header: "Subject",
-          accessor: "subject",
-      },
-      {
-          Header: "Is Closed",
-          accessor: "is_closed",
-          Cell: data => (
-              <IMToggleSwitchComponent isChecked={data.value} disabled />
-          )
-      },
-      {
-          Header: "Is Public",
-          accessor: "is_public",
-          Cell: data => (
-              <IMToggleSwitchComponent isChecked={data.value} disabled />
-          )
-      },
-      {
-          Header: "Created At",
-          accessor: "created_at",
-          Cell: data => (
-              <IMDateTableCell timestamp={data.value} />
-          )
-      },
-      {
-          Header: "Updated At",
-          accessor: "updated_at",
-          Cell: data => (
-              <IMDateTableCell timestamp={data.value} />
-          )
-      },
-      {
-          Header: "User ID",
-          accessor: "user_id",
-          Cell: data => (
-              <IMForeignKeyTableCell id={data.value} apiRouteName="admin/customer-support/users" viewRoute="users"
-          titleKey="email" />
-          )
-      },,
   {
-    Header: 'Actions',
-    accessor: 'actions',
-    Cell: data => <ActionsItemView data={data} />,
+      id: "id",
+      header: "id",
+      accessorKey: "id",
   },
-]
+  {
+      id: "number",
+      header: "number",
+      accessorKey: "number",
+  },
+  {
+      id: "author_email",
+      header: "author email",
+      accessorKey: "author_email",
+  },
+  {
+      id: "author_name",
+      header: "author name",
+      accessorKey: "author_name",
+  },
+  {
+      id: "message_count",
+      header: "message count",
+      accessorKey: "message_count",
+  },
+  {
+      id: "subject",
+      header: "subject",
+      accessorKey: "subject",
+  },
+  {
+      id: "is_closed",
+      header: "is closed",
+      accessorKey: "is_closed",
+      Cell: data => <IMToggleSwitchComponent isChecked={data.value} disabled />,
+  },
+  {
+      id: "is_public",
+      header: "is public",
+      accessorKey: "is_public",
+      Cell: data => <IMToggleSwitchComponent isChecked={data.value} disabled />,
+  },
+  {
+      id: "created_at",
+      header: "created at",
+      accessorKey: "created_at",
+      Cell: data => <IMDateTableCell timestamp={data.value} />,
+  },
+  {
+      id: "updated_at",
+      header: "updated at",
+      accessorKey: "updated_at",
+      Cell: data => <IMDateTableCell timestamp={data.value} />,
+  },
+  {
+      id: "user_id",
+      header: "user id",
+      accessorKey: "user_id",
+      Cell: data => (
+          <IMForeignKeyTableCell 
+              id={data.value} 
+              apiRouteName="admin/customer-support/users" 
+              viewRoute="users"
+              titleKey="email" 
+          />
+      ),
+  },
+  {
+      id: "actions",
+      header: "actions",
+      accessorKey: "actions",
+      Cell: data => <ActionsItemView data={data} />,
+  },
+];
+
 
 function ActionsItemView(props) {
   const { data } = props
@@ -161,7 +169,7 @@ function TicketThreadsListView(props) {
   const [isLoading, setIsLoading] = useState(true)
   const [TicketThreads, setTicketThreads] = useState([])
   const [data, setData] = useState([])
-
+  const [globalFilter, setGlobalFilter] = useState('')
   const [user, token, loading] = useCurrentUser()
 
   const columns = useMemo(() => TicketThreadsColumns, [])

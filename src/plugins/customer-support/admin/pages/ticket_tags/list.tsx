@@ -40,39 +40,41 @@ export const getStaticProps: GetStaticProps = async () => {
 }
 
 const TicketTagsColumns = [
-  
-      {
-          Header: "ID",
-          accessor: "id",
-      },
-      {
-          Header: "Name",
-          accessor: "name",
-      },
-      {
-          Header: "Slug",
-          accessor: "slug",
-      },
-      {
-          Header: "Published",
-          accessor: "published",
-          Cell: data => (
-              <IMToggleSwitchComponent isChecked={data.value} disabled />
-          )
-      },
-      {
-          Header: "Created At",
-          accessor: "created_at",
-          Cell: data => (
-              <IMDateTableCell timestamp={data.value} />
-          )
-      },,
   {
-    Header: 'Actions',
-    accessor: 'actions',
-    Cell: data => <ActionsItemView data={data} />,
+      id: "id",
+      header: "id",
+      accessorKey: "id",
   },
-]
+  {
+      id: "name",
+      header: "name",
+      accessorKey: "name",
+  },
+  {
+      id: "slug",
+      header: "slug",
+      accessorKey: "slug",
+  },
+  {
+      id: "published",
+      header: "published",
+      accessorKey: "published",
+      Cell: data => <IMToggleSwitchComponent isChecked={data.value} disabled />,
+  },
+  {
+      id: "created_at",
+      header: "created at",
+      accessorKey: "created_at",
+      Cell: data => <IMDateTableCell timestamp={data.value} />,
+  },
+  {
+      id: "actions",
+      header: "actions",
+      accessorKey: "actions",
+      Cell: data => <ActionsItemView data={data} />,
+  },
+];
+
 
 function ActionsItemView(props) {
   const { data } = props

@@ -40,50 +40,52 @@ export const getStaticProps: GetStaticProps = async () => {
 }
 
 const UsersColumns = [
-  
-      {
-          Header: "Email",
-          accessor: "email",
-      },
-      {
-          Header: "First Name",
-          accessor: "firstName",
-      },
-      {
-          Header: "Last Name",
-          accessor: "lastName",
-      },
-      {
-          Header: "Phone",
-          accessor: "phone",
-      },
-      {
-          Header: "Banned",
-          accessor: "banned",
-          Cell: data => (
-              <IMToggleSwitchComponent isChecked={data.value} disabled />
-          )
-      },
-      {
-          Header: "Created At",
-          accessor: "createdAt",
-          Cell: data => (
-              <IMDateTableCell timestamp={data.value} />
-          )
-      },
-      {
-          Header: "Updated At",
-          accessor: "updatedAt",
-          Cell: data => (
-              <IMDateTableCell timestamp={data.value} />
-          )
-      },,
   {
-    Header: 'Actions',
-    accessor: 'actions',
-    Cell: data => <ActionsItemView data={data} />,
+      id: "email",
+      header: "email",
+      accessorKey: "email",
   },
-]
+  {
+      id: "firstName",
+      header: "first name",
+      accessorKey: "firstName",
+  },
+  {
+      id: "lastName",
+      header: "last name",
+      accessorKey: "lastName",
+  },
+  {
+      id: "phone",
+      header: "phone",
+      accessorKey: "phone",
+  },
+  {
+      id: "banned",
+      header: "banned",
+      accessorKey: "banned",
+      Cell: data => <IMToggleSwitchComponent isChecked={data.value} disabled />,
+  },
+  {
+      id: "createdAt",
+      header: "created at",
+      accessorKey: "createdAt",
+      Cell: data => <IMDateTableCell timestamp={data.value} />,
+  },
+  {
+      id: "updatedAt",
+      header: "updated at",
+      accessorKey: "updatedAt",
+      Cell: data => <IMDateTableCell timestamp={data.value} />,
+  },
+  {
+      id: "actions",
+      header: "actions",
+      accessorKey: "actions",
+      Cell: data => <ActionsItemView data={data} />,
+  },
+];
+
 
 function ActionsItemView(props) {
   const { data } = props
