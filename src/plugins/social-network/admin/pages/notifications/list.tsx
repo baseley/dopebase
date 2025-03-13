@@ -40,47 +40,56 @@ export const getStaticProps: GetStaticProps = async () => {
 }
 
 const NotificationsColumns = [
-  
-      {
-          Header: "Title",
-          accessor: "title",
-      },
-      {
-          Header: "Body",
-          accessor: "body",
-      },
-      {
-          Header: "Type",
-          accessor: "type",
-      },
-      {
-          Header: "Marked as Seen?",
-          accessor: "seen",
-          Cell: data => (
-              <IMToggleSwitchComponent isChecked={data.value} disabled />
-          )
-      },
-      {
-          Header: "Date",
-          accessor: "createdAt",
-          Cell: data => (
-              <IMDateTableCell timestamp={data.value} />
-          )
-      },
-      {
-          Header: "Recipient User",
-          accessor: "toUserID",
-          Cell: data => (
-              <IMForeignKeyTableCell id={data.value} apiRouteName="admin/social-network/users" viewRoute="users"
-          titleKey="email" />
-          )
-      },,
   {
-    Header: 'Actions',
-    accessor: 'actions',
-    Cell: data => <ActionsItemView data={data} />,
+      id: "title",
+      header: "title",
+      accessorKey: "title",
   },
-]
+  {
+      id: "body",
+      header: "body",
+      accessorKey: "body",
+  },
+  {
+      id: "type",
+      header: "type",
+      accessorKey: "type",
+  },
+  {
+      id: "seen",
+      header: "marked as seen?",
+      accessorKey: "seen",
+      Cell: data => (
+          <IMToggleSwitchComponent isChecked={data.value} disabled />
+      ),
+  },
+  {
+      id: "createdAt",
+      header: "date",
+      accessorKey: "createdAt",
+      Cell: data => <IMDateTableCell timestamp={data.value} />,
+  },
+  {
+      id: "toUserID",
+      header: "recipient user",
+      accessorKey: "toUserID",
+      Cell: data => (
+          <IMForeignKeyTableCell 
+              id={data.value} 
+              apiRouteName="admin/social-network/users" 
+              viewRoute="users"
+              titleKey="email" 
+          />
+      ),
+  },
+  {
+      id: "actions",
+      header: "actions",
+      accessorKey: "actions",
+      Cell: data => <ActionsItemView data={data} />,
+  },
+];
+
 
 function ActionsItemView(props) {
   const { data } = props

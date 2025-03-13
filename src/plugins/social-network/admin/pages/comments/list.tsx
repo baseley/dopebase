@@ -40,40 +40,51 @@ export const getStaticProps: GetStaticProps = async () => {
 }
 
 const CommentsColumns = [
-  
-      {
-          Header: "Author",
-          accessor: "authorID",
-          Cell: data => (
-              <IMForeignKeyTableCell id={data.value} apiRouteName="admin/social-network/users" viewRoute="users"
-          titleKey="email" />
-          )
-      },
-      {
-          Header: "Content",
-          accessor: "commentText",
-      },
-      {
-          Header: "Date",
-          accessor: "createdAt",
-          Cell: data => (
-              <IMDateTableCell timestamp={data.value} />
-          )
-      },
-      {
-          Header: "Post",
-          accessor: "postID",
-          Cell: data => (
-              <IMForeignKeyTableCell id={data.value} apiRouteName="admin/social-network/posts" viewRoute="posts"
-          titleKey="id" />
-          )
-      },,
   {
-    Header: 'Actions',
-    accessor: 'actions',
-    Cell: data => <ActionsItemView data={data} />,
+      id: "authorID",
+      header: "author",
+      accessorKey: "authorID",
+      Cell: data => (
+          <IMForeignKeyTableCell 
+              id={data.value} 
+              apiRouteName="admin/social-network/users" 
+              viewRoute="users"
+              titleKey="email" 
+          />
+      ),
   },
-]
+  {
+      id: "commentText",
+      header: "content",
+      accessorKey: "commentText",
+  },
+  {
+      id: "createdAt",
+      header: "date",
+      accessorKey: "createdAt",
+      Cell: data => <IMDateTableCell timestamp={data.value} />,
+  },
+  {
+      id: "postID",
+      header: "post",
+      accessorKey: "postID",
+      Cell: data => (
+          <IMForeignKeyTableCell 
+              id={data.value} 
+              apiRouteName="admin/social-network/posts" 
+              viewRoute="posts"
+              titleKey="id" 
+          />
+      ),
+  },
+  {
+      id: "actions",
+      header: "actions",
+      accessorKey: "actions",
+      Cell: data => <ActionsItemView data={data} />,
+  },
+];
+
 
 function ActionsItemView(props) {
   const { data } = props
