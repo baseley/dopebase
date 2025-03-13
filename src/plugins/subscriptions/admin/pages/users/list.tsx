@@ -40,39 +40,41 @@ export const getStaticProps: GetStaticProps = async () => {
 }
 
 const UsersColumns = [
-  
-      {
-          Header: "Email",
-          accessor: "email",
-      },
-      {
-          Header: "First Name",
-          accessor: "first_name",
-      },
-      {
-          Header: "Last Name",
-          accessor: "last_name",
-      },
-      {
-          Header: "Created At",
-          accessor: "created_at",
-          Cell: data => (
-              <IMDateTableCell timestamp={data.value} />
-          )
-      },
-      {
-          Header: "Updated At",
-          accessor: "updated_at",
-          Cell: data => (
-              <IMDateTableCell timestamp={data.value} />
-          )
-      },,
   {
-    Header: 'Actions',
-    accessor: 'actions',
-    Cell: data => <ActionsItemView data={data} />,
+      id: "email",
+      header: "Email",
+      accessorKey: "email",
   },
-]
+  {
+      id: "first_name",
+      header: "First Name",
+      accessorKey: "first_name",
+  },
+  {
+      id: "last_name",
+      header: "Last Name",
+      accessorKey: "last_name",
+  },
+  {
+      id: "created_at",
+      header: "Created At",
+      accessorKey: "created_at",
+      Cell: data => <IMDateTableCell timestamp={data.value} />,
+  },
+  {
+      id: "updated_at",
+      header: "Updated At",
+      accessorKey: "updated_at",
+      Cell: data => <IMDateTableCell timestamp={data.value} />,
+  },
+  {
+      id: "actions",
+      header: "Actions",
+      accessorKey: "actions",
+      Cell: data => <ActionsItemView data={data} />,
+  },
+];
+
 
 function ActionsItemView(props) {
   const { data } = props

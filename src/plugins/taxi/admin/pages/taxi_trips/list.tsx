@@ -42,90 +42,97 @@ export const getStaticProps: GetStaticProps = async () => {
 }
 
 const TripsColumns = [
-  
-      {
-          Header: "ID",
-          accessor: "id",
-      },
-          {
-          Header: "Pickup Location",
-          accessor: "pickup",
-          Cell: data => (
-              <IMLocationTableCell data={data.value} />
-          )
-          },
-          {
-          Header: "Dropoff Location",
-          accessor: "dropoff",
-          Cell: data => (
-              <IMLocationTableCell data={data.value} />
-          )
-          },
-      {
-          Header: "Status",
-          accessor: "status",
-      },
-      {
-          Header: "Passenger",
-          accessor: "passenger",
-          Cell: data => (
-              <TaxiTripPassengerObjectTableCell data={data.value} />
-          )
-      },
-      {
-          Header: "Passenger ID",
-          accessor: "passengerID",
-          Cell: data => (
-              <IMForeignKeyTableCell id={data.value} apiRouteName="admin/taxi/users" viewRoute="users"
-          titleKey="email" />
-          )
-      },
-      {
-          Header: "Car Type",
-          accessor: "carType",
-          Cell: data => (
-              <IMForeignKeyTableCell id={data.value} apiRouteName="admin/taxi/taxi_car_categories" viewRoute="taxi_car_categories"
-          titleKey="name" />
-          )
-      },
-      {
-          Header: "Price Range",
-          accessor: "priceRange",
-      },
-      {
-          Header: "Ride",
-          accessor: "ride",
-          Cell: data => (
-              <IMObjectTableCell data={data.value} />
-          )
-      },
-          {
-          Header: "Current Location",
-          accessor: "carDrive",
-          Cell: data => (
-              <IMLocationTableCell data={data.value} />
-          )
-          },
-      {
-          Header: "Created At",
-          accessor: "createdAt",
-          Cell: data => (
-              <IMDateTableCell timestamp={data.value} />
-          )
-      },
-      {
-          Header: "Updated At",
-          accessor: "updatedAt",
-          Cell: data => (
-              <IMDateTableCell timestamp={data.value} />
-          )
-      },,
   {
-    Header: 'Actions',
-    accessor: 'actions',
-    Cell: data => <ActionsItemView data={data} />,
+      id: "id",
+      header: "ID",
+      accessorKey: "id",
   },
-]
+  {
+      id: "pickup",
+      header: "Pickup Location",
+      accessorKey: "pickup",
+      Cell: data => <IMLocationTableCell data={data.value} />,
+  },
+  {
+      id: "dropoff",
+      header: "Dropoff Location",
+      accessorKey: "dropoff",
+      Cell: data => <IMLocationTableCell data={data.value} />,
+  },
+  {
+      id: "status",
+      header: "Status",
+      accessorKey: "status",
+  },
+  {
+      id: "passenger",
+      header: "Passenger",
+      accessorKey: "passenger",
+      Cell: data => <TaxiTripPassengerObjectTableCell data={data.value} />,
+  },
+  {
+      id: "passengerID",
+      header: "Passenger ID",
+      accessorKey: "passengerID",
+      Cell: data => (
+          <IMForeignKeyTableCell
+              id={data.value}
+              apiRouteName="admin/taxi/users"
+              viewRoute="users"
+              titleKey="email"
+          />
+      ),
+  },
+  {
+      id: "carType",
+      header: "Car Type",
+      accessorKey: "carType",
+      Cell: data => (
+          <IMForeignKeyTableCell
+              id={data.value}
+              apiRouteName="admin/taxi/taxi_car_categories"
+              viewRoute="taxi_car_categories"
+              titleKey="name"
+          />
+      ),
+  },
+  {
+      id: "priceRange",
+      header: "Price Range",
+      accessorKey: "priceRange",
+  },
+  {
+      id: "ride",
+      header: "Ride",
+      accessorKey: "ride",
+      Cell: data => <IMObjectTableCell data={data.value} />,
+  },
+  {
+      id: "carDrive",
+      header: "Current Location",
+      accessorKey: "carDrive",
+      Cell: data => <IMLocationTableCell data={data.value} />,
+  },
+  {
+      id: "createdAt",
+      header: "Created At",
+      accessorKey: "createdAt",
+      Cell: data => <IMDateTableCell timestamp={data.value} />,
+  },
+  {
+      id: "updatedAt",
+      header: "Updated At",
+      accessorKey: "updatedAt",
+      Cell: data => <IMDateTableCell timestamp={data.value} />,
+  },
+  {
+      id: "actions",
+      header: "Actions",
+      accessorKey: "actions",
+      Cell: data => <ActionsItemView data={data} />,
+  },
+];
+
 
 function ActionsItemView(props) {
   const { data } = props

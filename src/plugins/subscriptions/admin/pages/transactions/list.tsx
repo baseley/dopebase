@@ -40,54 +40,59 @@ export const getStaticProps: GetStaticProps = async () => {
 }
 
 const TransactionsColumns = [
-  
-      {
-          Header: "Subscription ID",
-          accessor: "subscription_id",
-          Cell: data => (
-              <IMForeignKeyTableCell id={data.value} apiRouteName="admin/subscriptions/subscriptions" viewRoute="subscriptions"
-          titleKey="user_id" />
-          )
-      },
-      {
-          Header: "Amount",
-          accessor: "amount",
-      },
-      {
-          Header: "Transaction Date",
-          accessor: "transaction_date",
-          Cell: data => (
-              <IMDateTableCell timestamp={data.value} />
-          )
-      },
-      {
-          Header: "Status",
-          accessor: "status",
-      },
-      {
-          Header: "Provider Transaction ID",
-          accessor: "provider_transaction_id",
-      },
-      {
-          Header: "Created At",
-          accessor: "created_at",
-          Cell: data => (
-              <IMDateTableCell timestamp={data.value} />
-          )
-      },
-      {
-          Header: "Updated At",
-          accessor: "updated_at",
-          Cell: data => (
-              <IMDateTableCell timestamp={data.value} />
-          )
-      },,
   {
-    Header: 'Actions',
-    accessor: 'actions',
-    Cell: data => <ActionsItemView data={data} />,
+      id: "subscription_id",
+      header: "Subscription ID",
+      accessorKey: "subscription_id",
+      Cell: data => (
+          <IMForeignKeyTableCell
+              id={data.value}
+              apiRouteName="admin/subscriptions/subscriptions"
+              viewRoute="subscriptions"
+              titleKey="user_id"
+          />
+      ),
   },
-]
+  {
+      id: "amount",
+      header: "Amount",
+      accessorKey: "amount",
+  },
+  {
+      id: "transaction_date",
+      header: "Transaction Date",
+      accessorKey: "transaction_date",
+      Cell: data => <IMDateTableCell timestamp={data.value} />,
+  },
+  {
+      id: "status",
+      header: "Status",
+      accessorKey: "status",
+  },
+  {
+      id: "provider_transaction_id",
+      header: "Provider Transaction ID",
+      accessorKey: "provider_transaction_id",
+  },
+  {
+      id: "created_at",
+      header: "Created At",
+      accessorKey: "created_at",
+      Cell: data => <IMDateTableCell timestamp={data.value} />,
+  },
+  {
+      id: "updated_at",
+      header: "Updated At",
+      accessorKey: "updated_at",
+      Cell: data => <IMDateTableCell timestamp={data.value} />,
+  },
+  {
+      id: "actions",
+      header: "Actions",
+      accessorKey: "actions",
+      Cell: data => <ActionsItemView data={data} />,
+  },
+];
 
 function ActionsItemView(props) {
   const { data } = props
