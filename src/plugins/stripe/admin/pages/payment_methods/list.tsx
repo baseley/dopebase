@@ -40,60 +40,73 @@ export const getStaticProps: GetStaticProps = async () => {
 }
 
 const PaymentMethodsColumns = [
-  
-      {
-          Header: "ID",
-          accessor: "id",
-      },
-      {
-          Header: "Provider",
-          accessor: "provider",
-      },
-      {
-          Header: "Details",
-          accessor: "details",
-      },
-      {
-          Header: "Is Default",
-          accessor: "is_default",
-          Cell: data => (
-              <IMToggleSwitchComponent isChecked={data.value} disabled />
-          )
-      },
-      {
-          Header: "Stripe Customer ID",
-          accessor: "stripeCustomerID",
-      },
-      {
-          Header: "Brand",
-          accessor: "brand",
-      },
-      {
-          Header: "Last 4",
-          accessor: "last4",
-      },
-      {
-          Header: "Expiry Month",
-          accessor: "expiryMonth",
-      },
-      {
-          Header: "Expiry Year 4",
-          accessor: "expiryYear",
-      },
-      {
-          Header: "User",
-          accessor: "userID",
-          Cell: data => (
-              <IMForeignKeyTableCell id={data.value} apiRouteName="admin/stripe/users" viewRoute="users"
-          titleKey="email" />
-          )
-      },,
   {
-    Header: 'Actions',
-    accessor: 'actions',
-    Cell: data => <ActionsItemView data={data} />,
+      id: "id",
+      header: "ID",
+      accessorKey: "id",
   },
-]
+  {
+      id: "provider",
+      header: "Provider",
+      accessorKey: "provider",
+  },
+  {
+      id: "details",
+      header: "Details",
+      accessorKey: "details",
+  },
+  {
+      id: "is_default",
+      header: "Is Default",
+      accessorKey: "is_default",
+      Cell: data => <IMToggleSwitchComponent isChecked={data.value} disabled />,
+  },
+  {
+      id: "stripeCustomerID",
+      header: "Stripe Customer ID",
+      accessorKey: "stripeCustomerID",
+  },
+  {
+      id: "brand",
+      header: "Brand",
+      accessorKey: "brand",
+  },
+  {
+      id: "last4",
+      header: "Last 4",
+      accessorKey: "last4",
+  },
+  {
+      id: "expiryMonth",
+      header: "Expiry Month",
+      accessorKey: "expiryMonth",
+  },
+  {
+      id: "expiryYear",
+      header: "Expiry Year",
+      accessorKey: "expiryYear",
+  },
+  {
+      id: "userID",
+      header: "User",
+      accessorKey: "userID",
+      Cell: data => (
+          <IMForeignKeyTableCell
+              id={data.value}
+              apiRouteName="admin/stripe/users"
+              viewRoute="users"
+              titleKey="email"
+          />
+      ),
+  },
+  {
+      id: "actions",
+      header: "Actions",
+      accessorKey: "actions",
+      Cell: data => <ActionsItemView data={data} />,
+  },
+];
+
 
 function ActionsItemView(props) {
   const { data } = props
