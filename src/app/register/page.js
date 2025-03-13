@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { useRouter } from 'next/navigation'
-import { SignUpView } from '../../modules/auth/components/SignupView'
+import { SignUpView } from '../../modules/auth/components/SignUpView'
 import useCurrentUser from '../../modules/auth/hooks/useCurrentUser'
 
 const SignUp = props => {

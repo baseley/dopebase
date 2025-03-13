@@ -17,7 +17,8 @@ export const getComponentForRoutes = async (routes, searchParams) => {
   )
   if (slug === subscriptionsURL) {
     // subscriptions home page
-    const src = `${installedTheme}/pages/manage-subscriptions/page`
+    //const src = `${installedTheme}/pages/manage-subscriptions/page`
+    const src = `${installedTheme}/pages/blog/Home.tsx`
     try {
       const component = (await import(`../../../themes/` + src)).default
       return component({})

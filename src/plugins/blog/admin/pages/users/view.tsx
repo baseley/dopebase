@@ -13,19 +13,13 @@ import {
   IMToggleSwitchComponent,
   IMColorBoxComponent,
 } from '../../../../../admin/components/forms/fields'
-import Editor from 'rich-markdown-editor'
+import ReactMarkdown from 'react-markdown'
 import dynamic from 'next/dynamic'
-const CodeMirror = dynamic(
-  () => {
-    import('codemirror')
-    import('codemirror/mode/javascript/javascript')
-    import('codemirror/mode/css/css')
-    import('codemirror/mode/htmlmixed/htmlmixed')
-    import('codemirror/mode/markdown/markdown')
-    return import('react-codemirror2').then(mod => mod.Controlled)
-  },
-  { ssr: false },
-)
+import CodeMirror from '@uiw/react-codemirror'
+import { javascript } from '@codemirror/lang-javascript'
+import { css } from '@codemirror/lang-css'
+import { html } from '@codemirror/lang-html'
+import { markdown } from '@codemirror/lang-markdown'
 import styles from '../../../../../admin/themes/admin.module.css'
 
 const beautify_html = require('js-beautify').html
@@ -130,10 +124,9 @@ const DetailedUsersView = props => {
             <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
                 <label className={`${styles.FormLabel} FormLabel`}>Long Bio</label>
                 <div className={`${styles.FormTextField} ${styles.markdownEditorReadOnly} markdownEditorReadOnly FormTextField`}>
-                  <Editor
-                    defaultValue={originalData?.bio_description ?? ''}
-                    readOnly={true}
-                  />
+                  <ReactMarkdown>
+                    {originalData?.bio_description ?? ''}
+                  </ReactMarkdown>
                 </div>
             </div>
     

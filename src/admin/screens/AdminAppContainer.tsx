@@ -17,7 +17,7 @@ export const AdminAppContainer: React.FC<AdminAppContainerProps> = async ({
   searchParams,
 }) => {
   const user = await getCurrentUser()
-
+  console.log ("the users role is: ", user?.role)
   if (user?.role === 'admin') {
     return (
       <div className={styles.admin}>

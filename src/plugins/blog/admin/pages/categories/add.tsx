@@ -3,21 +3,14 @@
 import React, { useEffect, useState } from 'react'
 import { Formik } from 'formik'
 import { ClipLoader } from 'react-spinners'
-import Editor from 'rich-markdown-editor'
+import ReactMarkdown from 'react-markdown'
 import dynamic from 'next/dynamic'
 const CodeMirror = dynamic(
-  () => {
-    import('codemirror')
-    // import('codemirror/mode/javascript/javascript')
-    // import('codemirror/mode/css/css')
-    // import('codemirror/mode/htmlmixed/htmlmixed')
-    // import('codemirror/mode/markdown/markdown')
-    return import('react-codemirror2').then(mod => mod.Controlled)
-  },
-  { ssr: false },
+  () => import('@uiw/react-codemirror'),
+  { ssr: false }
 )
-import IMDatePicker from '../../../../../admin/components/forms/IMDatePicker'
-import { LocationPicker } from '../../../../../admin/components/forms/locationPicker'
+import IMDatePicker from '@/admin/components/forms/IMDatePicker'
+import { LocationPicker } from '@/admin/components/forms/locationPicker'
 import {
   TypeaheadComponent,
   IMObjectInputComponent,
@@ -31,15 +24,14 @@ import {
   IMPhoto,
   IMModal,
   IMToggleSwitchComponent,
-} from '../../../../../admin/components/forms/fields'
-import styles from '../../../../../admin/themes/admin.module.css'
+} from '@/admin/components/forms/fields'
+import styles from '@/admin/themes/admin.module.css'
 
 /* Insert extra imports here */
 import ParentArticleCategoryTypeaheadComponent from '../../components/ParentArticleCategoryTypeaheadComponent.js'
 
-
-import { pluginsAPIURL } from '../../../../../config/config'
-import { authPost } from '../../../../../modules/auth/utils/authFetch'
+import { pluginsAPIURL } from '@/config/config'
+import { authPost } from '@/modules/auth/utils/authFetch'
 
 const beautify_html = require('js-beautify').html
 const baseAPIURL = `${pluginsAPIURL}`
@@ -401,11 +393,13 @@ const AddNewCategoryView = () => {
                         <label className={`${styles.FormLabel} FormLabel`}>Description</label>
 
                         <div className={`${styles.FormEditorContainer} FormEditorContainer FormTextField`}>
-                          <Editor
-                            defaultValue={modifiedNonFormData.description}
-                            onChange={value => {
-                              onCodeChange(value(), 'description')
-                            }}
+                          <ReactMarkdown>
+                            {modifiedNonFormData.description || ''}
+                          </ReactMarkdown>
+                          <textarea
+                            className={`${styles.FormTextField} FormTextField`}
+                            onChange={(e) => onCodeChange(e.target.value, 'description')}
+                            value={modifiedNonFormData.description || ''}
                           />
                         </div>
                         <p className={`${styles.ErrorMessage} ErrorMessage`}>

@@ -3,21 +3,11 @@
 import React, { useEffect, useState } from 'react'
 import { Formik } from 'formik'
 import { ClipLoader } from 'react-spinners'
-import Editor from 'rich-markdown-editor'
+import ReactMarkdown from 'react-markdown'
 import dynamic from 'next/dynamic'
-const CodeMirror = dynamic(
-  () => {
-    import('codemirror')
-    import('codemirror/mode/javascript/javascript')
-    import('codemirror/mode/css/css')
-    import('codemirror/mode/htmlmixed/htmlmixed')
-    import('codemirror/mode/markdown/markdown')
-    return import('react-codemirror2').then(mod => mod.Controlled)
-  },
-  { ssr: false },
-)
-import IMDatePicker from '../../../../../admin/components/forms/IMDatePicker'
-import { LocationPicker } from '../../../../../admin/components/forms/locationPicker'
+import CodeMirror from '@uiw/react-codemirror'
+import IMDatePicker from '@/admin/components/forms/IMDatePicker'
+import { LocationPicker } from '@/admin/components/forms/locationPicker'
 import {
   TypeaheadComponent,
   IMObjectInputComponent,
@@ -31,13 +21,13 @@ import {
   IMPhoto,
   IMModal,
   IMToggleSwitchComponent,
-} from '../../../../../admin/components/forms/fields'
-import styles from '../../../../../admin/themes/admin.module.css'
+} from '@/admin/components/forms/fields'
+import styles from '@/admin/themes/admin.module.css'
 
 /* Insert extra imports here */
 
-import { pluginsAPIURL } from '../../../../../config/config'
-import { authPost } from '../../../../../modules/auth/utils/authFetch'
+import { pluginsAPIURL } from '@/config/config'
+import { authPost } from '@/modules/auth/utils/authFetch'
 
 const beautify_html = require('js-beautify').html
 const baseAPIURL = `${pluginsAPIURL}`
@@ -385,17 +375,9 @@ const AddNewSubscriptionPlanView = () => {
           }}
           onSubmit={(values, { setSubmitting }) => {
             createSubscriptionPlan(values, setSubmitting)
-          }}>
-          {({
-            values,
-            errors,
-            touched,
-            handleChange,
-            handleBlur,
-            handleSubmit,
-            isSubmitting,
-            /* and other goodies */
-          }) => (
+          }}
+        >
+          {({values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting}) => (
             <form onSubmit={handleSubmit}>
               {/* Insert all add form fields here */}
                     <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
@@ -418,11 +400,13 @@ const AddNewSubscriptionPlanView = () => {
                         <label className={`${styles.FormLabel} FormLabel`}>Basic Description</label>
 
                         <div className={`${styles.FormEditorContainer} FormEditorContainer`}>
-                          <Editor
-                            defaultValue={modifiedNonFormData.basic_description}
-                            onChange={value => {
-                              onCodeChange(value(), 'basic_description')
-                            }}
+                          <ReactMarkdown>
+                            {modifiedNonFormData.basic_description || ''}
+                          </ReactMarkdown>
+                          <textarea
+                            className={`${styles.FormTextField} FormTextField`}
+                            value={modifiedNonFormData.basic_description || ''}
+                            onChange={(e) => onCodeChange(e.target.value, 'basic_description')}
                           />
                         </div>
                         <p className={`${styles.ErrorMessage} ErrorMessage`}>
@@ -434,18 +418,9 @@ const AddNewSubscriptionPlanView = () => {
                     <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
                         <label className={`${styles.FormLabel} FormLabel`}>Detailed Description</label>
                         <CodeMirror
-                            className="editor FormTextField"
-                            type="detailed_description"
-                            value={modifiedNonFormData.detailed_description}
-                            name="detailed_description"
-                            options={{
-                                theme: 'darcula',
-                                lineNumbers: true,
-                                mode: 'htmlmixed',
-                            }}
-                            onBeforeChange={(editor, data, value) => {
-                                onCodeChange(value, 'detailed_description')
-                            }}
+                            value={modifiedNonFormData.detailed_description || ''}
+                            height="200px"
+                            onChange={(value) => onCodeChange(value, 'detailed_description')}
                         />
                         <p className={`${styles.ErrorMessage} ErrorMessage`}>
                             {errors.detailed_description && touched.detailed_description && errors.detailed_description}
@@ -467,7 +442,6 @@ const AddNewSubscriptionPlanView = () => {
                             {errors.price && touched.price && errors.price}
                         </p>
                     </div>
-    
 
                     <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
                         <label className={`${styles.FormLabel} FormLabel`}>Stripe Price ID</label>
@@ -483,20 +457,18 @@ const AddNewSubscriptionPlanView = () => {
                             {errors.stripe_price_id && touched.stripe_price_id && errors.stripe_price_id}
                         </p>
                     </div>
-    
 
-              <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                  <label className={`${styles.FormLabel} FormLabel`}>Billing Cycle</label>
-                  <IMStaticSelectComponent
-                      options={["monthly","yearly"]}
-                      name="billing_cycle"
-                      onChange={handleSelectChange}
-                  />
-                  <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                      {errors.billing_cycle && touched.billing_cycle && errors.billing_cycle}
-                  </p>
-              </div>
-          
+                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
+                        <label className={`${styles.FormLabel} FormLabel`}>Billing Cycle</label>
+                        <IMStaticSelectComponent
+                            options={["monthly","yearly"]}
+                            name="billing_cycle"
+                            onChange={handleSelectChange}
+                        />
+                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
+                            {errors.billing_cycle && touched.billing_cycle && errors.billing_cycle}
+                        </p>
+                    </div>
 
                     <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
                         <label className={`${styles.FormLabel} FormLabel`}>Created At</label>
@@ -505,7 +477,6 @@ const AddNewSubscriptionPlanView = () => {
                             onChange={(toDate) => onDateChange(toDate, "created_at")}
                         />
                     </div>
-    
 
                     <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
                         <label className={`${styles.FormLabel} FormLabel`}>Updated At</label>
@@ -514,20 +485,17 @@ const AddNewSubscriptionPlanView = () => {
                             onChange={(toDate) => onDateChange(toDate, "updated_at")}
                         />
                     </div>
-    
 
-
-              <div
-                className={`${styles.FormActionContainer} FormActionContainer`}>
-                <button
-                  className={`${styles.PrimaryButton} PrimaryButton`}
-                  type="submit"
-                  disabled={isSubmitting}>
-                  Create subscription_plan
-                </button>
-              </div>
-            </form>
-          )}
+                    <div className={`${styles.FormActionContainer} FormActionContainer`}>
+                        <button
+                            className={`${styles.PrimaryButton} PrimaryButton`}
+                            type="submit"
+                            disabled={isSubmitting}>
+                            Create subscription_plan
+                        </button>
+                    </div>
+                </form>
+            )}
         </Formik>
       </div>
     </div>

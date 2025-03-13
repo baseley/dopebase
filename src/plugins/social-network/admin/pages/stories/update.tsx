@@ -4,6 +4,13 @@ import React, { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Formik } from 'formik'
 import { ClipLoader } from 'react-spinners'
+import ReactMarkdown from 'react-markdown'
+import dynamic from 'next/dynamic'
+import CodeMirror from '@uiw/react-codemirror'
+import { javascript } from '@codemirror/lang-javascript'
+import { css } from '@codemirror/lang-css'
+import { html } from '@codemirror/lang-html'
+import { markdown } from '@codemirror/lang-markdown'
 import IMDatePicker from '../../../../../admin/components/forms/IMDatePicker'
 import { LocationPicker } from '../../../../../admin/components/forms/locationPicker'
 import {
@@ -20,19 +27,6 @@ import {
   IMModal,
   IMToggleSwitchComponent,
 } from '../../../../../admin/components/forms/fields'
-import Editor from 'rich-markdown-editor'
-import dynamic from 'next/dynamic'
-const CodeMirror = dynamic(
-  () => {
-    import('codemirror')
-    import('codemirror/mode/javascript/javascript')
-    import('codemirror/mode/css/css')
-    import('codemirror/mode/htmlmixed/htmlmixed')
-    import('codemirror/mode/markdown/markdown')
-    return import('react-codemirror2').then(mod => mod.Controlled)
-  },
-  { ssr: false },
-)
 import styles from '../../../../../admin/themes/admin.module.css'
 
 /* Insert extra imports here */

@@ -4,8 +4,8 @@ import React, { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Formik } from 'formik'
 import { ClipLoader } from 'react-spinners'
-import IMDatePicker from '../../../../../admin/components/forms/IMDatePicker'
-import { LocationPicker } from '../../../../../admin/components/forms/locationPicker'
+import IMDatePicker from '@/admin/components/forms/IMDatePicker'
+import { LocationPicker } from '@/admin/components/forms/locationPicker'
 import {
   TypeaheadComponent,
   IMColorPicker,
@@ -19,21 +19,12 @@ import {
   IMPhoto,
   IMModal,
   IMToggleSwitchComponent,
-} from '../../../../../admin/components/forms/fields'
-import Editor from 'rich-markdown-editor'
+} from '@/admin/components/forms/fields'
+import ReactMarkdown from 'react-markdown'
 import dynamic from 'next/dynamic'
-const CodeMirror = dynamic(
-  () => {
-    import('codemirror')
-    import('codemirror/mode/javascript/javascript')
-    import('codemirror/mode/css/css')
-    import('codemirror/mode/htmlmixed/htmlmixed')
-    import('codemirror/mode/markdown/markdown')
-    return import('react-codemirror2').then(mod => mod.Controlled)
-  },
-  { ssr: false },
-)
-import styles from '../../../../../admin/themes/admin.module.css'
+import CodeMirror from '@uiw/react-codemirror'
+import { markdown } from '@codemirror/lang-markdown'
+import styles from '@/admin/themes/admin.module.css'
 
 /* Insert extra imports here */
 
@@ -534,12 +525,15 @@ const UpdateUserView = props => {
         <label className={`${styles.FormLabel} FormLabel`}>Long Bio</label>
 
         <div className={`${styles.FormEditorContainer} FormEditorContainer`}>
-          <Editor
-            defaultValue={modifiedNonFormData.bio_description}
-            onChange={value => {
-              onCodeChange(value(), 'bio_description')
-            }}
+          <CodeMirror
+            value={modifiedNonFormData.bio_description || ''}
+            onChange={(value) => onCodeChange(value, 'bio_description')}
+            extensions={[markdown()]}
+            className={`${styles.FormTextArea} FormTextArea`}
           />
+          <div className={`${styles.MarkdownPreview} MarkdownPreview`}>
+            <ReactMarkdown>{modifiedNonFormData.bio_description || ''}</ReactMarkdown>
+          </div>
         </div>
         <p className={`${styles.ErrorMessage} ErrorMessage`}>
             {errors.bio_description && touched.bio_description && errors.bio_description}

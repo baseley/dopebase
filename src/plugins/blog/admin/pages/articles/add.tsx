@@ -3,21 +3,12 @@
 import React, { useEffect, useState } from 'react'
 import { Formik } from 'formik'
 import { ClipLoader } from 'react-spinners'
-import Editor from 'rich-markdown-editor'
+import ReactMarkdown from 'react-markdown'
 import dynamic from 'next/dynamic'
-const CodeMirror = dynamic(
-  () => {
-    import('codemirror')
-    import('codemirror/mode/javascript/javascript')
-    import('codemirror/mode/css/css')
-    import('codemirror/mode/htmlmixed/htmlmixed')
-    import('codemirror/mode/markdown/markdown')
-    return import('react-codemirror2').then(mod => mod.Controlled)
-  },
-  { ssr: false },
-)
-import IMDatePicker from '../../../../../admin/components/forms/IMDatePicker'
-import { LocationPicker } from '../../../../../admin/components/forms/locationPicker'
+import CodeMirror from '@uiw/react-codemirror'
+import { markdown } from '@codemirror/lang-markdown'
+import IMDatePicker from '@/admin/components/forms/IMDatePicker'
+import { LocationPicker } from '@/admin/components/forms/locationPicker'
 import {
   TypeaheadComponent,
   IMObjectInputComponent,
@@ -31,19 +22,16 @@ import {
   IMPhoto,
   IMModal,
   IMToggleSwitchComponent,
-} from '../../../../../admin/components/forms/fields'
-import styles from '../../../../../admin/themes/admin.module.css'
+} from '@/admin/components/forms/fields'
+import styles from '@/admin/themes/admin.module.css'
 
 /* Insert extra imports here */
 import IMArticleTagsMultipleTypeaheadIdComponent from '../../components/IMArticleTagsMultipleTypeaheadIdComponent.js'
-
 import ArticleCategoryTypeaheadComponent from '../../components/ArticleCategoryTypeaheadComponent.js'
-
 import ArticleAuthorTypeaheadComponent from '../../components/ArticleAuthorTypeaheadComponent.js'
 
-
-import { pluginsAPIURL } from '../../../../../config/config'
-import { authPost } from '../../../../../modules/auth/utils/authFetch'
+import { pluginsAPIURL } from '@/config/config'
+import { authPost } from '@/modules/auth/utils/authFetch'
 
 const beautify_html = require('js-beautify').html
 const baseAPIURL = `${pluginsAPIURL}`
@@ -412,12 +400,17 @@ const AddNewArticleView = () => {
                         <label className={`${styles.FormLabel} FormLabel`}>Content</label>
 
                         <div className={`${styles.FormEditorContainer} FormEditorContainer`}>
-                          <Editor
-                            defaultValue={modifiedNonFormData.content}
-                            onChange={value => {
-                              onCodeChange(value(), 'content')
+                          <CodeMirror
+                            value={modifiedNonFormData.content || ''}
+                            height="200px"
+                            extensions={[markdown()]}
+                            onChange={(value) => {
+                              onCodeChange(value, 'content')
                             }}
                           />
+                          <div className="markdown-preview">
+                            <ReactMarkdown>{modifiedNonFormData.content || ''}</ReactMarkdown>
+                          </div>
                         </div>
                         <p className={`${styles.ErrorMessage} ErrorMessage`}>
                             {errors.content && touched.content && errors.content}

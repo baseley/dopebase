@@ -3,7 +3,13 @@
 import React, { useMemo, useEffect, useState } from 'react'
 import { GetStaticProps } from 'next'
 import { useRouter } from 'next/navigation'
-import { useGlobalFilter, useTable, usePagination } from 'react-table'
+import {
+  useReactTable,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  flexRender,
+} from '@tanstack/react-table'
 import {
   IMLocationTableCell,
   IMSimpleLocationTableCell,
@@ -36,58 +42,67 @@ export const getStaticProps: GetStaticProps = async () => {
 const ArticleCategoriesColumns = [
   
       {
-          Header: "Name",
-          accessor: "name",
+          id:"name",
+          header: "Name",
+          accessorKey: "name",
       },
-            {
-            Header: "Description",
-            accessor: "description",
-            Cell: data => (
-                <div className='markdownReadOnly'>{data?.value && data.value.substring(0, 100)}...</div>
-            )
-            },
       {
-          Header: "Published",
-          accessor: "published",
+          id:"description",  
+          header: "Description",
+          accessorKey: "description",
           Cell: data => (
-              <IMToggleSwitchComponent isChecked={data.value} disabled />
+              <div className='markdownReadOnly'>{data?.value && data.value.substring(0, 100)}...</div>
           )
       },
       {
-          Header: "SEO Title",
-          accessor: "seo_title",
+        id: "published", // Unique identifier for the column
+        header: "Published", // Ensure header is a string
+        accessorKey: "published", // Matches the key in your data
+        Cell: ({ getValue }) => (
+          <IMToggleSwitchComponent isChecked={row.original.published} disabled />
+        ),
+      },
+      {   
+          id:"seo_title",
+          header: "SEO Title",
+          accessorKey: "seo_title",
+      },
+      {   
+          id:"seo_description",
+          header: "SEO Description",
+          accessorKey: "seo_description",
       },
       {
-          Header: "SEO Description",
-          accessor: "seo_description",
+          id:"canonical_url",
+          header: "Canonical URL",
+          accessorKey: "canonical_url",
       },
       {
-          Header: "Canonical URL",
-          accessor: "canonical_url",
+          id:"slug",
+          header: "Slug",
+          accessorKey: "slug",
       },
       {
-          Header: "Slug",
-          accessor: "slug",
-      },
-      {
-          Header: "SEO Cover Image",
-          accessor: "seo_image_url",
+          id:"seo_image_url",
+          header: "SEO Cover Image",
+          accessorKey: "seo_image_url",
           Cell: data => (
               <IMImagesTableCell singleImageURL={data.value} />
           )
       },
       {
-          Header: "Created Date",
-          accessor: "created_at",
+          id:"created_at",
+          header: "Created Date",
+          accessorKey: "created_at",
           Cell: data => (
               <IMDateTableCell timestamp={data.value} />
           )
-      },,
-  {
-    Header: 'Actions',
-    accessor: 'actions',
-    Cell: data => <ActionsItemView data={data} />,
-  },
+      },
+      {
+        id:"actions",
+        header: 'Actions',
+        Cell: data => <ActionsItemView data={data} />,
+      },
 ]
 
 function ActionsItemView(props) {
@@ -143,37 +158,23 @@ function ArticleCategoriesListView(props) {
   const [isLoading, setIsLoading] = useState(true)
   const [ArticleCategories, setArticleCategories] = useState([])
   const [data, setData] = useState([])
+  const [globalFilter, setGlobalFilter] = useState('')
 
   const [user, token, loading] = useCurrentUser()
 
   const columns = useMemo(() => ArticleCategoriesColumns, [])
 
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    prepareRow,
-    //pagination
-    page,
-    canPreviousPage,
-    canNextPage,
-    pageOptions,
-    pageCount,
-    gotoPage,
-    nextPage,
-    previousPage,
-    setPageSize,
-    // Get the state from the instance
-    state: { pageIndex, pageSize, globalFilter },
-    setGlobalFilter,
-  } = useTable(
-    {
-      columns,
-      data: ArticleCategories,
+  const table = useReactTable({
+    data: ArticleCategories,
+    columns,
+    state: {
+      globalFilter,
     },
-    useGlobalFilter,
-    usePagination,
-  )
+    onGlobalFilterChange: setGlobalFilter,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+  })
 
   useEffect(() => {
     if (loading) {
@@ -186,12 +187,11 @@ function ArticleCategoriesListView(props) {
     const extraQueryParams = null
     setIsLoading(true)
 
-    fetch(
-      baseAPIURL +
-        'article_tags/list' +
-        (extraQueryParams ? extraQueryParams : ''),
-      config,
-    )
+    const url = extraQueryParams
+    ? `${baseAPIURL}article_tags/list${extraQueryParams}`
+    : `${baseAPIURL}article_tags/list`;
+  
+  fetch(url)
       .then(response => response.json())
       .then(data => {
         console.log(data)
@@ -205,10 +205,15 @@ function ArticleCategoriesListView(props) {
       })
   }, [loading])
 
-  useEffect(() => {
-    setArticleCategories(data)
-  }, [pageIndex, pageSize, data])
+      .catch(error => console.error("Error fetching data:", error));
 
+
+useEffect(() => {
+  if (data.length > 0) {
+    setArticleCategories(data)
+  }
+}, [data])
+      
   return (
     <>
       <div className={`${styles.adminContent} adminContent`}>
@@ -232,35 +237,34 @@ function ArticleCategoriesListView(props) {
                     value={globalFilter || ''}
                     onChange={e => setGlobalFilter(e.target.value)}
                   />
-                  <table
-                    className={`${styles.Table} Table`}
-                    {...getTableProps()}>
+                  <table className={`${styles.Table} Table`}>
                     <thead>
-                      {headerGroups.map(headerGroup => (
-                        <tr {...headerGroup.getHeaderGroupProps()}>
-                          {headerGroup.headers.map(column => (
-                            <th {...column.getHeaderProps()}>
-                              {column.render('Header')}
+                      {table.getHeaderGroups().map(headerGroup => (
+                        <tr key={headerGroup.id}>
+                          {headerGroup.headers.map(header => (
+                            <th key={header.id}>
+                              {flexRender(
+                                header.column.columnDef.header,
+                                header.getContext()
+                              )}
                             </th>
                           ))}
                         </tr>
                       ))}
                     </thead>
-                    <tbody {...getTableBodyProps()}>
-                      {page.map((row, i) => {
-                        prepareRow(row)
-                        return (
-                          <tr {...row.getRowProps()}>
-                            {row.cells.map(cell => {
-                              return (
-                                <td {...cell.getCellProps()}>
-                                  {cell.render('Cell')}
-                                </td>
-                              )
-                            })}
-                          </tr>
-                        )
-                      })}
+                    <tbody>
+                      {table.getRowModel().rows.map(row => (
+                        <tr key={row.id}>
+                          {row.getVisibleCells().map(cell => (
+                            <td key={cell.id}>
+                              {flexRender(
+                                cell.column.columnDef.cell,
+                                cell.getContext()
+                              )}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
                       <tr>
                         {isLoading ? (
                           <td colSpan={ArticleCategoriesColumns.length - 1}>
@@ -268,9 +272,8 @@ function ArticleCategoriesListView(props) {
                           </td>
                         ) : (
                           <td colSpan={ArticleCategoriesColumns.length - 1}>
-                            <p
-                              className={`${styles.PaginationDetails} PaginationDetails`}>
-                              Showing {page.length} of {data.length} results
+                            <p className={`${styles.PaginationDetails} PaginationDetails`}>
+                              Showing {table.getRowModel().rows.length} of {data.length} results
                             </p>
                           </td>
                         )}
@@ -278,18 +281,17 @@ function ArticleCategoriesListView(props) {
                     </tbody>
                   </table>
                   <div className={`${styles.Pagination} Pagination`}>
-                    <div
-                      className={`${styles.LeftPaginationButtons} LeftPaginationButtons`}>
+                    <div className={`${styles.LeftPaginationButtons} LeftPaginationButtons`}>
                       <button
-                        onClick={() => gotoPage(0)}
+                        onClick={() => table.setPageIndex(0)}
                         className={`${styles.PaginationButton}`}
-                        disabled={!canPreviousPage}>
+                        disabled={!table.getCanPreviousPage()}>
                         <i className="fa fa-angle-double-left"></i>
-                      </button>{' '}
+                      </button>
                       <button
-                        onClick={() => previousPage()}
+                        onClick={() => table.previousPage()}
                         className={`${styles.PaginationButton}`}
-                        disabled={!canPreviousPage}>
+                        disabled={!table.getCanPreviousPage()}>
                         <i className="fa fa-angle-left"></i>
                       </button>
                     </div>
@@ -297,27 +299,26 @@ function ArticleCategoriesListView(props) {
                       <span>
                         Page{' '}
                         <strong>
-                          {pageIndex + 1} of {pageOptions.length}
-                        </strong>{' '}
+                          {table.getState().pagination.pageIndex + 1} of{' '}
+                          {table.getPageCount()}
+                        </strong>
                       </span>
                       <span>
                         | Go to page:{' '}
                         <input
                           type="number"
-                          defaultValue={pageIndex + 1}
+                          defaultValue={table.getState().pagination.pageIndex + 1}
                           onChange={e => {
-                            const page = e.target.value
-                              ? Number(e.target.value) - 1
-                              : 0
-                            gotoPage(page)
+                            const page = e.target.value ? Number(e.target.value) - 1 : 0
+                            table.setPageIndex(page)
                           }}
                           style={{ width: '100px' }}
                         />
-                      </span>{' '}
+                      </span>
                       <select
-                        value={pageSize}
+                        value={table.getState().pagination.pageSize}
                         onChange={e => {
-                          setPageSize(Number(e.target.value))
+                          table.setPageSize(Number(e.target.value))
                         }}>
                         {[10, 20, 30, 40, 50].map(pageSize => (
                           <option key={pageSize} value={pageSize}>
@@ -328,15 +329,15 @@ function ArticleCategoriesListView(props) {
                     </div>
                     <div className={`${styles.RightPaginationButtons}`}>
                       <button
-                        onClick={() => nextPage()}
+                        onClick={() => table.nextPage()}
                         className={`${styles.PaginationButton}`}
-                        disabled={!canNextPage}>
+                        disabled={!table.getCanNextPage()}>
                         <i className="fa fa-angle-right"></i>
-                      </button>{' '}
+                      </button>
                       <button
-                        onClick={() => gotoPage(pageCount - 1)}
+                        onClick={() => table.setPageIndex(table.getPageCount() - 1)}
                         className={`${styles.PaginationButton}`}
-                        disabled={!canNextPage}>
+                        disabled={!table.getCanNextPage()}>
                         <i className="fa fa-angle-double-right"></i>
                       </button>
                     </div>

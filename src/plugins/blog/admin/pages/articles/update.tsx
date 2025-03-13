@@ -4,8 +4,8 @@ import React, { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Formik } from 'formik'
 import { ClipLoader } from 'react-spinners'
-import IMDatePicker from '../../../../../admin/components/forms/IMDatePicker'
-import { LocationPicker } from '../../../../../admin/components/forms/locationPicker'
+import IMDatePicker from '@/admin/components/forms/IMDatePicker'
+import { LocationPicker } from '@/admin/components/forms/locationPicker'
 import {
   TypeaheadComponent,
   IMColorPicker,
@@ -19,21 +19,20 @@ import {
   IMPhoto,
   IMModal,
   IMToggleSwitchComponent,
-} from '../../../../../admin/components/forms/fields'
-import Editor from 'rich-markdown-editor'
+} from '@/admin/components/forms/fields'
+import ReactMarkdown from 'react-markdown'
 import dynamic from 'next/dynamic'
 const CodeMirror = dynamic(
-  () => {
-    import('codemirror')
-    import('codemirror/mode/javascript/javascript')
-    import('codemirror/mode/css/css')
-    import('codemirror/mode/htmlmixed/htmlmixed')
-    import('codemirror/mode/markdown/markdown')
-    return import('react-codemirror2').then(mod => mod.Controlled)
+  async () => {
+    const { basicSetup } = await import('@uiw/codemirror-extensions-basic-setup')
+    const { markdown } = await import('@codemirror/lang-markdown')
+    const { EditorView } = await import('@codemirror/view')
+    const mod = await import('@uiw/react-codemirror')
+    return mod
   },
-  { ssr: false },
+  { ssr: false }
 )
-import styles from '../../../../../admin/themes/admin.module.css'
+import styles from '@/admin/themes/admin.module.css'
 
 /* Insert extra imports here */
 import IMArticleTagsMultipleTypeaheadIdComponent from '../../components/IMArticleTagsMultipleTypeaheadIdComponent.js'
@@ -44,11 +43,11 @@ import ArticleAuthorTypeaheadComponent from '../../components/ArticleAuthorTypea
 
 
 const beautify_html = require('js-beautify').html
-import { pluginsAPIURL } from '../../../../../config/config'
+import { pluginsAPIURL } from '@/config/config'
 import {
   authFetch,
   authPost,
-} from '../../../../../modules/auth/utils/authFetch'
+} from '@/modules/auth/utils/authFetch'
 const baseAPIURL = `${pluginsAPIURL}admin/blog/`
 
 const UpdateArticleView = props => {
@@ -472,12 +471,9 @@ const UpdateArticleView = props => {
         <label className={`${styles.FormLabel} FormLabel`}>Content</label>
 
         <div className={`${styles.FormEditorContainer} FormEditorContainer`}>
-          <Editor
-            defaultValue={modifiedNonFormData.content}
-            onChange={value => {
-              onCodeChange(value(), 'content')
-            }}
-          />
+          <ReactMarkdown>
+            {modifiedNonFormData.content || ''}
+          </ReactMarkdown>
         </div>
         <p className={`${styles.ErrorMessage} ErrorMessage`}>
             {errors.content && touched.content && errors.content}

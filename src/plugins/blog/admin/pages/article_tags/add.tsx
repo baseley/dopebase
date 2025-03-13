@@ -3,21 +3,16 @@
 import React, { useEffect, useState } from 'react'
 import { Formik } from 'formik'
 import { ClipLoader } from 'react-spinners'
-import Editor from 'rich-markdown-editor'
+import ReactMarkdown from 'react-markdown'
 import dynamic from 'next/dynamic'
-const CodeMirror = dynamic(
-  () => {
-    import('codemirror')
-    import('codemirror/mode/javascript/javascript')
-    import('codemirror/mode/css/css')
-    import('codemirror/mode/htmlmixed/htmlmixed')
-    import('codemirror/mode/markdown/markdown')
-    return import('react-codemirror2').then(mod => mod.Controlled)
-  },
-  { ssr: false },
-)
-import IMDatePicker from '../../../../../admin/components/forms/IMDatePicker'
-import { LocationPicker } from '../../../../../admin/components/forms/locationPicker'
+import CodeMirror from '@uiw/react-codemirror'
+import { javascript } from '@codemirror/lang-javascript'
+import { css } from '@codemirror/lang-css'
+import { html } from '@codemirror/lang-html'
+import { markdown } from '@codemirror/lang-markdown'
+
+import IMDatePicker from '@/admin/components/forms/IMDatePicker'
+import { LocationPicker } from '@/admin/components/forms/locationPicker'
 import {
   TypeaheadComponent,
   IMObjectInputComponent,
@@ -31,13 +26,13 @@ import {
   IMPhoto,
   IMModal,
   IMToggleSwitchComponent,
-} from '../../../../../admin/components/forms/fields'
-import styles from '../../../../../admin/themes/admin.module.css'
+} from '@/admin/components/forms/fields'
+import styles from '@/admin/themes/admin.module.css'
 
 /* Insert extra imports here */
 
-import { pluginsAPIURL } from '../../../../../config/config'
-import { authPost } from '../../../../../modules/auth/utils/authFetch'
+import { pluginsAPIURL } from '@/config/config'
+import { authPost } from '@/modules/auth/utils/authFetch'
 
 const beautify_html = require('js-beautify').html
 const baseAPIURL = `${pluginsAPIURL}`
@@ -406,10 +401,15 @@ const AddNewArticleTagView = () => {
                         <label className={`${styles.FormLabel} FormLabel`}>Description</label>
 
                         <div className={`${styles.FormEditorContainer} FormEditorContainer`}>
-                          <Editor
-                            defaultValue={modifiedNonFormData.description}
-                            onChange={value => {
-                              onCodeChange(value(), 'description')
+                          <ReactMarkdown>
+                            {modifiedNonFormData.description || ''}
+                          </ReactMarkdown>
+                          <CodeMirror
+                            value={modifiedNonFormData.description || ''}
+                            height="200px"
+                            extensions={[markdown()]}
+                            onChange={(value) => {
+                              onCodeChange(value, 'description')
                             }}
                           />
                         </div>

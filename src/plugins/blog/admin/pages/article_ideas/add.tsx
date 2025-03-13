@@ -3,18 +3,11 @@
 import React, { useEffect, useState } from 'react'
 import { Formik } from 'formik'
 import { ClipLoader } from 'react-spinners'
-import Editor from 'rich-markdown-editor'
+import ReactMarkdown from 'react-markdown'
 import dynamic from 'next/dynamic'
 const CodeMirror = dynamic(
-  () => {
-    import('codemirror')
-    import('codemirror/mode/javascript/javascript')
-    import('codemirror/mode/css/css')
-    import('codemirror/mode/htmlmixed/htmlmixed')
-    import('codemirror/mode/markdown/markdown')
-    return import('react-codemirror2').then(mod => mod.Controlled)
-  },
-  { ssr: false },
+  () => import('@uiw/react-codemirror'),
+  { ssr: false }
 )
 import IMDatePicker from '../../../../../admin/components/forms/IMDatePicker'
 import { LocationPicker } from '../../../../../admin/components/forms/locationPicker'

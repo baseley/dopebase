@@ -49,7 +49,7 @@ export const getAllPluginsAndUpdateIfNeeded = async () => {
   // for each plugin, load the metadata from disk
   const plugins = await Promise.all(
     supportedPlugins.flatMap(async plugin => {
-      const { metadata } = await import(`./../../plugins/${plugin}`)
+      const { metadata } = await import(`../../plugins/${plugin}`)
       if (!metadata) {
         return null
       }
@@ -110,8 +110,9 @@ export const getAllPlugins = async () => {
 
   // for each plugin, load the metadata from disk
   const plugins = await Promise.all(
-    supportedPlugins.flatMap(async plugin => {
-      const { metadata } = await import(`./../../plugins/${plugin}`)
+    supportedPlugins.map(async plugin => {
+      
+      const { metadata } = await import(`../../plugins/${plugin}`)
       if (!metadata) {
         return null
       }

@@ -20,19 +20,13 @@ import {
   IMModal,
   IMToggleSwitchComponent,
 } from '../../../../../admin/components/forms/fields'
-import Editor from 'rich-markdown-editor'
+import ReactMarkdown from 'react-markdown'
 import dynamic from 'next/dynamic'
-const CodeMirror = dynamic(
-  () => {
-    import('codemirror')
-    import('codemirror/mode/javascript/javascript')
-    import('codemirror/mode/css/css')
-    import('codemirror/mode/htmlmixed/htmlmixed')
-    import('codemirror/mode/markdown/markdown')
-    return import('react-codemirror2').then(mod => mod.Controlled)
-  },
-  { ssr: false },
-)
+import CodeMirror from '@uiw/react-codemirror'
+import { javascript } from '@codemirror/lang-javascript'
+import { css } from '@codemirror/lang-css'
+import { html } from '@codemirror/lang-html'
+import { markdown } from '@codemirror/lang-markdown'
 import styles from '../../../../../admin/themes/admin.module.css'
 
 /* Insert extra imports here */
@@ -389,145 +383,7 @@ const UpdateUserView = props => {
   }
 
   return (
-    <div className={`${styles.Card} ${styles.FormCard} Card FormCard`}>
-      <div className={`${styles.CardBody} CardBody`}>
-        <h1>{originalData && originalData.name}</h1>
-        <Formik
-          initialValues={originalData}
-          validate={values => {
-            values = { ...values, ...modifiedNonFormData }
-            const errors = {}
-            {
-              /* Insert all form errors here */
-        if (!values.email) {
-            errors.email = 'Field Required!'
-        }
-
-            }
-
-            return errors
-          }}
-          onSubmit={(values, { setSubmitting }) => {
-            saveChanges(values, setSubmitting)
-          }}>
-          {({
-            values,
-            errors,
-            touched,
-            handleChange,
-            handleBlur,
-            handleSubmit,
-            isSubmitting,
-            /* and other goodies */
-          }) => (
-            <form onSubmit={handleSubmit}>
-              {/* Insert all edit form fields here */}
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Email</label>
-                        <input
-                            className={`${styles.FormTextField} FormTextField`}
-                            type="email"
-                            name="email"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.email}
-                        />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.email && touched.email && errors.email}
-                        </p>
-                    </div>
-    
-
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>First Name</label>
-                        <input
-                            className={`${styles.FormTextField} FormTextField`}
-                            type="firstName"
-                            name="firstName"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.firstName}
-                        />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.firstName && touched.firstName && errors.firstName}
-                        </p>
-                    </div>
-    
-
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Last Name</label>
-                        <input
-                            className={`${styles.FormTextField} FormTextField`}
-                            type="lastName"
-                            name="lastName"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.lastName}
-                        />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.lastName && touched.lastName && errors.lastName}
-                        </p>
-                    </div>
-    
-
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Phone</label>
-                        <input
-                            className={`${styles.FormTextField} FormTextField`}
-                            type="phone"
-                            name="phone"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.phone}
-                        />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.phone && touched.phone && errors.phone}
-                        </p>
-                    </div>
-    
-
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Banned</label>
-                        <IMToggleSwitchComponent isChecked={modifiedNonFormData.banned} onSwitchChange={() => handleSwitchChange(modifiedNonFormData["banned"], "banned")} />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.banned && touched.banned && errors.banned}
-                        </p>
-                    </div>
-    
-
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Created At</label>
-                        <IMDatePicker
-                            selected={modifiedNonFormData.createdAt}
-                            onChange={(toDate) => onDateChange(toDate, "createdAt")}
-                        />
-                    </div>
-    
-
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Updated At</label>
-                        <IMDatePicker
-                            selected={modifiedNonFormData.updatedAt}
-                            onChange={(toDate) => onDateChange(toDate, "updatedAt")}
-                        />
-                    </div>
-    
-
-
-              <div
-                className={`${styles.FormActionContainer} FormActionContainer`}>
-                <button
-                  className={`${styles.PrimaryButton} PrimaryButton`}
-                  type="submit"
-                  disabled={isSubmitting}>
-                  Save user
-                </button>
-              </div>
-            </form>
-          )}
-        </Formik>
-      </div>
-    </div>
+    <div className={`${styles.Card} ${styles.FormCard} Card FormCard`}/>
   )
 }
 

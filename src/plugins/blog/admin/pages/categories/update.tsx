@@ -4,8 +4,8 @@ import React, { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Formik } from 'formik'
 import { ClipLoader } from 'react-spinners'
-import IMDatePicker from '../../../../../admin/components/forms/IMDatePicker'
-import { LocationPicker } from '../../../../../admin/components/forms/locationPicker'
+import IMDatePicker from '@/admin/components/forms/IMDatePicker'
+import { LocationPicker } from '@/admin/components/forms/locationPicker'
 import {
   TypeaheadComponent,
   IMColorPicker,
@@ -19,19 +19,13 @@ import {
   IMPhoto,
   IMModal,
   IMToggleSwitchComponent,
-} from '../../../../../admin/components/forms/fields'
-import Editor from 'rich-markdown-editor'
+} from '@/admin/components/forms/fields'
+import ReactMarkdown from 'react-markdown'
 import dynamic from 'next/dynamic'
+
 const CodeMirror = dynamic(
-  () => {
-    import('codemirror')
-    // import('codemirror/mode/javascript/javascript')
-    // import('codemirror/mode/css/css')
-    // import('codemirror/mode/htmlmixed/htmlmixed')
-    // import('codemirror/mode/markdown/markdown')
-    return import('react-codemirror2').then(mod => mod.Controlled)
-  },
-  { ssr: false },
+  () => import('@uiw/react-codemirror'),
+  { ssr: false }
 )
 import styles from '../../../../../admin/themes/admin.module.css'
 
@@ -446,11 +440,11 @@ const UpdateCategoryView = props => {
 
                 <div
                   className={`${styles.FormEditorContainer} FormEditorContainer FormTextField`}>
-                  <Editor
-                    defaultValue={modifiedNonFormData.description}
-                    onChange={value => {
-                      onCodeChange(value(), 'description')
-                    }}
+                  <ReactMarkdown>{modifiedNonFormData.description || ''}</ReactMarkdown>
+                  <textarea
+                    value={modifiedNonFormData.description || ''}
+                    onChange={(e) => onCodeChange(e.target.value, 'description')}
+                    className={`${styles.FormTextField} FormTextField`}
                   />
                 </div>
                 <p className={`${styles.ErrorMessage} ErrorMessage`}>

@@ -1,18 +1,21 @@
 import { createStore, applyMiddleware, compose } from "redux";
-import thunk from "redux-thunk";
+import { thunk } from "redux-thunk";
 import rootReducer from "./reducers";
-
-const initialState = {};
-const middleware = [thunk];
 
 export interface ReduxRootState {
   auth: {
-    user: Object;
+    user: any;
+    loading: boolean;
+    errors: null | any;
   };
 }
 
+const initialState: Partial<ReduxRootState> = {};
+const middleware = [thunk];
+
 const store = createStore(
   rootReducer,
+  initialState,
   applyMiddleware(...middleware)
   // compose(
   //     applyMiddleware(...middleware),
