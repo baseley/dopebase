@@ -40,62 +40,73 @@ export const getStaticProps: GetStaticProps = async () => {
 }
 
 const TicketMessagesColumns = [
-  
-      {
-          Header: "ID",
-          accessor: "id",
-      },
-      {
-          Header: "Sender Email",
-          accessor: "sender_email",
-      },
-      {
-          Header: "From Original Poster",
-          accessor: "from_original_poster",
-          Cell: data => (
-              <IMToggleSwitchComponent isChecked={data.value} disabled />
-          )
-      },
-      {
-          Header: "Message",
-          accessor: "message",
-      },
-      {
-          Header: "Thread ID",
-          accessor: "thread_id",
-          Cell: data => (
-              <IMForeignKeyTableCell id={data.value} apiRouteName="admin/customer-support/ticket_threads" viewRoute="ticket_threads"
-          titleKey="subject" />
-          )
-      },
-      {
-          Header: "User ID",
-          accessor: "user_id",
-          Cell: data => (
-              <IMForeignKeyTableCell id={data.value} apiRouteName="admin/customer-support/users" viewRoute="users"
-          titleKey="email" />
-          )
-      },
-      {
-          Header: "Created At",
-          accessor: "created_at",
-          Cell: data => (
-              <IMDateTableCell timestamp={data.value} />
-          )
-      },
-      {
-          Header: "Updated At",
-          accessor: "updated_at",
-          Cell: data => (
-              <IMDateTableCell timestamp={data.value} />
-          )
-      },
   {
-    Header: 'Actions',
-    accessor: 'actions',
-    Cell: data => <ActionsItemView data={data} />,
+      id: "id",
+      header: "id",
+      accessorKey: "id",
   },
-]
+  {
+      id: "sender_email",
+      header: "sender email",
+      accessorKey: "sender_email",
+  },
+  {
+      id: "from_original_poster",
+      header: "from original poster",
+      accessorKey: "from_original_poster",
+      Cell: data => <IMToggleSwitchComponent isChecked={data.value} disabled />,
+  },
+  {
+      id: "message",
+      header: "message",
+      accessorKey: "message",
+  },
+  {
+      id: "thread_id",
+      header: "thread id",
+      accessorKey: "thread_id",
+      Cell: data => (
+          <IMForeignKeyTableCell 
+              id={data.value} 
+              apiRouteName="admin/customer-support/ticket_threads" 
+              viewRoute="ticket_threads"
+              titleKey="subject" 
+          />
+      ),
+  },
+  {
+      id: "user_id",
+      header: "user id",
+      accessorKey: "user_id",
+      Cell: data => (
+          <IMForeignKeyTableCell 
+              id={data.value} 
+              apiRouteName="admin/customer-support/users" 
+              viewRoute="users"
+              titleKey="email" 
+          />
+      ),
+  },
+  {
+      id: "created_at",
+      header: "created at",
+      accessorKey: "created_at",
+      Cell: data => <IMDateTableCell timestamp={data.value} />,
+  },
+  {
+      id: "updated_at",
+      header: "updated at",
+      accessorKey: "updated_at",
+      Cell: data => <IMDateTableCell timestamp={data.value} />,
+  },
+  {
+      id: "actions",
+      header: "actions",
+      accessorKey: "actions",
+      Cell: data => <ActionsItemView data={data} />,
+  },
+];
+
 
 function ActionsItemView(props) {
   const { data } = props
