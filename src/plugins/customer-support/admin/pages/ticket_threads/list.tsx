@@ -74,31 +74,31 @@ const TicketThreadsColumns = [
       id: "is_closed",
       header: "is closed",
       accessorKey: "is_closed",
-      Cell: data => <IMToggleSwitchComponent isChecked={data.value} disabled />,
+      cell: data => <IMToggleSwitchComponent isChecked={data.value} disabled />,
   },
   {
       id: "is_public",
       header: "is public",
       accessorKey: "is_public",
-      Cell: data => <IMToggleSwitchComponent isChecked={data.value} disabled />,
+      cell: data => <IMToggleSwitchComponent isChecked={data.value} disabled />,
   },
   {
       id: "created_at",
       header: "created at",
       accessorKey: "created_at",
-      Cell: data => <IMDateTableCell timestamp={data.value} />,
+      cell: data => <IMDateTableCell timestamp={data.value} />,
   },
   {
       id: "updated_at",
       header: "updated at",
       accessorKey: "updated_at",
-      Cell: data => <IMDateTableCell timestamp={data.value} />,
+      cell: data => <IMDateTableCell timestamp={data.value} />,
   },
   {
       id: "user_id",
       header: "user id",
       accessorKey: "user_id",
-      Cell: data => (
+      cell: data => (
           <IMForeignKeyTableCell 
               id={data.value} 
               apiRouteName="admin/customer-support/users" 
@@ -111,7 +111,7 @@ const TicketThreadsColumns = [
       id: "actions",
       header: "actions",
       accessorKey: "actions",
-      Cell: data => <ActionsItemView data={data} />,
+      cell: data => <ActionsItemView data={data} />,
   },
 ];
 

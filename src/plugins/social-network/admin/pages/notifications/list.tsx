@@ -59,7 +59,7 @@ const NotificationsColumns = [
       id: "seen",
       header: "marked as seen?",
       accessorKey: "seen",
-      Cell: data => (
+      cell: data => (
           <IMToggleSwitchComponent isChecked={data.value} disabled />
       ),
   },
@@ -67,13 +67,13 @@ const NotificationsColumns = [
       id: "createdAt",
       header: "date",
       accessorKey: "createdAt",
-      Cell: data => <IMDateTableCell timestamp={data.value} />,
+      cell: data => <IMDateTableCell timestamp={data.value} />,
   },
   {
       id: "toUserID",
       header: "recipient user",
       accessorKey: "toUserID",
-      Cell: data => (
+      cell: data => (
           <IMForeignKeyTableCell 
               id={data.value} 
               apiRouteName="admin/social-network/users" 
@@ -86,7 +86,7 @@ const NotificationsColumns = [
       id: "actions",
       header: "actions",
       accessorKey: "actions",
-      Cell: data => <ActionsItemView data={data} />,
+      cell: data => <ActionsItemView data={data} />,
   },
 ];
 

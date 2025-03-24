@@ -49,7 +49,7 @@ const SubscriptionPlansColumns = [
       id: "basic_description",
       header: "Basic Description",
       accessorKey: "basic_description",
-      Cell: data => (
+      cell: data => (
           <div className="markdownReadOnly">
               {data?.value && data.value.substring(0, 100)}...
           </div>
@@ -59,7 +59,7 @@ const SubscriptionPlansColumns = [
       id: "detailed_description",
       header: "Detailed Description",
       accessorKey: "detailed_description",
-      Cell: data => (
+      cell: data => (
           <div className="codeEditor">
               {data?.value && data.value.substring(0, 100)}...
           </div>
@@ -84,19 +84,19 @@ const SubscriptionPlansColumns = [
       id: "created_at",
       header: "Created At",
       accessorKey: "created_at",
-      Cell: data => <IMDateTableCell timestamp={data.value} />,
+      cell: data => <IMDateTableCell timestamp={data.value} />,
   },
   {
       id: "updated_at",
       header: "Updated At",
       accessorKey: "updated_at",
-      Cell: data => <IMDateTableCell timestamp={data.value} />,
+      cell: data => <IMDateTableCell timestamp={data.value} />,
   },
   {
       id: "actions",
       header: "Actions",
       accessorKey: "actions",
-      Cell: data => <ActionsItemView data={data} />,
+      cell: data => <ActionsItemView data={data} />,
   },
 ];
 

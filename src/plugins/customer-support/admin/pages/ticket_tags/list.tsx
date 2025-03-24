@@ -59,19 +59,19 @@ const TicketTagsColumns = [
       id: "published",
       header: "published",
       accessorKey: "published",
-      Cell: data => <IMToggleSwitchComponent isChecked={data.value} disabled />,
+      cell: data => <IMToggleSwitchComponent isChecked={data.value} disabled />,
   },
   {
       id: "created_at",
       header: "created at",
       accessorKey: "created_at",
-      Cell: data => <IMDateTableCell timestamp={data.value} />,
+      cell: data => <IMDateTableCell timestamp={data.value} />,
   },
   {
       id: "actions",
       header: "actions",
       accessorKey: "actions",
-      Cell: data => <ActionsItemView data={data} />,
+      cell: data => <ActionsItemView data={data} />,
   },
 ];
 

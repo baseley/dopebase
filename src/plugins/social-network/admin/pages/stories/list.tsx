@@ -49,7 +49,7 @@ const StoriesColumns = [
       id: "authorID",
       header: "Author",
       accessorKey: "authorID",
-      Cell: data => (
+      cell: data => (
           <IMForeignKeyTableCell 
               id={data.value} 
               apiRouteName="admin/social-network/users" 
@@ -62,13 +62,13 @@ const StoriesColumns = [
       id: "createdAt",
       header: "Date",
       accessorKey: "createdAt",
-      Cell: data => <IMDateTableCell timestamp={data.value} />,
+      cell: data => <IMDateTableCell timestamp={data.value} />,
   },
   {
       id: "storyMediaURL",
       header: "Media",
       accessorKey: "storyMediaURL",
-      Cell: data => <IMImagesTableCell singleImageURL={data.value} />,
+      cell: data => <IMImagesTableCell singleImageURL={data.value} />,
   },
   {
       id: "storyType",
@@ -79,7 +79,7 @@ const StoriesColumns = [
       id: "actions",
       header: "Actions",
       accessorKey: "actions",
-      Cell: data => <ActionsItemView data={data} />,
+      cell: data => <ActionsItemView data={data} />,
   },
 ];
 

@@ -49,7 +49,7 @@ const PostsColumns = [
       id: "authorID",
       header: "Author",
       accessorKey: "authorID",
-      Cell: data => (
+      cell: data => (
           <IMForeignKeyTableCell 
               id={data.value} 
               apiRouteName="admin/social-network/users" 
@@ -72,7 +72,7 @@ const PostsColumns = [
       id: "postMedia",
       header: "Media",
       accessorKey: "postMedia",
-      Cell: data => <IMMultimediaTableCell multimediaURLs={data.value} />,
+      cell: data => <IMMultimediaTableCell multimediaURLs={data.value} />,
   },
   {
       id: "location",
@@ -83,7 +83,7 @@ const PostsColumns = [
       id: "createdAt",
       header: "Date",
       accessorKey: "createdAt",
-      Cell: data => <IMDateTableCell timestamp={data.value} />,
+      cell: data => <IMDateTableCell timestamp={data.value} />,
   },
   {
       id: "reactionsCount",
@@ -94,7 +94,7 @@ const PostsColumns = [
       id: "actions",
       header: "Actions",
       accessorKey: "actions",
-      Cell: data => <ActionsItemView data={data} />,
+      cell: data => <ActionsItemView data={data} />,
   },
 ];
 

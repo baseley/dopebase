@@ -44,7 +44,7 @@ const TransactionsColumns = [
       id: "subscription_id",
       header: "Subscription ID",
       accessorKey: "subscription_id",
-      Cell: data => (
+      cell: data => (
           <IMForeignKeyTableCell
               id={data.value}
               apiRouteName="admin/subscriptions/subscriptions"
@@ -62,7 +62,7 @@ const TransactionsColumns = [
       id: "transaction_date",
       header: "Transaction Date",
       accessorKey: "transaction_date",
-      Cell: data => <IMDateTableCell timestamp={data.value} />,
+      cell: data => <IMDateTableCell timestamp={data.value} />,
   },
   {
       id: "status",
@@ -78,19 +78,19 @@ const TransactionsColumns = [
       id: "created_at",
       header: "Created At",
       accessorKey: "created_at",
-      Cell: data => <IMDateTableCell timestamp={data.value} />,
+      cell: data => <IMDateTableCell timestamp={data.value} />,
   },
   {
       id: "updated_at",
       header: "Updated At",
       accessorKey: "updated_at",
-      Cell: data => <IMDateTableCell timestamp={data.value} />,
+      cell: data => <IMDateTableCell timestamp={data.value} />,
   },
   {
       id: "actions",
       header: "Actions",
       accessorKey: "actions",
-      Cell: data => <ActionsItemView data={data} />,
+      cell: data => <ActionsItemView data={data} />,
   },
 ];
 

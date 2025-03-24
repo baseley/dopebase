@@ -44,7 +44,7 @@ const CommentsColumns = [
       id: "authorID",
       header: "author",
       accessorKey: "authorID",
-      Cell: data => (
+      cell: data => (
           <IMForeignKeyTableCell 
               id={data.value} 
               apiRouteName="admin/social-network/users" 
@@ -62,13 +62,13 @@ const CommentsColumns = [
       id: "createdAt",
       header: "date",
       accessorKey: "createdAt",
-      Cell: data => <IMDateTableCell timestamp={data.value} />,
+      cell: data => <IMDateTableCell timestamp={data.value} />,
   },
   {
       id: "postID",
       header: "post",
       accessorKey: "postID",
-      Cell: data => (
+      cell: data => (
           <IMForeignKeyTableCell 
               id={data.value} 
               apiRouteName="admin/social-network/posts" 
@@ -81,7 +81,7 @@ const CommentsColumns = [
       id: "actions",
       header: "actions",
       accessorKey: "actions",
-      Cell: data => <ActionsItemView data={data} />,
+      cell: data => <ActionsItemView data={data} />,
   },
 ];
 

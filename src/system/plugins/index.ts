@@ -46,6 +46,8 @@ export const getAllPluginsAndUpdateIfNeeded = async () => {
     // 'wiki',
   ]
 
+  console.log(storedPlugins)
+
   // for each plugin, load the metadata from disk
   const plugins = await Promise.all(
     supportedPlugins.flatMap(async plugin => {
@@ -130,5 +132,6 @@ export const getAllPlugins = async () => {
 export { installPlugin, uninstallPlugin } from './install'
 
 export const isInstalled = async id => {
+  console.log('checking in isInstalled')
   return await isInstalledDB(id)
 }

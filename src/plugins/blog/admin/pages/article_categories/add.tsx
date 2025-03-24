@@ -39,26 +39,72 @@ const AddNewCategoryView = () => {
   const [modifiedNonFormData, setModifiedNonFormData] = useState({})
   const [originalData, setOriginalData] = useState(null)
 
+
+useEffect(() => {
+  // Debug the authPost function
+  console.log("authPost function:", authPost);
+  
+  // Check if it's properly defined
+  if (typeof authPost !== 'function') {
+    console.error("❌ authPost is not a function!");
+  }
+}, []);
+
   useEffect(() => {
     setModifiedNonFormData({
       created_at: Math.floor(new Date().getTime() / 1000).toString(),
     })
   }, [])
-
+  useEffect(() => {
+    // Debug the API URL configuration
+    console.log("Base API URL:", baseAPIURL);
+    console.log("Full API endpoint:", `${baseAPIURL}admin/blog/article_categories/add`);
+  }, []);
   const createCategory = async (data, setSubmitting) => {
-    setIsLoading(true)
-    const url = `${baseAPIURL}admin/blog/article_categories/add`
-    const response = await authPost(
-      url,
-      JSON.stringify({ ...data, ...modifiedNonFormData }),
-    )
-    const resData = response.data
-    if (resData?.error) {
-      alert(resData?.error)
+    setIsLoading(true);
+    console.log("🔍 Starting category creation...");
+    
+    // Log the combined data being sent
+    console.log("📤 Data being sent to server:", JSON.stringify(data, null, 2));
+    
+    const url = `${baseAPIURL}admin/blog/article_categories/add`;
+    console.log("🌐 API URL:", url);
+    
+    try {
+      console.log("🔄 Making API request...");
+      const response = await authPost(
+        url,
+        JSON.stringify(data),
+      );
+      
+      console.log("✅ API response received:", response);
+      
+      // Check if response is valid
+      if (!response) {
+        console.error("❌ No response received from server");
+        alert("No response received from server");
+        return;
+      }
+      
+      const resData = response.data;
+      console.log("📊 Response data:", resData);
+      
+      if (resData?.error) {
+        console.error("❌ Server returned error:", resData.error);
+        alert(resData.error);
+      } else {
+        console.log("✅ Category created successfully!");
+      }
+    } catch (error) {
+      console.error("❌ Error during API call:", error);
+      console.error("Error details:", error.message);
+      console.error("Error stack:", error.stack);
+      alert(`Error creating category: ${error.message || "Unknown error"}`);
+    } finally {
+      setSubmitting(false);
+      setIsLoading(false);
     }
-    setSubmitting(false)
-    setIsLoading(false)
-  }
+  };
 
   const onTypeaheadSelect = (value, fieldName) => {
     var newData = { ...modifiedNonFormData }
@@ -356,7 +402,25 @@ const AddNewCategoryView = () => {
             return errors
           }}
           onSubmit={(values, { setSubmitting }) => {
-            createCategory(values, setSubmitting)
+            console.log("📝 Form submitted");
+            console.log("📋 Formik values:", values);
+            console.log("🗄️ Modified non-form data:", modifiedNonFormData);
+            
+            const combinedData = { ...values, ...modifiedNonFormData };
+            console.log("🔄 Combined data:", combinedData);
+            
+            // Check for required fields
+            const requiredFields = ['name', 'slug']; // Add all required fields based on your database schema
+            const missingFields = requiredFields.filter(field => !combinedData[field]);
+            
+            if (missingFields.length > 0) {
+              console.error("❌ Missing required fields:", missingFields);
+              alert(`Missing required fields: ${missingFields.join(', ')}`);
+              setSubmitting(false);
+              return;
+            }
+            
+            createCategory(combinedData, setSubmitting);
           }}>
           {({
             values,

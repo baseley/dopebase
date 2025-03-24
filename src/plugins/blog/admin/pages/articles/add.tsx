@@ -353,13 +353,13 @@ const AddNewArticleView = () => {
             const errors = {}
             {
               /* Insert all form errors here */
-        if (!values.created_at) {
-            errors.created_at = 'Field Required!'
-        }
+              if (!values.created_at) {
+                  errors.created_at = 'Field Required!'
+              }
 
-        if (!values.updated_at) {
-            errors.updated_at = 'Field Required!'
-        }
+              if (!values.updated_at) {
+                  errors.updated_at = 'Field Required!'
+              }
 
             }
 

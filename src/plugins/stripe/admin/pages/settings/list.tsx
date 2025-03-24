@@ -54,19 +54,19 @@ const SettingsColumns = [
       id: "created_at",
       header: "Created Date",
       accessorKey: "created_at",
-      Cell: data => <IMDateTableCell timestamp={data.value} />,
+      cell: data => <IMDateTableCell timestamp={data.value} />,
   },
   {
       id: "updated_at",
       header: "Updated Date",
       accessorKey: "updated_at",
-      Cell: data => <IMDateTableCell timestamp={data.value} />,
+      cell: data => <IMDateTableCell timestamp={data.value} />,
   },
   {
       id: "actions",
       header: "Actions",
       accessorKey: "actions",
-      Cell: data => <ActionsItemView data={data} />,
+      cell: data => <ActionsItemView data={data} />,
   },
 ];
 

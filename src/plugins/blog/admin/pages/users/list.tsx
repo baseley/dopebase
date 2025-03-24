@@ -75,7 +75,7 @@ const UsersColumns = [
           id:"bio_description",
           header: "Long Bio",
           accessorKey: "bio_description",
-          Cell: data => (
+          cell: data => (
               <div className='markdownReadOnly'>{data?.value && data.value.substring(0, 100)}...</div>
           )
       },
@@ -93,7 +93,7 @@ const UsersColumns = [
           id:"banned",
           header: "Banned",
           accessorKey: "banned",
-          Cell: data => (
+          cell: data => (
               <IMToggleSwitchComponent isChecked={data.value} disabled />
           )
       },
@@ -101,7 +101,7 @@ const UsersColumns = [
           id:"created_at",
           header: "Created At",
           accessorKey: "created_at",
-          Cell: data => (
+          cell: data => (
               <IMDateTableCell timestamp={data.value} />
           )
       },
@@ -109,7 +109,7 @@ const UsersColumns = [
           id:"updated_at",
           header: "Updated At",
           accessorKey: "updated_at",
-          Cell: data => (
+          cell: data => (
               <IMDateTableCell timestamp={data.value} />
           )
       },
@@ -117,7 +117,7 @@ const UsersColumns = [
           id:"actions",
           header: 'Actions',
           accessorKey: 'actions',
-          Cell: data => <ActionsItemView data={data} />,
+          cell: data => <ActionsItemView data={data} />,
       },
 ]
 

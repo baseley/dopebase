@@ -59,7 +59,7 @@ const PaymentMethodsColumns = [
       id: "is_default",
       header: "Is Default",
       accessorKey: "is_default",
-      Cell: data => <IMToggleSwitchComponent isChecked={data.value} disabled />,
+      cell: data => <IMToggleSwitchComponent isChecked={data.value} disabled />,
   },
   {
       id: "stripeCustomerID",
@@ -90,7 +90,7 @@ const PaymentMethodsColumns = [
       id: "userID",
       header: "User",
       accessorKey: "userID",
-      Cell: data => (
+      cell: data => (
           <IMForeignKeyTableCell 
               id={data.value} 
               apiRouteName="admin/subscriptions/users" 
@@ -103,7 +103,7 @@ const PaymentMethodsColumns = [
       id: "actions",
       header: "Actions",
       accessorKey: "actions",
-      Cell: data => <ActionsItemView data={data} />,
+      cell: data => <ActionsItemView data={data} />,
   },
 ];
 

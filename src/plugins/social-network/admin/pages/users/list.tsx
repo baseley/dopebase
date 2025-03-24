@@ -69,13 +69,13 @@ const UsersColumns = [
       id: "profilePictureURL",
       header: "Profile Picture",
       accessorKey: "profilePictureURL",
-      Cell: data => <IMImagesTableCell singleImageURL={data.value} />,
+      cell: data => <IMImagesTableCell singleImageURL={data.value} />,
   },
   {
       id: "banned",
       header: "Banned",
       accessorKey: "banned",
-      Cell: data => <IMToggleSwitchComponent isChecked={data.value} disabled />,
+      cell: data => <IMToggleSwitchComponent isChecked={data.value} disabled />,
   },
   {
       id: "role",
@@ -86,19 +86,19 @@ const UsersColumns = [
       id: "createdAt",
       header: "Created At",
       accessorKey: "createdAt",
-      Cell: data => <IMDateTableCell timestamp={data.value} />,
+      cell: data => <IMDateTableCell timestamp={data.value} />,
   },
   {
       id: "updatedAt",
       header: "Updated At",
       accessorKey: "updatedAt",
-      Cell: data => <IMDateTableCell timestamp={data.value} />,
+      cell: data => <IMDateTableCell timestamp={data.value} />,
   },
   {
       id: "actions",
       header: "Actions",
       accessorKey: "actions",
-      Cell: data => <ActionsItemView data={data} />,
+      cell: data => <ActionsItemView data={data} />,
   },
 ];
 

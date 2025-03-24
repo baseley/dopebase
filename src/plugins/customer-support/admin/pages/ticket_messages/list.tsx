@@ -54,7 +54,7 @@ const TicketMessagesColumns = [
       id: "from_original_poster",
       header: "from original poster",
       accessorKey: "from_original_poster",
-      Cell: data => <IMToggleSwitchComponent isChecked={data.value} disabled />,
+      cell: data => <IMToggleSwitchComponent isChecked={data.value} disabled />,
   },
   {
       id: "message",
@@ -65,7 +65,7 @@ const TicketMessagesColumns = [
       id: "thread_id",
       header: "thread id",
       accessorKey: "thread_id",
-      Cell: data => (
+      cell: data => (
           <IMForeignKeyTableCell 
               id={data.value} 
               apiRouteName="admin/customer-support/ticket_threads" 
@@ -78,7 +78,7 @@ const TicketMessagesColumns = [
       id: "user_id",
       header: "user id",
       accessorKey: "user_id",
-      Cell: data => (
+      cell: data => (
           <IMForeignKeyTableCell 
               id={data.value} 
               apiRouteName="admin/customer-support/users" 
@@ -91,19 +91,19 @@ const TicketMessagesColumns = [
       id: "created_at",
       header: "created at",
       accessorKey: "created_at",
-      Cell: data => <IMDateTableCell timestamp={data.value} />,
+      cell: data => <IMDateTableCell timestamp={data.value} />,
   },
   {
       id: "updated_at",
       header: "updated at",
       accessorKey: "updated_at",
-      Cell: data => <IMDateTableCell timestamp={data.value} />,
+      cell: data => <IMDateTableCell timestamp={data.value} />,
   },
   {
       id: "actions",
       header: "actions",
       accessorKey: "actions",
-      Cell: data => <ActionsItemView data={data} />,
+      cell: data => <ActionsItemView data={data} />,
   },
 ];
 

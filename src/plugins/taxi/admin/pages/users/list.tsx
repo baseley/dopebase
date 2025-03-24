@@ -69,19 +69,19 @@ const UsersColumns = [
       id: "profilePictureURL",
       header: "Profile Picture",
       accessorKey: "profilePictureURL",
-      Cell: data => <IMImagesTableCell singleImageURL={data.value} />,
+      cell: data => <IMImagesTableCell singleImageURL={data.value} />,
   },
   {
       id: "licensePictureURL",
       header: "License Picture",
       accessorKey: "licensePictureURL",
-      Cell: data => <IMImagesTableCell singleImageURL={data.value} />,
+      cell: data => <IMImagesTableCell singleImageURL={data.value} />,
   },
   {
       id: "carPictureURL",
       header: "Car Photo",
       accessorKey: "carPictureURL",
-      Cell: data => <IMImagesTableCell singleImageURL={data.value} />,
+      cell: data => <IMImagesTableCell singleImageURL={data.value} />,
   },
   {
       id: "carName",
@@ -97,7 +97,7 @@ const UsersColumns = [
       id: "carType",
       header: "Car Type",
       accessorKey: "carType",
-      Cell: data => (
+      cell: data => (
           <IMForeignKeyTableCell
               id={data.value}
               apiRouteName="admin/taxi/taxi_car_categories"
@@ -110,7 +110,7 @@ const UsersColumns = [
       id: "inProgressOrderID",
       header: "In Progress Order ID",
       accessorKey: "inProgressOrderID",
-      Cell: data => (
+      cell: data => (
           <IMForeignKeyTableCell
               id={data.value}
               apiRouteName="admin/taxi/taxi_trips"
@@ -123,25 +123,25 @@ const UsersColumns = [
       id: "banned",
       header: "Banned",
       accessorKey: "banned",
-      Cell: data => <IMToggleSwitchComponent isChecked={data.value} disabled />,
+      cell: data => <IMToggleSwitchComponent isChecked={data.value} disabled />,
   },
   {
       id: "createdAt",
       header: "Created At",
       accessorKey: "createdAt",
-      Cell: data => <IMDateTableCell timestamp={data.value} />,
+      cell: data => <IMDateTableCell timestamp={data.value} />,
   },
   {
       id: "updatedAt",
       header: "Updated At",
       accessorKey: "updatedAt",
-      Cell: data => <IMDateTableCell timestamp={data.value} />,
+      cell: data => <IMDateTableCell timestamp={data.value} />,
   },
   {
       id: "actions",
       header: "Actions",
       accessorKey: "actions",
-      Cell: data => <ActionsItemView data={data} />,
+      cell: data => <ActionsItemView data={data} />,
   },
 ];
 

@@ -42,6 +42,7 @@ export const markAsUninstalled = async id => {
 }
 
 export const isInstalled = async id => {
+  console.log('isInstalled in Firebase')
   const plugin = await getOne('plugins', id)
   return plugin?.installed ?? false
 }

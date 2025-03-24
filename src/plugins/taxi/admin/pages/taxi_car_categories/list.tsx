@@ -59,13 +59,13 @@ const TaxiCarCategoriesColumns = [
       id: "photo",
       header: "Car Photo",
       accessorKey: "photo",
-      Cell: data => <IMImagesTableCell singleImageURL={data.value} />,
+      cell: data => <IMImagesTableCell singleImageURL={data.value} />,
   },
   {
       id: "marker",
       header: "Car Marker Icon",
       accessorKey: "marker",
-      Cell: data => <IMImagesTableCell singleImageURL={data.value} />,
+      cell: data => <IMImagesTableCell singleImageURL={data.value} />,
   },
   {
       id: "baseFare",
@@ -101,19 +101,19 @@ const TaxiCarCategoriesColumns = [
       id: "createdAt",
       header: "Created At",
       accessorKey: "createdAt",
-      Cell: data => <IMDateTableCell timestamp={data.value} />,
+      cell: data => <IMDateTableCell timestamp={data.value} />,
   },
   {
       id: "updatedAt",
       header: "Updated At",
       accessorKey: "updatedAt",
-      Cell: data => <IMDateTableCell timestamp={data.value} />,
+      cell: data => <IMDateTableCell timestamp={data.value} />,
   },
   {
       id: "actions",
       header: "Actions",
       accessorKey: "actions",
-      Cell: data => <ActionsItemView data={data} />,
+      cell: data => <ActionsItemView data={data} />,
   },
 ];
 

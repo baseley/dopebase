@@ -44,7 +44,7 @@ const SubscriptionsColumns = [
       id: "user_id",
       header: "User ID",
       accessorKey: "user_id",
-      Cell: data => (
+      cell: data => (
           <IMForeignKeyTableCell
               id={data.value}
               apiRouteName="admin/subscriptions/users"
@@ -57,7 +57,7 @@ const SubscriptionsColumns = [
       id: "plan_id",
       header: "Plan ID",
       accessorKey: "plan_id",
-      Cell: data => (
+      cell: data => (
           <IMForeignKeyTableCell
               id={data.value}
               apiRouteName="admin/subscriptions/subscription_plans"
@@ -70,13 +70,13 @@ const SubscriptionsColumns = [
       id: "start_date",
       header: "Start Date",
       accessorKey: "start_date",
-      Cell: data => <IMDateTableCell timestamp={data.value} />,
+      cell: data => <IMDateTableCell timestamp={data.value} />,
   },
   {
       id: "end_date",
       header: "End Date",
       accessorKey: "end_date",
-      Cell: data => <IMDateTableCell timestamp={data.value} />,
+      cell: data => <IMDateTableCell timestamp={data.value} />,
   },
   {
       id: "status",
@@ -87,31 +87,31 @@ const SubscriptionsColumns = [
       id: "last_payment_date",
       header: "Last Payment Date",
       accessorKey: "last_payment_date",
-      Cell: data => <IMDateTableCell timestamp={data.value} />,
+      cell: data => <IMDateTableCell timestamp={data.value} />,
   },
   {
       id: "next_billing_date",
       header: "Next Billing Date",
       accessorKey: "next_billing_date",
-      Cell: data => <IMDateTableCell timestamp={data.value} />,
+      cell: data => <IMDateTableCell timestamp={data.value} />,
   },
   {
       id: "created_at",
       header: "Created At",
       accessorKey: "created_at",
-      Cell: data => <IMDateTableCell timestamp={data.value} />,
+      cell: data => <IMDateTableCell timestamp={data.value} />,
   },
   {
       id: "updated_at",
       header: "Updated At",
       accessorKey: "updated_at",
-      Cell: data => <IMDateTableCell timestamp={data.value} />,
+      cell: data => <IMDateTableCell timestamp={data.value} />,
   },
   {
       id: "actions",
       header: "Actions",
       accessorKey: "actions",
-      Cell: data => <ActionsItemView data={data} />,
+      cell: data => <ActionsItemView data={data} />,
   },
 ];
 
