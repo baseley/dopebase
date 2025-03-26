@@ -25,14 +25,14 @@ const themesColumns = [
     accessorKey: 'version',
   },
   {
-    header: 'Actions',
     accessorKey: 'actions',
-    cell: ({ row }) => <ActionsItemView item={row.original} />,
+    header: 'Actions',
+    cell: ({ row }) => <ActionsItemView data={row} />, 
   },
 ];
 
-function ActionsItemView({ item }) {
-  const router = useRouter();
+function ActionsItemView({ data }) {
+  const item = data.original;
 
   const handleInstall = async () => {
     if (window.confirm('Are you sure you want to activate this theme? Changes will apply immediately.')) {
@@ -43,14 +43,17 @@ function ActionsItemView({ item }) {
 
   return (
     <div className={styles.inlineActionsContainer}>
-      {!item.selected && (
-        <button onClick={handleInstall} type="button" className="btn btn-success btn-sm">
-          <i className="fa fa-edit">Activate</i>
+      {!item.selected ? (
+        <button onClick={handleInstall} className="btn btn-success btn-sm">
+          Activate
         </button>
+      ) : (
+        <span>Actived</span>
       )}
     </div>
   );
 }
+
 
 export const ThemesListView = () => {
   const [themes, setThemes] = useState([]);
