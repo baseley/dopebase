@@ -50,7 +50,7 @@ const ArticleCategoriesColumns = [
           id:"description",  
           header: "Description",
           accessorKey: "description",
-          Cell: data => (
+          cell: data => (
               <div className='markdownReadOnly'>{data?.value && data.value.substring(0, 100)}...</div>
           )
       },
@@ -58,7 +58,7 @@ const ArticleCategoriesColumns = [
         id: "published", // Unique identifier for the column
         header: "Published", // Ensure header is a string
         accessorKey: "published", // Matches the key in your data
-        Cell: ({ getValue }) => (
+        cell: ({ getValue }) => (
           <IMToggleSwitchComponent isChecked={row.original.published} disabled />
         ),
       },
@@ -86,7 +86,7 @@ const ArticleCategoriesColumns = [
           id:"seo_image_url",
           header: "SEO Cover Image",
           accessorKey: "seo_image_url",
-          Cell: data => (
+          cell: data => (
               <IMImagesTableCell singleImageURL={data.value} />
           )
       },
@@ -94,14 +94,14 @@ const ArticleCategoriesColumns = [
           id:"created_at",
           header: "Created Date",
           accessorKey: "created_at",
-          Cell: data => (
+          cell: data => (
               <IMDateTableCell timestamp={data.value} />
           )
       },
       {
         id:"actions",
         header: 'Actions',
-        Cell: data => <ActionsItemView data={data} />,
+        cell: data => <ActionsItemView data={data} />,
       },
 ]
 

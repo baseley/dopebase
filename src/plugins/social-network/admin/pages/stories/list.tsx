@@ -40,43 +40,49 @@ export const getStaticProps: GetStaticProps = async () => {
 }
 
 const StoriesColumns = [
-  
-      {
-          Header: "Story ID",
-          accessor: "id",
-      },
-      {
-          Header: "Author",
-          accessor: "authorID",
-          Cell: data => (
-              <IMForeignKeyTableCell id={data.value} apiRouteName="admin/social-network/users" viewRoute="users"
-          titleKey="email" />
-          )
-      },
-      {
-          Header: "Date",
-          accessor: "createdAt",
-          Cell: data => (
-              <IMDateTableCell timestamp={data.value} />
-          )
-      },
-      {
-          Header: "Media",
-          accessor: "storyMediaURL",
-          Cell: data => (
-              <IMImagesTableCell singleImageURL={data.value} />
-          )
-      },
-      {
-          Header: "Type",
-          accessor: "storyType",
-      },,
   {
-    Header: 'Actions',
-    accessor: 'actions',
-    Cell: data => <ActionsItemView data={data} />,
+      id: "id",
+      header: "Story ID",
+      accessorKey: "id",
   },
-]
+  {
+      id: "authorID",
+      header: "Author",
+      accessorKey: "authorID",
+      cell: data => (
+          <IMForeignKeyTableCell 
+              id={data.value} 
+              apiRouteName="admin/social-network/users" 
+              viewRoute="users"
+              titleKey="email" 
+          />
+      ),
+  },
+  {
+      id: "createdAt",
+      header: "Date",
+      accessorKey: "createdAt",
+      cell: data => <IMDateTableCell timestamp={data.value} />,
+  },
+  {
+      id: "storyMediaURL",
+      header: "Media",
+      accessorKey: "storyMediaURL",
+      cell: data => <IMImagesTableCell singleImageURL={data.value} />,
+  },
+  {
+      id: "storyType",
+      header: "Type",
+      accessorKey: "storyType",
+  },
+  {
+      id: "actions",
+      header: "Actions",
+      accessorKey: "actions",
+      cell: data => <ActionsItemView data={data} />,
+  },
+];
+
 
 function ActionsItemView(props) {
   const { data } = props

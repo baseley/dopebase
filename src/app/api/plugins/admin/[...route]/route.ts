@@ -9,18 +9,21 @@ export async function GET(req) {
   const url = new URL(req.url)
 
   console.log(url.pathname)
+  console.log('debug check')
 
   /// example: api/plugins/a/b/c
   const pathItems = url.pathname.split('/')
 
   // First path item is always the identifier of the plugin
   if (pathItems?.length < 5) {
+    console.log('error here: route 1')
     return res.json({ error: 'Invalid route' }, { status: 400 })
   }
   const pluginID = pathItems[4]
   console.log('pluginID', pluginID)
   const installed = await isInstalled(pluginID)
   if (!installed) {
+    console.log('error here: plugin 1')
     return res.json({ error: 'Plugin not installed' }, { status: 400 })
   }
 
@@ -48,6 +51,7 @@ export async function POST(req) {
 
   const isAdmin = await isAdminAuthenticated(req)
   if (!isAdmin) {
+    console.log('error here: access 1')
     return res.json({ error: 'Access denied' }, { status: 400 })
   }
   /// example: api/plugins/a/b/c
@@ -55,6 +59,7 @@ export async function POST(req) {
 
   // First path item is always the identifier of the plugin
   if (pathItems?.length < 5) {
+    console.log('error here: route 2')
     return res.json({ error: 'Invalid route' }, { status: 400 })
   }
   console.log(pathItems)
@@ -63,6 +68,7 @@ export async function POST(req) {
 
   const installed = await isInstalled(pluginID)
   if (!installed) {
+    console.log('error here: plugin 2')
     return res.json({ error: 'Plugin not installed' }, { status: 400 })
   }
 

@@ -40,77 +40,83 @@ export const getStaticProps: GetStaticProps = async () => {
 }
 
 const TaxiCarCategoriesColumns = [
-  
-      {
-          Header: "ID",
-          accessor: "id",
-      },
-      {
-          Header: "Name",
-          accessor: "name",
-      },
-      {
-          Header: "Description",
-          accessor: "description",
-      },
-      {
-          Header: "Car Photo",
-          accessor: "photo",
-          Cell: data => (
-              <IMImagesTableCell singleImageURL={data.value} />
-          )
-      },
-      {
-          Header: "Car Marker Icon",
-          accessor: "marker",
-          Cell: data => (
-              <IMImagesTableCell singleImageURL={data.value} />
-          )
-      },
-      {
-          Header: "Base Fare",
-          accessor: "baseFare",
-      },
-      {
-          Header: "Cost per km",
-          accessor: "costPerKm",
-      },
-      {
-          Header: "Cost per min",
-          accessor: "costPerMin",
-      },
-      {
-          Header: "Minimum Fare",
-          accessor: "minimumFare",
-      },
-      {
-          Header: "Max number of passengers",
-          accessor: "numberOfPassengers",
-      },
-      {
-          Header: "Average speed per min (km / minute)",
-          accessor: "averageSpeedPerMin",
-      },
-      {
-          Header: "Created At",
-          accessor: "createdAt",
-          Cell: data => (
-              <IMDateTableCell timestamp={data.value} />
-          )
-      },
-      {
-          Header: "Updated At",
-          accessor: "updatedAt",
-          Cell: data => (
-              <IMDateTableCell timestamp={data.value} />
-          )
-      },,
   {
-    Header: 'Actions',
-    accessor: 'actions',
-    Cell: data => <ActionsItemView data={data} />,
+      id: "id",
+      header: "ID",
+      accessorKey: "id",
   },
-]
+  {
+      id: "name",
+      header: "Name",
+      accessorKey: "name",
+  },
+  {
+      id: "description",
+      header: "Description",
+      accessorKey: "description",
+  },
+  {
+      id: "photo",
+      header: "Car Photo",
+      accessorKey: "photo",
+      cell: data => <IMImagesTableCell singleImageURL={data.value} />,
+  },
+  {
+      id: "marker",
+      header: "Car Marker Icon",
+      accessorKey: "marker",
+      cell: data => <IMImagesTableCell singleImageURL={data.value} />,
+  },
+  {
+      id: "baseFare",
+      header: "Base Fare",
+      accessorKey: "baseFare",
+  },
+  {
+      id: "costPerKm",
+      header: "Cost per km",
+      accessorKey: "costPerKm",
+  },
+  {
+      id: "costPerMin",
+      header: "Cost per min",
+      accessorKey: "costPerMin",
+  },
+  {
+      id: "minimumFare",
+      header: "Minimum Fare",
+      accessorKey: "minimumFare",
+  },
+  {
+      id: "numberOfPassengers",
+      header: "Max number of passengers",
+      accessorKey: "numberOfPassengers",
+  },
+  {
+      id: "averageSpeedPerMin",
+      header: "Average speed per min (km / minute)",
+      accessorKey: "averageSpeedPerMin",
+  },
+  {
+      id: "createdAt",
+      header: "Created At",
+      accessorKey: "createdAt",
+      cell: data => <IMDateTableCell timestamp={data.value} />,
+  },
+  {
+      id: "updatedAt",
+      header: "Updated At",
+      accessorKey: "updatedAt",
+      cell: data => <IMDateTableCell timestamp={data.value} />,
+  },
+  {
+      id: "actions",
+      header: "Actions",
+      accessorKey: "actions",
+      cell: data => <ActionsItemView data={data} />,
+  },
+];
+
 
 function ActionsItemView(props) {
   const { data } = props

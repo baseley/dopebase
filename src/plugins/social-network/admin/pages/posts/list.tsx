@@ -40,55 +40,64 @@ export const getStaticProps: GetStaticProps = async () => {
 }
 
 const PostsColumns = [
-  
-      {
-          Header: "Post ID",
-          accessor: "id",
-      },
-      {
-          Header: "Author",
-          accessor: "authorID",
-          Cell: data => (
-              <IMForeignKeyTableCell id={data.value} apiRouteName="admin/social-network/users" viewRoute="users"
-          titleKey="email" />
-          )
-      },
-      {
-          Header: "Number of Comments",
-          accessor: "commentCount",
-      },
-      {
-          Header: "Content",
-          accessor: "postText",
-      },
-      {
-          Header: "Media",
-          accessor: "postMedia",
-          Cell: data => (
-              <IMMultimediaTableCell multimediaURLs={data.value} />
-          )
-      },
-      {
-          Header: "Location",
-          accessor: "location",
-      },
-      {
-          Header: "Date",
-          accessor: "createdAt",
-          Cell: data => (
-              <IMDateTableCell timestamp={data.value} />
-          )
-      },
-      {
-          Header: "Number of Reactions",
-          accessor: "reactionsCount",
-      },,
   {
-    Header: 'Actions',
-    accessor: 'actions',
-    Cell: data => <ActionsItemView data={data} />,
+      id: "id",
+      header: "Post ID",
+      accessorKey: "id",
   },
-]
+  {
+      id: "authorID",
+      header: "Author",
+      accessorKey: "authorID",
+      cell: data => (
+          <IMForeignKeyTableCell 
+              id={data.value} 
+              apiRouteName="admin/social-network/users" 
+              viewRoute="users"
+              titleKey="email" 
+          />
+      ),
+  },
+  {
+      id: "commentCount",
+      header: "Number of Comments",
+      accessorKey: "commentCount",
+  },
+  {
+      id: "postText",
+      header: "Content",
+      accessorKey: "postText",
+  },
+  {
+      id: "postMedia",
+      header: "Media",
+      accessorKey: "postMedia",
+      cell: data => <IMMultimediaTableCell multimediaURLs={data.value} />,
+  },
+  {
+      id: "location",
+      header: "Location",
+      accessorKey: "location",
+  },
+  {
+      id: "createdAt",
+      header: "Date",
+      accessorKey: "createdAt",
+      cell: data => <IMDateTableCell timestamp={data.value} />,
+  },
+  {
+      id: "reactionsCount",
+      header: "Number of Reactions",
+      accessorKey: "reactionsCount",
+  },
+  {
+      id: "actions",
+      header: "Actions",
+      accessorKey: "actions",
+      cell: data => <ActionsItemView data={data} />,
+  },
+];
+
 
 function ActionsItemView(props) {
   const { data } = props

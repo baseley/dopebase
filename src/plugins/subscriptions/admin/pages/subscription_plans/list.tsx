@@ -40,57 +40,66 @@ export const getStaticProps: GetStaticProps = async () => {
 }
 
 const SubscriptionPlansColumns = [
-  
-      {
-          Header: "Name",
-          accessor: "name",
-      },
-            {
-            Header: "Basic Description",
-            accessor: "basic_description",
-            Cell: data => (
-                <div className='markdownReadOnly'>{data?.value && data.value.substring(0, 100)}...</div>
-            )
-            },
-          {
-          Header: "Detailed Description",
-          accessor: "detailed_description",
-          Cell: data => (
-              <div className='codeEditor'>{data?.value && data.value.substring(0, 100)}...</div>
-          )
-          },
-      {
-          Header: "Price",
-          accessor: "price",
-      },
-      {
-          Header: "Stripe Price ID",
-          accessor: "stripe_price_id",
-      },
-      {
-          Header: "Billing Cycle",
-          accessor: "billing_cycle",
-      },
-      {
-          Header: "Created At",
-          accessor: "created_at",
-          Cell: data => (
-              <IMDateTableCell timestamp={data.value} />
-          )
-      },
-      {
-          Header: "Updated At",
-          accessor: "updated_at",
-          Cell: data => (
-              <IMDateTableCell timestamp={data.value} />
-          )
-      },,
   {
-    Header: 'Actions',
-    accessor: 'actions',
-    Cell: data => <ActionsItemView data={data} />,
+      id: "name",
+      header: "Name",
+      accessorKey: "name",
   },
-]
+  {
+      id: "basic_description",
+      header: "Basic Description",
+      accessorKey: "basic_description",
+      cell: data => (
+          <div className="markdownReadOnly">
+              {data?.value && data.value.substring(0, 100)}...
+          </div>
+      ),
+  },
+  {
+      id: "detailed_description",
+      header: "Detailed Description",
+      accessorKey: "detailed_description",
+      cell: data => (
+          <div className="codeEditor">
+              {data?.value && data.value.substring(0, 100)}...
+          </div>
+      ),
+  },
+  {
+      id: "price",
+      header: "Price",
+      accessorKey: "price",
+  },
+  {
+      id: "stripe_price_id",
+      header: "Stripe Price ID",
+      accessorKey: "stripe_price_id",
+  },
+  {
+      id: "billing_cycle",
+      header: "Billing Cycle",
+      accessorKey: "billing_cycle",
+  },
+  {
+      id: "created_at",
+      header: "Created At",
+      accessorKey: "created_at",
+      cell: data => <IMDateTableCell timestamp={data.value} />,
+  },
+  {
+      id: "updated_at",
+      header: "Updated At",
+      accessorKey: "updated_at",
+      cell: data => <IMDateTableCell timestamp={data.value} />,
+  },
+  {
+      id: "actions",
+      header: "Actions",
+      accessorKey: "actions",
+      cell: data => <ActionsItemView data={data} />,
+  },
+];
+
 
 function ActionsItemView(props) {
   const { data } = props

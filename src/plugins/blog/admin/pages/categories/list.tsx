@@ -51,7 +51,7 @@ const ArticleCategoriesColumns = [
           id:"description",
           header: "Description",
           accessorKey: "description",
-          Cell: data => (
+          cell: data => (
               <div className='markdownReadOnly'>{data?.value && data.value.substring(0, 100)}...</div>
           )
       },
@@ -64,7 +64,7 @@ const ArticleCategoriesColumns = [
           id:"logo_url",
           header: "Logo",
           accessorKey: "logo_url",
-          Cell: data => (
+          cell: data => (
               <IMImagesTableCell singleImageURL={data.value} />
           )
       },
@@ -87,7 +87,7 @@ const ArticleCategoriesColumns = [
           id:"seo_image_url",
           header: "SEO Cover Image",
           accessorKey: "seo_image_url",
-          Cell: data => (
+          cell: data => (
               <IMImagesTableCell singleImageURL={data.value} />
           )
       },
@@ -95,7 +95,7 @@ const ArticleCategoriesColumns = [
           id:"published",
           header: "Published",
           accessorKey: "published",
-          Cell: data => (
+          cell: data => (
               <IMToggleSwitchComponent isChecked={data.value} disabled />
           )
       },
@@ -103,7 +103,7 @@ const ArticleCategoriesColumns = [
           id:"parent_id",
           header: "Parent Category",
           accessorKey: "parent_id",
-          Cell: data => (
+          cell: data => (
               <IMForeignKeyTableCell id={data.value} apiRouteName="admin/blog/categories" viewRoute="categories"
           titleKey="title" />
           )
@@ -112,7 +112,7 @@ const ArticleCategoriesColumns = [
           id:"actions",
           header: 'Actions',
           accessorKey: 'actions',
-          Cell: data => <ActionsItemView data={data} />,
+          cell: data => <ActionsItemView data={data} />,
       },
 ]
 

@@ -40,65 +40,68 @@ export const getStaticProps: GetStaticProps = async () => {
 }
 
 const UsersColumns = [
-  
-      {
-          Header: "Email",
-          accessor: "email",
-      },
-      {
-          Header: "Username",
-          accessor: "username",
-      },
-      {
-          Header: "First Name",
-          accessor: "firstName",
-      },
-      {
-          Header: "Last Name",
-          accessor: "lastName",
-      },
-      {
-          Header: "Phone",
-          accessor: "phone",
-      },
-      {
-          Header: "Profile Picture",
-          accessor: "profilePictureURL",
-          Cell: data => (
-              <IMImagesTableCell singleImageURL={data.value} />
-          )
-      },
-      {
-          Header: "Banned",
-          accessor: "banned",
-          Cell: data => (
-              <IMToggleSwitchComponent isChecked={data.value} disabled />
-          )
-      },
-      {
-          Header: "Role",
-          accessor: "role",
-      },
-      {
-          Header: "Created At",
-          accessor: "createdAt",
-          Cell: data => (
-              <IMDateTableCell timestamp={data.value} />
-          )
-      },
-      {
-          Header: "Updated At",
-          accessor: "updatedAt",
-          Cell: data => (
-              <IMDateTableCell timestamp={data.value} />
-          )
-      },,
   {
-    Header: 'Actions',
-    accessor: 'actions',
-    Cell: data => <ActionsItemView data={data} />,
+      id: "email",
+      header: "Email",
+      accessorKey: "email",
   },
-]
+  {
+      id: "username",
+      header: "Username",
+      accessorKey: "username",
+  },
+  {
+      id: "firstName",
+      header: "First Name",
+      accessorKey: "firstName",
+  },
+  {
+      id: "lastName",
+      header: "Last Name",
+      accessorKey: "lastName",
+  },
+  {
+      id: "phone",
+      header: "Phone",
+      accessorKey: "phone",
+  },
+  {
+      id: "profilePictureURL",
+      header: "Profile Picture",
+      accessorKey: "profilePictureURL",
+      cell: data => <IMImagesTableCell singleImageURL={data.value} />,
+  },
+  {
+      id: "banned",
+      header: "Banned",
+      accessorKey: "banned",
+      cell: data => <IMToggleSwitchComponent isChecked={data.value} disabled />,
+  },
+  {
+      id: "role",
+      header: "Role",
+      accessorKey: "role",
+  },
+  {
+      id: "createdAt",
+      header: "Created At",
+      accessorKey: "createdAt",
+      cell: data => <IMDateTableCell timestamp={data.value} />,
+  },
+  {
+      id: "updatedAt",
+      header: "Updated At",
+      accessorKey: "updatedAt",
+      cell: data => <IMDateTableCell timestamp={data.value} />,
+  },
+  {
+      id: "actions",
+      header: "Actions",
+      accessorKey: "actions",
+      cell: data => <ActionsItemView data={data} />,
+  },
+];
+
 
 function ActionsItemView(props) {
   const { data } = props

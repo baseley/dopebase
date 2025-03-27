@@ -40,75 +40,81 @@ export const getStaticProps: GetStaticProps = async () => {
 }
 
 const SubscriptionsColumns = [
-  
-      {
-          Header: "User ID",
-          accessor: "user_id",
-          Cell: data => (
-              <IMForeignKeyTableCell id={data.value} apiRouteName="admin/subscriptions/users" viewRoute="users"
-          titleKey="email" />
-          )
-      },
-      {
-          Header: "Plan ID",
-          accessor: "plan_id",
-          Cell: data => (
-              <IMForeignKeyTableCell id={data.value} apiRouteName="admin/subscriptions/subscription_plans" viewRoute="subscription_plans"
-          titleKey="name" />
-          )
-      },
-      {
-          Header: "Start Date",
-          accessor: "start_date",
-          Cell: data => (
-              <IMDateTableCell timestamp={data.value} />
-          )
-      },
-      {
-          Header: "End Date",
-          accessor: "end_date",
-          Cell: data => (
-              <IMDateTableCell timestamp={data.value} />
-          )
-      },
-      {
-          Header: "Status",
-          accessor: "status",
-      },
-      {
-          Header: "Last Payment Date",
-          accessor: "last_payment_date",
-          Cell: data => (
-              <IMDateTableCell timestamp={data.value} />
-          )
-      },
-      {
-          Header: "Next Billing Date",
-          accessor: "next_billing_date",
-          Cell: data => (
-              <IMDateTableCell timestamp={data.value} />
-          )
-      },
-      {
-          Header: "Created At",
-          accessor: "created_at",
-          Cell: data => (
-              <IMDateTableCell timestamp={data.value} />
-          )
-      },
-      {
-          Header: "Updated At",
-          accessor: "updated_at",
-          Cell: data => (
-              <IMDateTableCell timestamp={data.value} />
-          )
-      },,
   {
-    Header: 'Actions',
-    accessor: 'actions',
-    Cell: data => <ActionsItemView data={data} />,
+      id: "user_id",
+      header: "User ID",
+      accessorKey: "user_id",
+      cell: data => (
+          <IMForeignKeyTableCell
+              id={data.value}
+              apiRouteName="admin/subscriptions/users"
+              viewRoute="users"
+              titleKey="email"
+          />
+      ),
   },
-]
+  {
+      id: "plan_id",
+      header: "Plan ID",
+      accessorKey: "plan_id",
+      cell: data => (
+          <IMForeignKeyTableCell
+              id={data.value}
+              apiRouteName="admin/subscriptions/subscription_plans"
+              viewRoute="subscription_plans"
+              titleKey="name"
+          />
+      ),
+  },
+  {
+      id: "start_date",
+      header: "Start Date",
+      accessorKey: "start_date",
+      cell: data => <IMDateTableCell timestamp={data.value} />,
+  },
+  {
+      id: "end_date",
+      header: "End Date",
+      accessorKey: "end_date",
+      cell: data => <IMDateTableCell timestamp={data.value} />,
+  },
+  {
+      id: "status",
+      header: "Status",
+      accessorKey: "status",
+  },
+  {
+      id: "last_payment_date",
+      header: "Last Payment Date",
+      accessorKey: "last_payment_date",
+      cell: data => <IMDateTableCell timestamp={data.value} />,
+  },
+  {
+      id: "next_billing_date",
+      header: "Next Billing Date",
+      accessorKey: "next_billing_date",
+      cell: data => <IMDateTableCell timestamp={data.value} />,
+  },
+  {
+      id: "created_at",
+      header: "Created At",
+      accessorKey: "created_at",
+      cell: data => <IMDateTableCell timestamp={data.value} />,
+  },
+  {
+      id: "updated_at",
+      header: "Updated At",
+      accessorKey: "updated_at",
+      cell: data => <IMDateTableCell timestamp={data.value} />,
+  },
+  {
+      id: "actions",
+      header: "Actions",
+      accessorKey: "actions",
+      cell: data => <ActionsItemView data={data} />,
+  },
+];
+
 
 function ActionsItemView(props) {
   const { data } = props

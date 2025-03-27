@@ -38,7 +38,7 @@ const $capitalcaseplural$Columns = [
   {
     Header: 'Actions',
     accessor: 'actions',
-    Cell: data => <ActionsItemView data={data} />,
+    cell: data => <ActionsItemView data={data} />,
   },
 ]
 
@@ -206,7 +206,7 @@ function $capitalcaseplural$ListView(props) {
                             {row.cells.map(cell => {
                               return (
                                 <td {...cell.getCellProps()}>
-                                  {cell.render('Cell')}
+                                  {cell.render('cell')}
                                 </td>
                               )
                             })}
