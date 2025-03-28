@@ -119,12 +119,12 @@ export default function AdminMenuClient({ menuItems, urlPath = "admin", slug }: 
       <SidebarHeader className="p-4 pb-6">
         <div className="flex items-center gap-2 px-2 py-1">
           <img src="https://dopebase.com/assets/dopebase-logo.svg" alt="Dopebase Logo" className="h-6 w-6" />
-          <span className="font-medium text-white">dopebase</span>
+          <span className="font-medium text-primary">Dopebase</span>
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-2">
-        <SectionTitle>Main</SectionTitle>
+      <SidebarContent className="px-4">
+        {/* <SectionTitle>Main</SectionTitle> */}
         <SidebarMenu>
           {mainMenuItems.map((menuItem, index) => {
             const IconComponent = iconMap[menuItem.icon as keyof typeof iconMap] || Settings
