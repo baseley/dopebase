@@ -3,7 +3,7 @@ export const theme = {
       primary: "#1E40AF", // Blue-700
       secondary: "#9333EA", // Purple-600
       background: "#F3F4F6", // Gray-100
-      text: "#111827", // Gray-900
+      text: "#000000", // Gray-900
       card: "#FFFFFF",
     },
     borderRadius: {
