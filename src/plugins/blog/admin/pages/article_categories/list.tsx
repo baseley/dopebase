@@ -1,182 +1,234 @@
-// @ts-nocheck
-'use client'
-import React, { useMemo, useEffect, useState } from 'react'
-import { GetStaticProps } from 'next'
-import { useRouter } from 'next/navigation'
+"use client"
+
+import { useMemo, useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import {
   useReactTable,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   flexRender,
-} from '@tanstack/react-table'
+} from "@tanstack/react-table"
 import {
-  IMLocationTableCell,
-  IMSimpleLocationTableCell,
-  IMColorsTableCell,
-  IMMultimediaTableCell,
-  IMObjectTableCell,
-  IMImagesTableCell,
-  IMDateTableCell,
-  IMForeignKeyTableCell,
-  IMAddressTableCell,
-} from '../../../../../admin/components/forms/table'
-import {
-  IMColorBoxComponent,
-  IMPhoto,
-  IMModal,
-  IMToggleSwitchComponent,
-} from '../../../../../admin/components/forms/fields'
-import { pluginsAPIURL } from '../../../../../config/config'
-import useCurrentUser from '../../../../../modules/auth/hooks/useCurrentUser'
-import { authPost } from '../../../../../modules/auth/utils/authFetch'
-import styles from '../../../../../admin/themes/admin.module.css'
-/* Insert extra imports for table cells here */
+  Search,
+  Plus,
+  Eye,
+  Edit,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Filter,
+  SlidersHorizontal,
+  ArrowUpDown,
+  Loader2,
+  ImageIcon,
+  Tag,
+  FileText,
+  Layers,
+} from "lucide-react"
+import { IMImagesTableCell, IMForeignKeyTableCell } from "@/admin/components/forms/table"
+import { pluginsAPIURL } from "@/config/config"
+import useCurrentUser from "@/modules/auth/hooks/useCurrentUser"
+import { authPost } from "@/modules/auth/utils/authFetch"
+import { theme } from "@/lib/theme"
 
 const baseAPIURL = `${pluginsAPIURL}admin/blog/`
 
-export const getStaticProps: GetStaticProps = async () => {
-  return { props: { isAdminRoute: true } }
-}
-
 const ArticleCategoriesColumns = [
-  
-      {
-          id:"name",
-          header: "Name",
-          accessorKey: "name",
-      },
-      {
-          id:"description",
-          header: "Description",
-          accessorKey: "description",
-          cell: data => (
-              <div className='markdownReadOnly'>{data?.value && data.value.substring(0, 100)}...</div>
-          )
-      },
-      {
-          id:"slug",
-          header: "Slug",
-          accessorKey: "slug",
-      },
-      {
-          id:"logo_url",
-          header: "Logo",
-          accessorKey: "logo_url",
-          cell: data => (
-              <IMImagesTableCell singleImageURL={data.value} />
-          )
-      },
-      {
-          id:"seo_title",
-          header: "SEO Title",
-          accessorKey: "seo_title",
-      },
-      {
-          id:"seo_description",
-          header: "SEO Description",
-          accessorKey: "seo_description",
-      },
-      {
-          id:"canonical_url",
-          header: "Canonical URL",
-          accessorKey: "canonical_url",
-      },
-      {
-          id:"seo_image_url",
-          header: "SEO Cover Image",
-          accessorKey: "seo_image_url",
-          cell: data => (
-              <IMImagesTableCell singleImageURL={data.value} />
-          )
-      },
-      {
-          id:"published",
-          header: "Published",
-          accessorKey: "published",
-          cell: data => (
-              <IMToggleSwitchComponent isChecked={data.value} disabled />
-          )
-      },
-      {
-          id:"parent_id",
-          header: "Parent Category",
-          accessorKey: "parent_id",
-          cell: data => (
-              <IMForeignKeyTableCell id={data.value} apiRouteName="admin/blog/article_categories" viewRoute="article_categories"
-          titleKey="name" />
-          )
-      },
-      {
-        id: 'actions',
-        header: 'Actions',
-        accessorKey: 'actions',
-        cell: data => <ActionsItemView data={data} />,
-      },
+  {
+    id: "name",
+    header: "Name",
+    accessorKey: "name",
+    cell: ({ getValue }) => (
+      <div className="font-medium" style={{ color: theme.colors.text.primary }}>
+        {getValue()}
+      </div>
+    ),
+  },
+  {
+    id: "description",
+    header: "Description",
+    accessorKey: "description",
+    cell: ({ getValue }) => (
+      <div className="markdownReadOnly max-w-xs truncate" style={{ color: theme.colors.text.secondary }}>
+        {getValue() ? `${getValue().substring(0, 60)}...` : "-"}
+      </div>
+    ),
+  },
+  {
+    id: "slug",
+    header: "Slug",
+    accessorKey: "slug",
+    cell: ({ getValue }) => (
+      <div className="flex items-center">
+        <Tag className="mr-2 h-4 w-4 text-gray-400" />
+        <span className="text-sm font-mono" style={{ color: theme.colors.text.secondary }}>
+          {getValue() || "-"}
+        </span>
+      </div>
+    ),
+  },
+  {
+    id: "logo_url",
+    header: "Logo",
+    accessorKey: "logo_url",
+    cell: ({ getValue }) => (
+      <div className="flex justify-center">
+        {getValue() ? (
+          <div
+            className="relative h-10 w-10 rounded-md overflow-hidden border"
+            style={{ borderColor: theme.colors.border.light }}
+          >
+            <IMImagesTableCell singleImageURL={getValue()} />
+          </div>
+        ) : (
+          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-gray-100">
+            <ImageIcon className="h-5 w-5 text-gray-400" />
+          </div>
+        )}
+      </div>
+    ),
+  },
+  {
+    id: "published",
+    header: "Status",
+    accessorKey: "published",
+    cell: ({ getValue }) => (
+      <div className="flex justify-center">
+        <span
+          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+            getValue() ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
+          }`}
+        >
+          {getValue() ? "Published" : "Draft"}
+        </span>
+      </div>
+    ),
+  },
+  {
+    id: "parent_id",
+    header: "Parent",
+    accessorKey: "parent_id",
+    cell: ({ getValue }) => (
+      <div className="flex justify-center">
+        {getValue() ? (
+          <div className="flex items-center">
+            <Layers className="mr-2 h-4 w-4 text-gray-400" />
+            <IMForeignKeyTableCell
+              id={getValue()}
+              apiRouteName="admin/blog/article_categories"
+              viewRoute="article_categories"
+              titleKey="name"
+            />
+          </div>
+        ) : (
+          <span className="text-sm text-gray-400">-</span>
+        )}
+      </div>
+    ),
+  },
+  {
+    id: "actions",
+    header: "Actions",
+    accessorKey: "actions",
+    cell: (data) => <ActionsItemView data={data} />,
+  },
 ]
 
-function ActionsItemView(props) {
-  console.log('>>>> Action Item View')
-  const { data } = props
+function ActionsItemView({ data }) {
   const router = useRouter()
+  const [isDeleting, setIsDeleting] = useState(false)
 
-  const handleView = item => {
-    const viewPath = './view?id=' + item.id
-    router.push(viewPath)
+  const handleView = (item) => {
+    router.push(`./article_categories/view?id=${item.id}`)
   }
 
-  const handleEdit = item => {
-    const editPath = './update?id=' + item.id
-    router.push(editPath)
+  const handleEdit = (item) => {
+    router.push(`./article_categories/update?id=${item.id}`)
   }
 
-  const handleDelete = async item => {
-    if (window.confirm('Are you sure you want to delete this item?')) {
-      const path = baseAPIURL + 'article_categories/delete'
-      const response = await authPost(path, { id: item.id })
-      window.location.reload(false)
+  const handleDelete = async (item) => {
+    if (window.confirm("Are you sure you want to delete this category?")) {
+      setIsDeleting(true)
+      try {
+        const path = baseAPIURL + "article_categories/delete"
+        await authPost(path, { id: item.id })
+        window.location.reload()
+      } catch (error) {
+        console.error("Error deleting category:", error)
+        alert("Failed to delete category. Please try again.")
+      } finally {
+        setIsDeleting(false)
+      }
     }
   }
 
+  const buttonStyle = {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "34px",
+    height: "34px",
+    borderRadius: theme.borderRadius.md,
+    transition: theme.transitions.normal,
+    marginRight: theme.spacing[2],
+  }
+
   return (
-    <div className={`${styles.inlineActionsContainer} inlineActionsContainer bg-red-500`}>
+    <div className="flex items-center justify-end">
       <button
         onClick={() => handleView(data.row.original)}
-        type="button"
-        id="tooltip264453216"
-        className={`${styles.btnSm} btn-icon btn btn-info btn-sm`}>
-        <i className="fa fa-eye"></i>
+        style={{
+          ...buttonStyle,
+          backgroundColor: theme.colors.state.hover,
+          color: theme.colors.text.primary,
+        }}
+        title="View"
+        disabled={isDeleting}
+      >
+        <Eye size={16} />
       </button>
       <button
         onClick={() => handleEdit(data.row.original)}
-        type="button"
-        id="tooltip366246651"
-        className={`${styles.btnSm} btn-icon btn btn-success btn-sm`}>
-        <i className="fa fa-edit"></i>
+        style={{
+          ...buttonStyle,
+          backgroundColor: theme.colors.accent.muted,
+          color: theme.colors.accent.primary,
+        }}
+        title="Edit"
+        disabled={isDeleting}
+      >
+        <Edit size={16} />
       </button>
       <button
         onClick={() => handleDelete(data.row.original)}
-        type="button"
-        id="tooltip476609793"
-        className={`${styles.btnSm} btn-icon btn btn-danger btn-sm`}>
-        <i className="fa fa-times"></i>
+        style={{
+          ...buttonStyle,
+          backgroundColor: "rgba(239, 68, 68, 0.15)",
+          color: theme.colors.feedback.error,
+        }}
+        title="Delete"
+        disabled={isDeleting}
+      >
+        {isDeleting ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
       </button>
     </div>
   )
 }
 
-function ArticleCategoriesListView(props) {
+function ArticleCategoriesListView() {
   const [isLoading, setIsLoading] = useState(true)
-  const [ArticleCategories, setArticleCategories] = useState([])
+  const [articleCategories, setArticleCategories] = useState([])
   const [data, setData] = useState([])
-  const [globalFilter, setGlobalFilter] = useState('')
-
+  const [globalFilter, setGlobalFilter] = useState("")
   const [user, token, loading] = useCurrentUser()
 
   const columns = useMemo(() => ArticleCategoriesColumns, [])
 
   const table = useReactTable({
-    data: ArticleCategories,
+    data: articleCategories,
     columns,
     state: {
       globalFilter,
@@ -185,178 +237,322 @@ function ArticleCategoriesListView(props) {
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    initialState: {
+      pagination: {
+        pageSize: 10,
+      },
+    },
   })
 
   useEffect(() => {
     if (loading) {
       return
     }
-    const config = {
-      headers: { Authorization: token },
+
+    const fetchData = async () => {
+      setIsLoading(true)
+      try {
+        const config = {
+          headers: { Authorization: token },
+        }
+
+        const response = await fetch(baseAPIURL + "article_categories/list", config)
+
+        if (!response.ok) {
+          throw new Error("Network response was not ok")
+        }
+
+        const data = await response.json()
+        setData(data)
+      } catch (error) {
+        console.error("Error fetching categories:", error)
+      } finally {
+        setIsLoading(false)
+      }
     }
 
-    const extraQueryParams = null
-    setIsLoading(true)
-
-    fetch(
-      baseAPIURL +
-        'article_categories/list' +
-        (extraQueryParams ? extraQueryParams : ''),
-      config,
-    )
-      .then(response => response.json())
-      .then(data => {
-        console.log(data)
-        const article_categories = data
-        setData(article_categories)
-
-        setIsLoading(false)
-      })
-      .catch(err => {
-        console.log(err)
-      })
-  }, [loading])
+    fetchData()
+  }, [loading, token])
 
   useEffect(() => {
     setArticleCategories(data)
   }, [globalFilter, data])
 
+  const router = useRouter()
+
   return (
-    <>
-      <div className={`${styles.adminContent} adminContent`}>
-        <div className="row">
-          <div className="col col-md-12">
-            <div className="Card">
-              <div className="CardHeader">
-                <a
-                  className={`${styles.Link} ${styles.AddLink} Link AddLink`}
-                  href="./add">
-                  Add New
-                </a>
-                <h1>Article Categories</h1>
-              </div>
-              <div className={`${styles.CardBody} CardBody`}>
-                <div className={`${styles.TableContainer} TableContainer`}>
-                  <input
-                    className={`${styles.SearchInput} SearchInput`}
-                    type="text"
-                    placeholder="Search..."
-                    value={globalFilter || ''}
-                    onChange={e => setGlobalFilter(e.target.value)}
-                  />
-                  <table className={`${styles.Table} Table`}>
-                    <thead>
-                      {table.getHeaderGroups().map(headerGroup => (
-                        <tr key={headerGroup.id}>
-                          {headerGroup.headers.map(header => (
-                            <th key={header.id}>
-                              {flexRender(
-                                header.column.columnDef.header,
-                                header.getContext()
-                              )}
-                            </th>
-                          ))}
-                        </tr>
-                      ))}
-                    </thead>
-                    <tbody>
-                      {table.getRowModel().rows.map(row => (
-                        <tr key={row.id}>
-                          {row.getVisibleCells().map(cell => (
-                            <td key={cell.id}>
-                              {flexRender(
-                                cell.column.columnDef.cell,
-                                cell.getContext()
-                              )}
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
-                      <tr>
-                        {isLoading ? (
-                          <td colSpan={ArticleCategoriesColumns.length - 1}>
-                            <p>Loading...</p>
-                          </td>
-                        ) : (
-                          <td colSpan={ArticleCategoriesColumns.length - 1}>
-                            <p className={`${styles.PaginationDetails} PaginationDetails`}>
-                              Showing {table.getRowModel().rows.length} of {data.length} results
-                            </p>
-                          </td>
-                        )}
-                      </tr>
-                    </tbody>
-                  </table>
-                  <div className={`${styles.Pagination} Pagination`}>
-                    <div className={`${styles.LeftPaginationButtons} LeftPaginationButtons`}>
-                      <button
-                        onClick={() => table.setPageIndex(0)}
-                        className={`${styles.PaginationButton}`}
-                        disabled={!table.getCanPreviousPage()}>
-                        <i className="fa fa-angle-double-left"></i>
-                      </button>
-                      <button
-                        onClick={() => table.previousPage()}
-                        className={`${styles.PaginationButton}`}
-                        disabled={!table.getCanPreviousPage()}>
-                        <i className="fa fa-angle-left"></i>
-                      </button>
-                    </div>
-                    <div className={`${styles.CenterPaginationButtons}`}>
-                      <span>
-                        Page{' '}
-                        <strong>
-                          {table.getState().pagination.pageIndex + 1} of{' '}
-                          {table.getPageCount()}
-                        </strong>
-                      </span>
-                      <span>
-                        | Go to page:{' '}
-                        <input
-                          type="number"
-                          defaultValue={table.getState().pagination.pageIndex + 1}
-                          onChange={e => {
-                            const page = e.target.value ? Number(e.target.value) - 1 : 0
-                            table.setPageIndex(page)
+    <div className="max-w-[1600px] mx-auto">
+      <div
+        className="rounded-lg overflow-hidden border shadow-md"
+        style={{
+          backgroundColor: theme.colors.surface.secondary,
+          borderColor: theme.colors.border.light,
+        }}
+      >
+        <div
+          className="flex items-center justify-between p-6 border-b"
+          style={{ borderColor: theme.colors.border.light }}
+        >
+          <h1 className="text-2xl font-semibold" style={{ color: theme.colors.text.primary }}>
+            Article Categories
+          </h1>
+          <button
+            onClick={() => router.push("./article_categories/add")}
+            className="flex items-center px-4 py-2 rounded-md transition-colors"
+            style={{
+              backgroundColor: theme.colors.accent.primary,
+              color: "#ffffff",
+            }}
+          >
+            <Plus size={18} className="mr-2" />
+            Add New Category
+          </button>
+        </div>
+
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="relative w-full max-w-md">
+              <input
+                type="text"
+                placeholder="Search categories..."
+                value={globalFilter || ""}
+                onChange={(e) => setGlobalFilter(e.target.value)}
+                className="w-full px-4 py-2 pl-10 rounded-md transition-colors"
+                style={{
+                  backgroundColor: theme.colors.surface.tertiary,
+                  borderWidth: "1px",
+                  borderStyle: "solid",
+                  borderColor: theme.colors.border.light,
+                  color: theme.colors.text.primary,
+                }}
+              />
+              <Search
+                className="absolute left-3 top-1/2 transform -translate-y-1/2"
+                size={18}
+                style={{ color: theme.colors.text.secondary }}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                className="flex items-center px-3 py-2 rounded-md transition-colors"
+                style={{
+                  backgroundColor: theme.colors.surface.tertiary,
+                  color: theme.colors.text.secondary,
+                  borderWidth: "1px",
+                  borderStyle: "solid",
+                  borderColor: theme.colors.border.light,
+                }}
+              >
+                <Filter size={16} className="mr-2" />
+                Filters
+              </button>
+              <button
+                className="flex items-center px-3 py-2 rounded-md transition-colors"
+                style={{
+                  backgroundColor: theme.colors.surface.tertiary,
+                  color: theme.colors.text.secondary,
+                  borderWidth: "1px",
+                  borderStyle: "solid",
+                  borderColor: theme.colors.border.light,
+                }}
+              >
+                <SlidersHorizontal size={16} className="mr-2" />
+                Columns
+              </button>
+            </div>
+          </div>
+
+          <div className="overflow-hidden rounded-lg border" style={{ borderColor: theme.colors.border.light }}>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <tr
+                      key={headerGroup.id}
+                      style={{
+                        backgroundColor: theme.colors.surface.tertiary,
+                      }}
+                    >
+                      {headerGroup.headers.map((header) => (
+                        <th
+                          key={header.id}
+                          className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
+                          style={{
+                            color: theme.colors.text.secondary,
+                            borderBottom: `1px solid ${theme.colors.border.light}`,
                           }}
-                          style={{ width: '100px' }}
-                        />
-                      </span>
-                      <select
-                        value={table.getState().pagination.pageSize}
-                        onChange={e => {
-                          table.setPageSize(Number(e.target.value))
-                        }}>
-                        {[10, 20, 30, 40, 50].map(pageSize => (
-                          <option key={pageSize} value={pageSize}>
-                            Show {pageSize}
-                          </option>
+                        >
+                          <div className="flex items-center">
+                            {flexRender(header.column.columnDef.header, header.getContext())}
+                            {header.column.getCanSort() && <ArrowUpDown className="ml-2 h-4 w-4" />}
+                          </div>
+                        </th>
+                      ))}
+                    </tr>
+                  ))}
+                </thead>
+                <tbody>
+                  {isLoading ? (
+                    <tr>
+                      <td
+                        colSpan={columns.length}
+                        className="px-6 py-12 text-center"
+                        style={{ color: theme.colors.text.secondary }}
+                      >
+                        <div className="flex flex-col items-center justify-center">
+                          <Loader2
+                            className="h-8 w-8 animate-spin mb-4"
+                            style={{ color: theme.colors.accent.primary }}
+                          />
+                          <p>Loading categories...</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : table.getRowModel().rows.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={columns.length}
+                        className="px-6 py-12 text-center"
+                        style={{ color: theme.colors.text.secondary }}
+                      >
+                        <div className="flex flex-col items-center justify-center">
+                          <FileText className="h-8 w-8 mb-4" style={{ color: theme.colors.text.tertiary }} />
+                          <p className="mb-2">No categories found</p>
+                          <p className="text-sm">Try adjusting your search or create a new category</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    table.getRowModel().rows.map((row) => (
+                      <tr
+                        key={row.id}
+                        className="hover:bg-gray-50 transition-colors"
+                        style={{
+                          borderBottom: `1px solid ${theme.colors.border.light}`,
+                        }}
+                      >
+                        {row.getVisibleCells().map((cell) => (
+                          <td key={cell.id} className="px-6 py-4 whitespace-nowrap">
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </td>
                         ))}
-                      </select>
-                    </div>
-                    <div className={`${styles.RightPaginationButtons}`}>
-                      <button
-                        onClick={() => table.nextPage()}
-                        className={`${styles.PaginationButton}`}
-                        disabled={!table.getCanNextPage()}>
-                        <i className="fa fa-angle-right"></i>
-                      </button>
-                      <button
-                        onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                        className={`${styles.PaginationButton}`}
-                        disabled={!table.getCanNextPage()}>
-                        <i className="fa fa-angle-double-right"></i>
-                      </button>
-                    </div>
-                  </div>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <div
+              className="flex items-center justify-between px-6 py-4 border-t"
+              style={{ borderColor: theme.colors.border.light }}
+            >
+              <div className="flex items-center">
+                <span className="text-sm" style={{ color: theme.colors.text.secondary }}>
+                  Showing {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} to{" "}
+                  {Math.min(
+                    (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
+                    table.getFilteredRowModel().rows.length,
+                  )}{" "}
+                  of {table.getFilteredRowModel().rows.length} results
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <select
+                  value={table.getState().pagination.pageSize}
+                  onChange={(e) => table.setPageSize(Number(e.target.value))}
+                  className="px-3 py-1 rounded-md text-sm"
+                  style={{
+                    backgroundColor: theme.colors.surface.tertiary,
+                    borderWidth: "1px",
+                    borderStyle: "solid",
+                    borderColor: theme.colors.border.light,
+                    color: theme.colors.text.primary,
+                  }}
+                >
+                  {[10, 20, 30, 50, 100].map((pageSize) => (
+                    <option key={pageSize} value={pageSize}>
+                      {pageSize} rows
+                    </option>
+                  ))}
+                </select>
+
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => table.setPageIndex(0)}
+                    disabled={!table.getCanPreviousPage()}
+                    className="p-1 rounded-md"
+                    style={{
+                      backgroundColor: theme.colors.surface.tertiary,
+                      color: table.getCanPreviousPage() ? theme.colors.text.primary : theme.colors.text.disabled,
+                      borderWidth: "1px",
+                      borderStyle: "solid",
+                      borderColor: theme.colors.border.light,
+                      opacity: table.getCanPreviousPage() ? 1 : 0.5,
+                    }}
+                  >
+                    <ChevronsLeft size={18} />
+                  </button>
+                  <button
+                    onClick={() => table.previousPage()}
+                    disabled={!table.getCanPreviousPage()}
+                    className="p-1 rounded-md"
+                    style={{
+                      backgroundColor: theme.colors.surface.tertiary,
+                      color: table.getCanPreviousPage() ? theme.colors.text.primary : theme.colors.text.disabled,
+                      borderWidth: "1px",
+                      borderStyle: "solid",
+                      borderColor: theme.colors.border.light,
+                      opacity: table.getCanPreviousPage() ? 1 : 0.5,
+                    }}
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+
+                  <span className="px-4 py-1 text-sm font-medium" style={{ color: theme.colors.text.primary }}>
+                    Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+                  </span>
+
+                  <button
+                    onClick={() => table.nextPage()}
+                    disabled={!table.getCanNextPage()}
+                    className="p-1 rounded-md"
+                    style={{
+                      backgroundColor: theme.colors.surface.tertiary,
+                      color: table.getCanNextPage() ? theme.colors.text.primary : theme.colors.text.disabled,
+                      borderWidth: "1px",
+                      borderStyle: "solid",
+                      borderColor: theme.colors.border.light,
+                      opacity: table.getCanNextPage() ? 1 : 0.5,
+                    }}
+                  >
+                    <ChevronRight size={18} />
+                  </button>
+                  <button
+                    onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+                    disabled={!table.getCanNextPage()}
+                    className="p-1 rounded-md"
+                    style={{
+                      backgroundColor: theme.colors.surface.tertiary,
+                      color: table.getCanNextPage() ? theme.colors.text.primary : theme.colors.text.disabled,
+                      borderWidth: "1px",
+                      borderStyle: "solid",
+                      borderColor: theme.colors.border.light,
+                      opacity: table.getCanNextPage() ? 1 : 0.5,
+                    }}
+                  >
+                    <ChevronsRight size={18} />
+                  </button>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </>
+    </div>
   )
 }
 
 export default ArticleCategoriesListView
+
