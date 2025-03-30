@@ -1,6 +1,4 @@
 "use client"
-
-import type React from "react"
 import Link from "next/link"
 import { useState } from "react"
 import { BarChart3, Settings, UserCircle, LogOut, ChevronDown, ChevronRight, Palette, Package } from "lucide-react"
@@ -16,7 +14,6 @@ import {
   SidebarMenuSub,
   SidebarMenuSubItem,
   SidebarMenuSubButton,
-  SidebarRail,
 } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
 import { theme } from "@/lib/theme"
@@ -115,7 +112,7 @@ export default function AdminMenuClient({ menuItems, urlPath = "admin", slug }: 
 
   return (
     <Sidebar
-      collapsible="icon"
+      collapsible="none"
       className="border-r"
       style={{
         backgroundColor: colors.surface.primary,
@@ -124,16 +121,26 @@ export default function AdminMenuClient({ menuItems, urlPath = "admin", slug }: 
         width: sidebar.width,
       }}
     >
-      <SidebarHeader className="p-5 border-b" style={{ borderColor: colors.border.light }}>
-        <div className="flex items-center gap-3">
-          <img src="https://dopebase.com/assets/dopebase-logo.svg" alt="Dopebase Logo" className="h-7 w-7" />
+      <SidebarHeader
+        className="border-b"
+        style={{
+          borderColor: colors.border.light,
+          padding: "24px 24px 24px 24px", // Increased padding for more space
+        }}
+      >
+        <div className="flex items-center gap-4 px-2">
+          <img src="https://dopebase.com/assets/dopebase-logo.svg" alt="Dopebase Logo" className="h-8 w-8" />
           <span className="text-lg font-medium" style={{ color: colors.text.primary }}>
             Dopebase
           </span>
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-3 py-4">
+      <SidebarContent
+        style={{
+          padding: "24px 16px", // Increased padding for more space
+        }}
+      >
         <SidebarMenu>
           {mainMenuItems.map((menuItem, index) => {
             const IconComponent = iconMap[menuItem.icon as keyof typeof iconMap] || Settings
@@ -142,14 +149,14 @@ export default function AdminMenuClient({ menuItems, urlPath = "admin", slug }: 
             const isActive = index === selectedIndex
 
             return (
-              <SidebarMenuItem key={menuItem.path} className="my-1">
+              <SidebarMenuItem key={menuItem.path} className="my-2.5">
                 {!hasSubItems ? (
                   <SidebarMenuButton
                     asChild
                     isActive={isActive && !hasSubItems}
                     className="rounded-md"
                     style={{
-                      padding: sidebar.menuItemPadding,
+                      padding: "12px 16px", // Increased padding for better touch targets
                       transition: transitions.normal,
                       borderRadius: borderRadius.md,
                       backgroundColor: isActive ? colors.state.selected : "transparent",
@@ -162,7 +169,7 @@ export default function AdminMenuClient({ menuItems, urlPath = "admin", slug }: 
                       className="flex items-center w-full"
                     >
                       <IconComponent
-                        className="mr-3 h-5 w-5"
+                        className="mr-4 h-5 w-5" // Increased margin for better spacing
                         style={{
                           color: isActive ? colors.accent.primary : colors.text.secondary,
                         }}
@@ -177,7 +184,7 @@ export default function AdminMenuClient({ menuItems, urlPath = "admin", slug }: 
                       isActive={isActive}
                       className="rounded-md w-full"
                       style={{
-                        padding: sidebar.menuItemPadding,
+                        padding: "12px 16px", // Increased padding for better touch targets
                         transition: transitions.normal,
                         borderRadius: borderRadius.md,
                         backgroundColor: isActive ? colors.state.selected : "transparent",
@@ -185,7 +192,7 @@ export default function AdminMenuClient({ menuItems, urlPath = "admin", slug }: 
                       }}
                     >
                       <IconComponent
-                        className="mr-3 h-5 w-5"
+                        className="mr-4 h-5 w-5" // Increased margin for better spacing
                         style={{
                           color: isActive ? colors.accent.primary : colors.text.secondary,
                         }}
@@ -206,8 +213,8 @@ export default function AdminMenuClient({ menuItems, urlPath = "admin", slug }: 
 
                     <SidebarMenuSub
                       className={cn(
-                        "transition-all overflow-hidden ml-7 border-l",
-                        isExpanded ? "max-h-96 py-1" : "max-h-0 py-0",
+                        "transition-all overflow-hidden ml-8 border-l", // Increased margin for better indentation
+                        isExpanded ? "max-h-96 py-2" : "max-h-0 py-0", // Increased padding for better spacing
                       )}
                       style={{
                         transition: transitions.expand,
@@ -226,12 +233,12 @@ export default function AdminMenuClient({ menuItems, urlPath = "admin", slug }: 
                               isActive={isSubActive}
                               className="rounded-md"
                               style={{
-                                padding: "8px 16px",
+                                padding: "10px 16px", // Increased padding for better touch targets
                                 transition: transitions.normal,
                                 borderRadius: borderRadius.md,
                                 backgroundColor: isSubActive ? colors.state.selected : "transparent",
                                 color: isSubActive ? colors.accent.primary : colors.text.primary,
-                                marginLeft: "8px",
+                                marginLeft: "10px", // Increased margin for better indentation
                               }}
                             >
                               <Link
@@ -254,19 +261,25 @@ export default function AdminMenuClient({ menuItems, urlPath = "admin", slug }: 
         </SidebarMenu>
       </SidebarContent>
 
-      <SidebarFooter className="mt-auto p-4 border-t" style={{ borderColor: colors.border.light }}>
+      <SidebarFooter
+        className="mt-auto border-t"
+        style={{
+          borderColor: colors.border.light,
+          padding: "24px 16px", // Increased padding for more space
+        }}
+      >
         <SidebarMenu>
           {footerMenuItems.map((menuItem) => {
             const IconComponent = iconMap[menuItem.icon as keyof typeof iconMap] || Settings
             const isLogout = menuItem.title === "Logout"
 
             return (
-              <SidebarMenuItem key={menuItem.path} className="my-1">
+              <SidebarMenuItem key={menuItem.path} className="my-2.5">
                 <SidebarMenuButton
                   asChild
                   className="rounded-md w-full"
                   style={{
-                    padding: sidebar.menuItemPadding,
+                    padding: "12px 16px", // Increased padding for better touch targets
                     transition: transitions.normal,
                     borderRadius: borderRadius.md,
                     color: isLogout ? colors.feedback.error : colors.text.primary,
@@ -274,7 +287,7 @@ export default function AdminMenuClient({ menuItems, urlPath = "admin", slug }: 
                 >
                   <Link href={`/${urlPath}/${menuItem.path}`} className="flex items-center w-full">
                     <IconComponent
-                      className="mr-3 h-5 w-5"
+                      className="mr-4 h-5 w-5" // Increased margin for better spacing
                       style={{
                         color: isLogout ? colors.feedback.error : colors.text.secondary,
                       }}
@@ -287,14 +300,6 @@ export default function AdminMenuClient({ menuItems, urlPath = "admin", slug }: 
           })}
         </SidebarMenu>
       </SidebarFooter>
-
-      <SidebarRail
-        style={
-          {
-            "--rail-color": colors.border.light,
-          } as React.CSSProperties
-        }
-      />
     </Sidebar>
   )
 }

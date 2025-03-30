@@ -2,7 +2,7 @@ import type React from "react"
 import { Suspense } from "react"
 import { getCurrentUser } from "../utils/getCurrentUserByCookies"
 import AdminMenu from "@/admin/components/AdminMenu"
-import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { theme } from "@/lib/theme"
 
 interface AdminAppContainerProps {
@@ -36,7 +36,6 @@ export const AdminAppContainer: React.FC<AdminAppContainerProps> = async ({ chil
                   backgroundColor: theme.colors.surface.secondary,
                 }}
               >
-                <SidebarTrigger className="mr-4" />
                 <div className="flex items-center justify-between w-full">
                   <h1 className="text-xl font-semibold" style={{ color: theme.colors.text.primary }}>
                     {/* Page title will be dynamically set */}

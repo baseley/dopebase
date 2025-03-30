@@ -136,11 +136,11 @@ export const theme = {
 
   // Component specific
   sidebar: {
-    width: "260px",
+    width: "280px", // Increased width for better readability
     collapsedWidth: "64px",
-    menuItemPadding: "10px 16px",
-    submenuPadding: "8px 16px 8px 46px",
-    iconGap: "12px",
+    menuItemPadding: "12px 16px", // Increased padding for better touch targets
+    submenuPadding: "10px 16px 10px 46px", // Adjusted for better alignment
+    iconGap: "16px", // Increased for better spacing
   },
 
   content: {
@@ -178,4 +178,38 @@ export const theme = {
       activeBg: "#b91c1c",
     },
   },
+
+  // Form styles
+  forms: {
+    input: {
+      height: "44px", // Increased height for better touch targets
+      padding: "0 16px",
+      fontSize: "0.875rem",
+      borderRadius: "0.375rem",
+      borderColor: "#e0e0e0",
+      focusBorderColor: "#8a2be2",
+      backgroundColor: "#f0f0f0",
+      color: "#121212",
+      placeholderColor: "#a0a0a0",
+    },
+    label: {
+      fontSize: "0.875rem",
+      fontWeight: 500,
+      color: "#121212",
+      marginBottom: "0.5rem",
+    },
+    error: {
+      color: "#ef4444",
+      fontSize: "0.75rem",
+      marginTop: "0.25rem",
+    },
+    card: {
+      padding: "24px",
+      borderRadius: "0.5rem",
+      backgroundColor: "#ffffff",
+      borderColor: "#e0e0e0",
+      shadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+    },
+  },
 }
+
