@@ -1,10 +1,9 @@
 "use client"
 
 import type React from "react"
-
 import Link from "next/link"
 import { useState } from "react"
-import { BarChart3, Settings, UserCircle, LogOut, ChevronDown, ChevronRight } from "lucide-react"
+import { BarChart3, Settings, UserCircle, LogOut, ChevronDown, ChevronRight, Palette, Package } from "lucide-react"
 
 import {
   Sidebar,
@@ -20,6 +19,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
+import { theme } from "@/lib/theme"
 
 // Map Font Awesome icon names to Lucide icons
 const iconMap = {
@@ -27,6 +27,13 @@ const iconMap = {
   gear: Settings,
   "user-circle": UserCircle,
   "sign-out": LogOut,
+}
+
+// Map for submenu icons
+const submenuIconMap = {
+  settings: Settings,
+  themes: Palette,
+  plugins: Package,
 }
 
 interface MenuItem {
@@ -104,84 +111,140 @@ export default function AdminMenuClient({ menuItems, urlPath = "admin", slug }: 
     }
   }
 
-  // Section title component for better organization
-  const SectionTitle = ({ children }: { children: React.ReactNode }) => (
-    <div className="px-3 py-2 text-xs font-medium text-gray-400 uppercase tracking-wider">{children}</div>
-  )
-
-  // Badge component for "Coming Soon" labels
-  const ComingSoonBadge = () => (
-    <span className="ml-auto text-xs px-1.5 py-0.5 rounded bg-gray-800 text-gray-400">Coming Soon</span>
-  )
+  const { colors, spacing, transitions, borderRadius, sidebar } = theme
 
   return (
-    <Sidebar collapsible="icon" className="bg-[#121212] text-white border-r border-gray-800">
-      <SidebarHeader className="p-4 pb-6">
-        <div className="flex items-center gap-2 px-2 py-1">
-          <img src="https://dopebase.com/assets/dopebase-logo.svg" alt="Dopebase Logo" className="h-6 w-6" />
-          <span className="font-medium text-primary">Dopebase</span>
+    <Sidebar
+      collapsible="icon"
+      className="border-r"
+      style={{
+        backgroundColor: colors.surface.primary,
+        color: colors.text.primary,
+        borderColor: colors.border.light,
+        width: sidebar.width,
+      }}
+    >
+      <SidebarHeader className="p-5 border-b" style={{ borderColor: colors.border.light }}>
+        <div className="flex items-center gap-3">
+          <img src="https://dopebase.com/assets/dopebase-logo.svg" alt="Dopebase Logo" className="h-7 w-7" />
+          <span className="text-lg font-medium" style={{ color: colors.text.primary }}>
+            Dopebase
+          </span>
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-4">
-        {/* <SectionTitle>Main</SectionTitle> */}
+      <SidebarContent className="px-3 py-4">
         <SidebarMenu>
           {mainMenuItems.map((menuItem, index) => {
             const IconComponent = iconMap[menuItem.icon as keyof typeof iconMap] || Settings
             const hasSubItems = menuItem.subItems && menuItem.subItems.length > 0
             const isExpanded = expandedMenus[index] || false
+            const isActive = index === selectedIndex
 
             return (
-              <SidebarMenuItem key={menuItem.path}>
+              <SidebarMenuItem key={menuItem.path} className="my-1">
                 {!hasSubItems ? (
                   <SidebarMenuButton
                     asChild
-                    isActive={index === selectedIndex && !hasSubItems}
-                    className="hover:bg-gray-800 text-gray-300 hover:text-white data-[active=true]:bg-blue-600 data-[active=true]:text-white rounded-md"
+                    isActive={isActive && !hasSubItems}
+                    className="rounded-md"
+                    style={{
+                      padding: sidebar.menuItemPadding,
+                      transition: transitions.normal,
+                      borderRadius: borderRadius.md,
+                      backgroundColor: isActive ? colors.state.selected : "transparent",
+                      color: isActive ? colors.accent.primary : colors.text.primary,
+                    }}
                   >
-                    <Link href={`/${urlPath}/${menuItem.path}`} onClick={() => onSelect(index, -1)}>
-                      <IconComponent className="mr-2 h-4 w-4" />
-                      <span>{menuItem.title}</span>
+                    <Link
+                      href={`/${urlPath}/${menuItem.path}`}
+                      onClick={() => onSelect(index, -1)}
+                      className="flex items-center w-full"
+                    >
+                      <IconComponent
+                        className="mr-3 h-5 w-5"
+                        style={{
+                          color: isActive ? colors.accent.primary : colors.text.secondary,
+                        }}
+                      />
+                      <span className="font-medium">{menuItem.title}</span>
                     </Link>
                   </SidebarMenuButton>
                 ) : (
                   <>
                     <SidebarMenuButton
                       onClick={() => onSelect(index, -1)}
-                      isActive={index === selectedIndex}
-                      className="hover:bg-gray-800 text-gray-300 hover:text-white data-[active=true]:bg-blue-600 data-[active=true]:text-white rounded-md"
+                      isActive={isActive}
+                      className="rounded-md w-full"
+                      style={{
+                        padding: sidebar.menuItemPadding,
+                        transition: transitions.normal,
+                        borderRadius: borderRadius.md,
+                        backgroundColor: isActive ? colors.state.selected : "transparent",
+                        color: isActive ? colors.accent.primary : colors.text.primary,
+                      }}
                     >
-                      <IconComponent className="mr-2 h-4 w-4" />
-                      <span>{menuItem.title}</span>
+                      <IconComponent
+                        className="mr-3 h-5 w-5"
+                        style={{
+                          color: isActive ? colors.accent.primary : colors.text.secondary,
+                        }}
+                      />
+                      <span className="font-medium">{menuItem.title}</span>
                       {isExpanded ? (
-                        <ChevronDown className="ml-auto h-4 w-4" />
+                        <ChevronDown
+                          className="ml-auto h-4 w-4 transition-transform"
+                          style={{ color: colors.text.secondary }}
+                        />
                       ) : (
-                        <ChevronRight className="ml-auto h-4 w-4" />
+                        <ChevronRight
+                          className="ml-auto h-4 w-4 transition-transform"
+                          style={{ color: colors.text.secondary }}
+                        />
                       )}
                     </SidebarMenuButton>
 
                     <SidebarMenuSub
                       className={cn(
-                        "transition-all duration-200 overflow-hidden pl-2 border-l border-gray-700 ml-2",
-                        isExpanded ? "max-h-96" : "max-h-0",
+                        "transition-all overflow-hidden ml-7 border-l",
+                        isExpanded ? "max-h-96 py-1" : "max-h-0 py-0",
                       )}
+                      style={{
+                        transition: transitions.expand,
+                        borderColor: isActive ? colors.accent.primary : colors.border.light,
+                        opacity: isExpanded ? 1 : 0,
+                      }}
                     >
-                      {menuItem.subItems?.map((subitem, subindex) => (
-                        <SidebarMenuSubItem key={subitem.title}>
-                          <SidebarMenuSubButton
-                            asChild
-                            isActive={index === selectedIndex && subindex === extractedSubindex}
-                            className="text-gray-400 hover:text-white data-[active=true]:bg-blue-600 data-[active=true]:text-white rounded-md"
-                          >
-                            <Link
-                              href={`/${urlPath}/${menuItem.path}/${subitem.path}`}
-                              onClick={() => onSelect(index, subindex)}
+                      {menuItem.subItems?.map((subitem, subindex) => {
+                        const isSubActive = index === selectedIndex && subindex === extractedSubindex
+                        const SubIcon = submenuIconMap[subitem.path as keyof typeof submenuIconMap]
+
+                        return (
+                          <SidebarMenuSubItem key={subitem.title}>
+                            <SidebarMenuSubButton
+                              asChild
+                              isActive={isSubActive}
+                              className="rounded-md"
+                              style={{
+                                padding: "8px 16px",
+                                transition: transitions.normal,
+                                borderRadius: borderRadius.md,
+                                backgroundColor: isSubActive ? colors.state.selected : "transparent",
+                                color: isSubActive ? colors.accent.primary : colors.text.primary,
+                                marginLeft: "8px",
+                              }}
                             >
-                              <span>{subitem.title}</span>
-                            </Link>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                      ))}
+                              <Link
+                                href={`/${urlPath}/${menuItem.path}/${subitem.path}`}
+                                onClick={() => onSelect(index, subindex)}
+                                className="flex items-center w-full"
+                              >
+                                <span>{subitem.title}</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        )
+                      })}
                     </SidebarMenuSub>
                   </>
                 )}
@@ -191,16 +254,31 @@ export default function AdminMenuClient({ menuItems, urlPath = "admin", slug }: 
         </SidebarMenu>
       </SidebarContent>
 
-      <SidebarFooter className="mt-auto p-2 border-t border-gray-800">
+      <SidebarFooter className="mt-auto p-4 border-t" style={{ borderColor: colors.border.light }}>
         <SidebarMenu>
           {footerMenuItems.map((menuItem) => {
             const IconComponent = iconMap[menuItem.icon as keyof typeof iconMap] || Settings
+            const isLogout = menuItem.title === "Logout"
 
             return (
-              <SidebarMenuItem key={menuItem.path}>
-                <SidebarMenuButton asChild className="hover:bg-gray-800 text-gray-300 hover:text-white rounded-md">
-                  <Link href={`/${urlPath}/${menuItem.path}`}>
-                    <IconComponent className="mr-2 h-4 w-4" />
+              <SidebarMenuItem key={menuItem.path} className="my-1">
+                <SidebarMenuButton
+                  asChild
+                  className="rounded-md w-full"
+                  style={{
+                    padding: sidebar.menuItemPadding,
+                    transition: transitions.normal,
+                    borderRadius: borderRadius.md,
+                    color: isLogout ? colors.feedback.error : colors.text.primary,
+                  }}
+                >
+                  <Link href={`/${urlPath}/${menuItem.path}`} className="flex items-center w-full">
+                    <IconComponent
+                      className="mr-3 h-5 w-5"
+                      style={{
+                        color: isLogout ? colors.feedback.error : colors.text.secondary,
+                      }}
+                    />
                     <span>{menuItem.title}</span>
                   </Link>
                 </SidebarMenuButton>
@@ -210,7 +288,13 @@ export default function AdminMenuClient({ menuItems, urlPath = "admin", slug }: 
         </SidebarMenu>
       </SidebarFooter>
 
-      <SidebarRail className="after:bg-gray-700" />
+      <SidebarRail
+        style={
+          {
+            "--rail-color": colors.border.light,
+          } as React.CSSProperties
+        }
+      />
     </Sidebar>
   )
 }

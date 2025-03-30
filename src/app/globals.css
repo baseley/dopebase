@@ -520,3 +520,11 @@ In Site Admin Menu
     @apply bg-background text-foreground;
   }
 }
+/* ---custome sidebar--*/
+.sidebar-menu-button:hover {
+  background-color: var(--hover-bg);
+}
+
+.sidebar-menu-button[data-active="true"] {
+  color: var(--active-color);
+}
