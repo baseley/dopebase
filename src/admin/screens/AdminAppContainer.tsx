@@ -1,53 +1,51 @@
-import React from "react"
-import { Suspense } from "react"
-import Link from "next/link"
-import { Home, ChevronRight } from "lucide-react"
-import { getCurrentUser } from "../utils/getCurrentUserByCookies"
-import AdminMenu from "@/admin/components/AdminMenu"
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
-import { theme } from "@/lib/theme"
+import React, { Suspense } from "react";
+import Link from "next/link";
+import { Home, ChevronRight } from "lucide-react";
+import { getCurrentUser } from "../utils/getCurrentUserByCookies";
+import AdminMenu from "@/admin/components/AdminMenu";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { theme } from "@/lib/theme";
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import type { ReactNode } from "react"
+} from "@/components/ui/breadcrumb";
+import type { ReactNode } from "react";
 
 interface AdminAppContainerProps {
-  children: ReactNode
-  params: { routes?: string[] } | undefined
-  searchParams: any
+  children: ReactNode;
+  params?: { routes?: string[] };
+  searchParams: any;
 }
 
 export const AdminAppContainer: React.FC<AdminAppContainerProps> = async ({ children, params = {}, searchParams }) => {
-  const user = await getCurrentUser()
+  const user = await getCurrentUser();
 
-  // Generate breadcrumbs from routes
-  const generateBreadcrumbs = (routes?: string[] | undefined) => {
-    if (!routes || routes.length === 0) {
-      return [{ label: "Dashboard", href: "/admin" }]
+  // Ensure routes is always an array
+  const generateBreadcrumbs = (routes?: string[]) => {
+    if (!Array.isArray(routes) || routes.length === 0) {
+      return [{ label: "Dashboard", href: "/admin" }];
     }
 
-    const breadcrumbs = [{ label: "Dashboard", href: "/admin" }]
-    let path = "/admin"
+    const breadcrumbs = [{ label: "Dashboard", href: "/admin" }];
+    let path = "/admin";
 
-    routes.forEach((route, index) => {
-      path += `/${route}`
-      // Format the route name to be more readable
+    routes.forEach((route) => {
+      path += `/${route}`;
       const label = route
         .split("_")
         .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(" ")
+        .join(" ");
 
-      breadcrumbs.push({ label, href: path })
-    })
+      breadcrumbs.push({ label, href: path });
+    });
 
-    return breadcrumbs
-  }
+    return breadcrumbs;
+  };
 
-  const breadcrumbs = generateBreadcrumbs(params?.routes)
+  const breadcrumbs = generateBreadcrumbs(params?.routes || []);
 
   if (user?.role === "admin") {
     return (
@@ -60,43 +58,13 @@ export const AdminAppContainer: React.FC<AdminAppContainerProps> = async ({ chil
       >
         <div className="flex flex-1 overflow-hidden">
           <SidebarProvider defaultOpen={true}>
-            <Suspense
-              fallback={
-                <div className="p-4" style={{ color: theme.colors.text.primary }}>
-                  Loading menu...
-                </div>
-              }
-            >
+            <Suspense fallback={<div className="p-4" style={{ color: theme.colors.text.primary }}>Loading menu...</div>}>
               <AdminMenu params={params} searchParams={searchParams} />
             </Suspense>
-            <SidebarInset
-              className="flex flex-col p-6"
-              style={{
-                backgroundColor: theme.colors.background,
-                border: "none", // Remove the border since we'll add it to the content
-              }}
-            >
-              <div
-                className="flex flex-col flex-1 rounded-xl border overflow-hidden"
-                style={{
-                  borderColor: theme.colors.border.light,
-                  backgroundColor: theme.colors.surface.secondary,
-                }}
-              >
-                <div
-                  className="flex items-center px-6 py-4 border-b"
-                  style={{
-                    borderColor: theme.colors.border.light,
-                  }}
-                >
-                  <Link
-                    href="/"
-                    className="flex items-center justify-center w-8 h-8 rounded-md mr-3 transition-colors"
-                    style={{
-                      backgroundColor: theme.colors.state.hover,
-                      color: theme.colors.text.primary,
-                    }}
-                  >
+            <SidebarInset className="flex flex-col p-6" style={{ backgroundColor: theme.colors.background }}>
+              <div className="flex flex-col flex-1 rounded-xl border overflow-hidden" style={{ borderColor: theme.colors.border.light, backgroundColor: theme.colors.surface.secondary }}>
+                <div className="flex items-center px-6 py-4 border-b" style={{ borderColor: theme.colors.border.light }}>
+                  <Link href="/" className="flex items-center justify-center w-8 h-8 rounded-md mr-3 transition-colors" style={{ backgroundColor: theme.colors.state.hover, color: theme.colors.text.primary }}>
                     <Home size={18} />
                   </Link>
 
@@ -132,28 +100,15 @@ export const AdminAppContainer: React.FC<AdminAppContainerProps> = async ({ chil
           </SidebarProvider>
         </div>
       </div>
-    )
+    );
   }
 
   return (
-    <div
-      className="flex h-screen items-center justify-center p-4 text-center"
-      style={{
-        backgroundColor: theme.colors.background,
-        color: theme.colors.text.primary,
-      }}
-    >
-      <div
-        className="rounded-lg border p-8 shadow-sm"
-        style={{
-          backgroundColor: theme.colors.surface.secondary,
-          borderColor: theme.colors.border.light,
-        }}
-      >
+    <div className="flex h-screen items-center justify-center p-4 text-center" style={{ backgroundColor: theme.colors.background, color: theme.colors.text.primary }}>
+      <div className="rounded-lg border p-8 shadow-sm" style={{ backgroundColor: theme.colors.surface.secondary, borderColor: theme.colors.border.light }}>
         <h2 className="mb-4 text-xl font-semibold">Access Denied</h2>
         <p>Sorry, you do not have permissions to access this page.</p>
       </div>
     </div>
-  )
-}
-
+  );
+};
