@@ -27,34 +27,40 @@ import {
   Tag,
   FileText,
   Layers,
+  FolderTree,
 } from "lucide-react"
 import { IMImagesTableCell, IMForeignKeyTableCell } from "@/admin/components/forms/table"
 import { pluginsAPIURL } from "@/config/config"
 import useCurrentUser from "@/modules/auth/hooks/useCurrentUser"
 import { authPost } from "@/modules/auth/utils/authFetch"
 import { theme } from "@/lib/theme"
+import type React from "react"
 
 const baseAPIURL = `${pluginsAPIURL}admin/blog/`
+
+interface ArticleCategory {
+  id: string
+  name: string
+  description: string | null
+  slug: string
+  logo_url: string | null
+  published: boolean
+  parent_id: string | null
+}
 
 const ArticleCategoriesColumns = [
   {
     id: "name",
     header: "Name",
     accessorKey: "name",
-    cell: ({ getValue }) => (
-      <div className="font-medium" style={{ color: theme.colors.text.primary }}>
-        {getValue()}
-      </div>
-    ),
+    cell: ({ getValue }) => <div style={theme.listView.nameCell}>{getValue()}</div>,
   },
   {
     id: "description",
     header: "Description",
     accessorKey: "description",
     cell: ({ getValue }) => (
-      <div className="markdownReadOnly max-w-xs truncate" style={{ color: theme.colors.text.secondary }}>
-        {getValue() ? `${getValue().substring(0, 60)}...` : "-"}
-      </div>
+      <div style={theme.listView.descriptionCell}>{getValue() ? `${getValue().substring(0, 60)}...` : "-"}</div>
     ),
   },
   {
@@ -64,7 +70,13 @@ const ArticleCategoriesColumns = [
     cell: ({ getValue }) => (
       <div className="flex items-center">
         <Tag className="mr-2 h-4 w-4 text-gray-400" />
-        <span className="text-sm font-mono" style={{ color: theme.colors.text.secondary }}>
+        <span
+          style={{
+            fontFamily: "monospace",
+            fontSize: "0.75rem",
+            color: theme.colors.text.secondary,
+          }}
+        >
           {getValue() || "-"}
         </span>
       </div>
@@ -84,8 +96,11 @@ const ArticleCategoriesColumns = [
             <IMImagesTableCell singleImageURL={getValue()} />
           </div>
         ) : (
-          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-gray-100">
-            <ImageIcon className="h-5 w-5 text-gray-400" />
+          <div
+            className="flex h-10 w-10 items-center justify-center rounded-md"
+            style={{ backgroundColor: theme.colors.surface.tertiary }}
+          >
+            <ImageIcon className="h-5 w-5" style={{ color: theme.colors.text.tertiary }} />
           </div>
         )}
       </div>
@@ -98,9 +113,16 @@ const ArticleCategoriesColumns = [
     cell: ({ getValue }) => (
       <div className="flex justify-center">
         <span
-          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-            getValue() ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
-          }`}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            padding: "0.25rem 0.75rem",
+            borderRadius: "9999px",
+            fontSize: "0.75rem",
+            fontWeight: 500,
+            backgroundColor: getValue() ? "rgba(16, 185, 129, 0.15)" : "rgba(245, 158, 11, 0.15)",
+            color: getValue() ? theme.colors.feedback.success : theme.colors.feedback.warning,
+          }}
         >
           {getValue() ? "Published" : "Draft"}
         </span>
@@ -124,7 +146,7 @@ const ArticleCategoriesColumns = [
             />
           </div>
         ) : (
-          <span className="text-sm text-gray-400">-</span>
+          <span style={{ fontSize: "0.875rem", color: theme.colors.text.tertiary }}>-</span>
         )}
       </div>
     ),
@@ -137,19 +159,19 @@ const ArticleCategoriesColumns = [
   },
 ]
 
-function ActionsItemView({ data }) {
+function ActionsItemView({ data }: { data: any }) {
   const router = useRouter()
   const [isDeleting, setIsDeleting] = useState(false)
 
-  const handleView = (item) => {
+  const handleView = (item: ArticleCategory) => {
     router.push(`./article_categories/view?id=${item.id}`)
   }
 
-  const handleEdit = (item) => {
+  const handleEdit = (item: ArticleCategory) => {
     router.push(`./article_categories/update?id=${item.id}`)
   }
 
-  const handleDelete = async (item) => {
+  const handleDelete = async (item: ArticleCategory) => {
     if (window.confirm("Are you sure you want to delete this category?")) {
       setIsDeleting(true)
       try {
@@ -165,23 +187,12 @@ function ActionsItemView({ data }) {
     }
   }
 
-  const buttonStyle = {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "34px",
-    height: "34px",
-    borderRadius: theme.borderRadius.md,
-    transition: theme.transitions.normal,
-    marginRight: theme.spacing[2],
-  }
-
   return (
     <div className="flex items-center justify-end">
       <button
         onClick={() => handleView(data.row.original)}
         style={{
-          ...buttonStyle,
+          ...theme.listView.iconButton,
           backgroundColor: theme.colors.state.hover,
           color: theme.colors.text.primary,
         }}
@@ -193,7 +204,7 @@ function ActionsItemView({ data }) {
       <button
         onClick={() => handleEdit(data.row.original)}
         style={{
-          ...buttonStyle,
+          ...theme.listView.iconButton,
           backgroundColor: theme.colors.accent.muted,
           color: theme.colors.accent.primary,
         }}
@@ -205,7 +216,7 @@ function ActionsItemView({ data }) {
       <button
         onClick={() => handleDelete(data.row.original)}
         style={{
-          ...buttonStyle,
+          ...theme.listView.iconButton,
           backgroundColor: "rgba(239, 68, 68, 0.15)",
           color: theme.colors.feedback.error,
         }}
@@ -220,8 +231,8 @@ function ActionsItemView({ data }) {
 
 function ArticleCategoriesListView() {
   const [isLoading, setIsLoading] = useState(true)
-  const [articleCategories, setArticleCategories] = useState([])
-  const [data, setData] = useState([])
+  const [articleCategories, setArticleCategories] = useState<ArticleCategory[]>([])
+  const [data, setData] = useState<ArticleCategory[]>([])
   const [globalFilter, setGlobalFilter] = useState("")
   const [user, token, loading] = useCurrentUser()
 
@@ -281,25 +292,17 @@ function ArticleCategoriesListView() {
   const router = useRouter()
 
   return (
-    <div className="max-w-[1600px] mx-auto">
-      <div
-        className="rounded-lg overflow-hidden border shadow-md"
-        style={{
-          backgroundColor: theme.colors.surface.secondary,
-          borderColor: theme.colors.border.light,
-        }}
-      >
-        <div
-          className="flex items-center justify-between p-6 border-b"
-          style={{ borderColor: theme.colors.border.light }}
-        >
-          <h1 className="text-2xl font-semibold" style={{ color: theme.colors.text.primary }}>
+    <div style={{ maxWidth: theme.content.maxWidth, margin: "0 auto" }}>
+      <div style={theme.listView.card}>
+        <div style={theme.listView.cardHeader}>
+          <h1 style={theme.listView.title}>
+            <FolderTree size={24} style={{ color: theme.colors.accent.primary, marginRight: "0.5rem" }} />
             Article Categories
           </h1>
           <button
             onClick={() => router.push("./article_categories/add")}
-            className="flex items-center px-4 py-2 rounded-md transition-colors"
             style={{
+              ...theme.listView.actionButton,
               backgroundColor: theme.colors.accent.primary,
               color: "#ffffff",
             }}
@@ -309,51 +312,45 @@ function ArticleCategoriesListView() {
           </button>
         </div>
 
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="relative w-full max-w-md">
+        <div style={theme.listView.cardBody}>
+          <div
+            style={
+              {
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: "1.5rem",
+              } as React.CSSProperties
+            }
+          >
+            <div style={theme.listView.searchContainer}>
               <input
                 type="text"
                 placeholder="Search categories..."
                 value={globalFilter || ""}
                 onChange={(e) => setGlobalFilter(e.target.value)}
-                className="w-full px-4 py-2 pl-10 rounded-md transition-colors"
-                style={{
-                  backgroundColor: theme.colors.surface.tertiary,
-                  borderWidth: "1px",
-                  borderStyle: "solid",
-                  borderColor: theme.colors.border.light,
-                  color: theme.colors.text.primary,
-                }}
+                style={theme.listView.searchInput}
               />
-              <Search
-                className="absolute left-3 top-1/2 transform -translate-y-1/2"
-                size={18}
-                style={{ color: theme.colors.text.secondary }}
-              />
+              <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
             </div>
-            <div className="flex items-center gap-2">
+            <div style={{ display: "flex", gap: "0.5rem" } as React.CSSProperties}>
               <button
-                className="flex items-center px-3 py-2 rounded-md transition-colors"
                 style={{
+                  ...theme.listView.actionButton,
                   backgroundColor: theme.colors.surface.tertiary,
                   color: theme.colors.text.secondary,
-                  borderWidth: "1px",
-                  borderStyle: "solid",
-                  borderColor: theme.colors.border.light,
+                  border: `1px solid ${theme.colors.border.light}`,
                 }}
               >
                 <Filter size={16} className="mr-2" />
                 Filters
               </button>
               <button
-                className="flex items-center px-3 py-2 rounded-md transition-colors"
                 style={{
+                  ...theme.listView.actionButton,
                   backgroundColor: theme.colors.surface.tertiary,
                   color: theme.colors.text.secondary,
-                  borderWidth: "1px",
-                  borderStyle: "solid",
-                  borderColor: theme.colors.border.light,
+                  border: `1px solid ${theme.colors.border.light}`,
                 }}
               >
                 <SlidersHorizontal size={16} className="mr-2" />
@@ -362,9 +359,17 @@ function ArticleCategoriesListView() {
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-lg border" style={{ borderColor: theme.colors.border.light }}>
-            <div className="overflow-x-auto">
-              <table className="w-full">
+          <div
+            style={
+              {
+                overflow: "hidden",
+                borderRadius: theme.borderRadius.lg,
+                border: `1px solid ${theme.colors.border.light}`,
+              } as React.CSSProperties
+            }
+          >
+            <div style={{ overflowX: "auto" } as React.CSSProperties}>
+              <table style={theme.listView.table}>
                 <thead>
                   {table.getHeaderGroups().map((headerGroup) => (
                     <tr
@@ -376,15 +381,22 @@ function ArticleCategoriesListView() {
                       {headerGroup.headers.map((header) => (
                         <th
                           key={header.id}
-                          className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
                           style={{
+                            ...theme.listView.tableHeader,
                             color: theme.colors.text.secondary,
                             borderBottom: `1px solid ${theme.colors.border.light}`,
                           }}
                         >
-                          <div className="flex items-center">
+                          <div
+                            style={
+                              {
+                                display: "flex",
+                                alignItems: "center",
+                              } as React.CSSProperties
+                            }
+                          >
                             {flexRender(header.column.columnDef.header, header.getContext())}
-                            {header.column.getCanSort() && <ArrowUpDown className="ml-2 h-4 w-4" />}
+                            {header.column.getCanSort() && <ArrowUpDown size={14} style={{ marginLeft: "0.5rem" }} />}
                           </div>
                         </th>
                       ))}
@@ -396,15 +408,15 @@ function ArticleCategoriesListView() {
                     <tr>
                       <td
                         colSpan={columns.length}
-                        className="px-6 py-12 text-center"
-                        style={{ color: theme.colors.text.secondary }}
+                        style={{
+                          ...theme.listView.tableCell,
+                          textAlign: "center",
+                          padding: "3rem 1.5rem",
+                        }}
                       >
-                        <div className="flex flex-col items-center justify-center">
-                          <Loader2
-                            className="h-8 w-8 animate-spin mb-4"
-                            style={{ color: theme.colors.accent.primary }}
-                          />
-                          <p>Loading categories...</p>
+                        <div style={theme.listView.loadingContainer}>
+                          <div className="animate-spin" style={theme.listView.loadingSpinner}></div>
+                          <span>Loading categories...</span>
                         </div>
                       </td>
                     </tr>
@@ -412,13 +424,20 @@ function ArticleCategoriesListView() {
                     <tr>
                       <td
                         colSpan={columns.length}
-                        className="px-6 py-12 text-center"
-                        style={{ color: theme.colors.text.secondary }}
+                        style={{
+                          ...theme.listView.tableCell,
+                          textAlign: "center",
+                          padding: "3rem 1.5rem",
+                        }}
                       >
-                        <div className="flex flex-col items-center justify-center">
-                          <FileText className="h-8 w-8 mb-4" style={{ color: theme.colors.text.tertiary }} />
-                          <p className="mb-2">No categories found</p>
-                          <p className="text-sm">Try adjusting your search or create a new category</p>
+                        <div style={theme.listView.emptyContainer}>
+                          <div style={theme.listView.emptyIconContainer}>
+                            <FileText size={32} style={{ color: theme.colors.text.tertiary }} />
+                          </div>
+                          <div style={theme.listView.emptyTitle}>No categories found</div>
+                          <div style={theme.listView.emptyMessage}>
+                            Try adjusting your search or create a new category
+                          </div>
                         </div>
                       </td>
                     </tr>
@@ -426,13 +445,16 @@ function ArticleCategoriesListView() {
                     table.getRowModel().rows.map((row) => (
                       <tr
                         key={row.id}
-                        className="hover:bg-gray-50 transition-colors"
                         style={{
+                          transition: theme.transitions.normal,
+                          backgroundColor: theme.colors.surface.secondary,
                           borderBottom: `1px solid ${theme.colors.border.light}`,
                         }}
+                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = theme.colors.state.hover)}
+                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = theme.colors.surface.secondary)}
                       >
                         {row.getVisibleCells().map((cell) => (
-                          <td key={cell.id} className="px-6 py-4 whitespace-nowrap">
+                          <td key={cell.id} style={theme.listView.tableCell}>
                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                           </td>
                         ))}
@@ -444,31 +466,51 @@ function ArticleCategoriesListView() {
             </div>
 
             <div
-              className="flex items-center justify-between px-6 py-4 border-t"
-              style={{ borderColor: theme.colors.border.light }}
+              style={
+                {
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "1rem 1.5rem",
+                  borderTop: `1px solid ${theme.colors.border.light}`,
+                } as React.CSSProperties
+              }
             >
-              <div className="flex items-center">
-                <span className="text-sm" style={{ color: theme.colors.text.secondary }}>
-                  Showing {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} to{" "}
-                  {Math.min(
-                    (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
-                    table.getFilteredRowModel().rows.length,
-                  )}{" "}
-                  of {table.getFilteredRowModel().rows.length} results
-                </span>
+              <div
+                style={
+                  {
+                    fontSize: "0.875rem",
+                    color: theme.colors.text.secondary,
+                  } as React.CSSProperties
+                }
+              >
+                Showing {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} to{" "}
+                {Math.min(
+                  (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
+                  table.getFilteredRowModel().rows.length,
+                )}{" "}
+                of {table.getFilteredRowModel().rows.length} results
               </div>
 
-              <div className="flex items-center gap-2">
+              <div
+                style={
+                  {
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                  } as React.CSSProperties
+                }
+              >
                 <select
                   value={table.getState().pagination.pageSize}
                   onChange={(e) => table.setPageSize(Number(e.target.value))}
-                  className="px-3 py-1 rounded-md text-sm"
                   style={{
+                    padding: "0.25rem 0.75rem",
+                    borderRadius: theme.borderRadius.md,
                     backgroundColor: theme.colors.surface.tertiary,
-                    borderWidth: "1px",
-                    borderStyle: "solid",
-                    borderColor: theme.colors.border.light,
+                    border: `1px solid ${theme.colors.border.light}`,
                     color: theme.colors.text.primary,
+                    fontSize: "0.875rem",
                   }}
                 >
                   {[10, 20, 30, 50, 100].map((pageSize) => (
@@ -478,71 +520,57 @@ function ArticleCategoriesListView() {
                   ))}
                 </select>
 
-                <div className="flex items-center gap-1">
+                <div style={theme.listView.pagination}>
                   <button
                     onClick={() => table.setPageIndex(0)}
                     disabled={!table.getCanPreviousPage()}
-                    className="p-1 rounded-md"
                     style={{
-                      backgroundColor: theme.colors.surface.tertiary,
-                      color: table.getCanPreviousPage() ? theme.colors.text.primary : theme.colors.text.disabled,
-                      borderWidth: "1px",
-                      borderStyle: "solid",
-                      borderColor: theme.colors.border.light,
-                      opacity: table.getCanPreviousPage() ? 1 : 0.5,
+                      ...theme.listView.paginationButton,
+                      opacity: !table.getCanPreviousPage() ? 0.5 : 1,
+                      cursor: !table.getCanPreviousPage() ? "not-allowed" : "pointer",
                     }}
+                    title="First page"
                   >
-                    <ChevronsLeft size={18} />
+                    <ChevronsLeft size={16} />
                   </button>
                   <button
                     onClick={() => table.previousPage()}
                     disabled={!table.getCanPreviousPage()}
-                    className="p-1 rounded-md"
                     style={{
-                      backgroundColor: theme.colors.surface.tertiary,
-                      color: table.getCanPreviousPage() ? theme.colors.text.primary : theme.colors.text.disabled,
-                      borderWidth: "1px",
-                      borderStyle: "solid",
-                      borderColor: theme.colors.border.light,
-                      opacity: table.getCanPreviousPage() ? 1 : 0.5,
+                      ...theme.listView.paginationButton,
+                      opacity: !table.getCanPreviousPage() ? 0.5 : 1,
+                      cursor: !table.getCanPreviousPage() ? "not-allowed" : "pointer",
                     }}
+                    title="Previous page"
                   >
-                    <ChevronLeft size={18} />
+                    <ChevronLeft size={16} />
                   </button>
-
-                  <span className="px-4 py-1 text-sm font-medium" style={{ color: theme.colors.text.primary }}>
+                  <span style={theme.listView.paginationText}>
                     Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
                   </span>
-
                   <button
                     onClick={() => table.nextPage()}
                     disabled={!table.getCanNextPage()}
-                    className="p-1 rounded-md"
                     style={{
-                      backgroundColor: theme.colors.surface.tertiary,
-                      color: table.getCanNextPage() ? theme.colors.text.primary : theme.colors.text.disabled,
-                      borderWidth: "1px",
-                      borderStyle: "solid",
-                      borderColor: theme.colors.border.light,
-                      opacity: table.getCanNextPage() ? 1 : 0.5,
+                      ...theme.listView.paginationButton,
+                      opacity: !table.getCanNextPage() ? 0.5 : 1,
+                      cursor: !table.getCanNextPage() ? "not-allowed" : "pointer",
                     }}
+                    title="Next page"
                   >
-                    <ChevronRight size={18} />
+                    <ChevronRight size={16} />
                   </button>
                   <button
                     onClick={() => table.setPageIndex(table.getPageCount() - 1)}
                     disabled={!table.getCanNextPage()}
-                    className="p-1 rounded-md"
                     style={{
-                      backgroundColor: theme.colors.surface.tertiary,
-                      color: table.getCanNextPage() ? theme.colors.text.primary : theme.colors.text.disabled,
-                      borderWidth: "1px",
-                      borderStyle: "solid",
-                      borderColor: theme.colors.border.light,
-                      opacity: table.getCanNextPage() ? 1 : 0.5,
+                      ...theme.listView.paginationButton,
+                      opacity: !table.getCanNextPage() ? 0.5 : 1,
+                      cursor: !table.getCanNextPage() ? "not-allowed" : "pointer",
                     }}
+                    title="Last page"
                   >
-                    <ChevronsRight size={18} />
+                    <ChevronsRight size={16} />
                   </button>
                 </div>
               </div>

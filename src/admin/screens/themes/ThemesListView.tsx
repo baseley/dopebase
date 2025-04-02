@@ -38,24 +38,18 @@ const themesColumns = [
   {
     header: "Identifier",
     accessorKey: "id",
-    cell: ({ getValue }) => (
-      <div
-        style={{ fontFamily: "monospace", fontSize: theme.typography.fontSizes.xs, color: theme.colors.text.secondary }}
-      >
-        {getValue()}
-      </div>
-    ),
+    cell: ({ getValue }) => <div style={theme.listView.idCell}>{getValue()}</div>,
   },
   {
     header: "Name",
     accessorKey: "name",
-    cell: ({ getValue }) => <div style={{ fontWeight: theme.typography.fontWeights.medium }}>{getValue()}</div>,
+    cell: ({ getValue }) => <div style={theme.listView.nameCell}>{getValue()}</div>,
   },
   {
     header: "Description",
     accessorKey: "description",
     cell: ({ getValue }) => (
-      <div style={{ maxWidth: "400px", fontSize: theme.typography.fontSizes.sm, color: theme.colors.text.secondary }}>
+      <div style={theme.listView.descriptionCell}>
         {getValue() || <span style={{ fontStyle: "italic" }}>No description</span>}
       </div>
     ),
@@ -63,20 +57,7 @@ const themesColumns = [
   {
     header: "Version",
     accessorKey: "version",
-    cell: ({ getValue }) => (
-      <div
-        style={{
-          display: "inline-block",
-          padding: "2px 8px",
-          borderRadius: theme.borderRadius.md,
-          border: `1px solid ${theme.colors.border.light}`,
-          fontSize: theme.typography.fontSizes.xs,
-          fontFamily: "monospace",
-        }}
-      >
-        v{getValue()}
-      </div>
-    ),
+    cell: ({ getValue }) => <div style={theme.listView.versionCell}>v{getValue()}</div>,
   },
   {
     accessorKey: "actions",
@@ -103,32 +84,13 @@ function ActionsItemView({ data }: { data: Theme }) {
     }
   }
 
-  const buttonStyle = {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: "6px 12px",
-    borderRadius: theme.borderRadius.md,
-    transition: theme.transitions.normal,
-    fontSize: theme.typography.fontSizes.sm,
-    fontWeight: theme.typography.fontWeights.medium,
-    cursor: "pointer",
-    border: "none",
-  }
-
   if (data.selected) {
     return (
       <div
         style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "6px",
-          padding: "6px 12px",
-          borderRadius: theme.borderRadius.md,
+          ...theme.listView.statusBadge,
           backgroundColor: `${theme.colors.accent.primary}20`,
           color: theme.colors.accent.primary,
-          fontSize: theme.typography.fontSizes.sm,
-          fontWeight: theme.typography.fontWeights.medium,
         }}
       >
         <Check size={14} />
@@ -142,7 +104,7 @@ function ActionsItemView({ data }: { data: Theme }) {
       onClick={handleInstall}
       disabled={isActivating}
       style={{
-        ...buttonStyle,
+        ...theme.listView.actionButton,
         backgroundColor: "transparent",
         border: `1px solid ${theme.colors.accent.primary}30`,
         color: theme.colors.accent.primary,
@@ -216,142 +178,17 @@ export const ThemesListView = () => {
     },
   })
 
-  const cardStyle = {
-    backgroundColor: theme.colors.surface.secondary,
-    borderRadius: theme.borderRadius.lg,
-    boxShadow: theme.shadows.md,
-    overflow: "hidden",
-    border: `1px solid ${theme.colors.border.light}`,
-    maxWidth: theme.content.maxWidth,
-    margin: "0 auto",
-  }
-
-  const cardHeaderStyle = {
-    padding: theme.spacing[6],
-    borderBottom: `1px solid ${theme.colors.border.light}`,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-  }
-
-  const cardBodyStyle = {
-    padding: theme.spacing[6],
-  }
-
-  const tableStyle = {
-    width: "100%",
-    borderCollapse: "collapse",
-    borderSpacing: "0",
-  }
-
-  const tableHeaderStyle = {
-    backgroundColor: theme.colors.surface.tertiary,
-    color: theme.colors.text.secondary,
-    fontSize: theme.typography.fontSizes.sm,
-    fontWeight: theme.typography.fontWeights.semibold,
-    textAlign: "left",
-    padding: theme.table.cellPadding,
-    borderBottom: `1px solid ${theme.colors.border.light}`,
-  }
-
-  const tableCellStyle = {
-    padding: theme.table.cellPadding,
-    borderBottom: `1px solid ${theme.colors.border.light}`,
-    color: theme.colors.text.primary,
-    fontSize: theme.typography.fontSizes.sm,
-  }
-
-  const inputStyle = {
-    width: "100%",
-    padding: "10px 16px",
-    backgroundColor: theme.colors.surface.tertiary,
-    border: `1px solid ${theme.colors.border.light}`,
-    borderRadius: theme.borderRadius.md,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing[4],
-    fontSize: theme.typography.fontSizes.sm,
-    outline: "none",
-    transition: theme.transitions.normal,
-  }
-
-  const buttonPrimaryStyle = {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: "8px 16px",
-    backgroundColor: theme.colors.accent.primary,
-    color: "#ffffff",
-    borderRadius: theme.borderRadius.md,
-    fontWeight: theme.typography.fontWeights.medium,
-    transition: theme.transitions.normal,
-    cursor: "pointer",
-    border: "none",
-    fontSize: theme.typography.fontSizes.sm,
-    textDecoration: "none",
-  }
-
-  const paginationStyle = {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "flex-end",
-    marginTop: theme.spacing[4],
-    gap: theme.spacing[2],
-  }
-
-  const paginationButtonStyle = {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "32px",
-    height: "32px",
-    backgroundColor: theme.colors.surface.tertiary,
-    color: theme.colors.text.primary,
-    borderRadius: theme.borderRadius.md,
-    transition: theme.transitions.normal,
-    cursor: "pointer",
-    border: "none",
-  }
-
-  const paginationTextStyle = {
-    color: theme.colors.text.secondary,
-    fontSize: theme.typography.fontSizes.sm,
-    margin: `0 ${theme.spacing[2]}`,
-  }
-
-  const tabStyle = {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: "8px 16px",
-    borderRadius: theme.borderRadius.md,
-    transition: theme.transitions.normal,
-    cursor: "pointer",
-    fontSize: theme.typography.fontSizes.sm,
-    fontWeight: theme.typography.fontWeights.medium,
-    marginRight: theme.spacing[2],
-  }
-
   return (
-    <div style={cardStyle}>
-      <div style={cardHeaderStyle}>
-        <h1
-          style={{
-            fontSize: theme.typography.fontSizes["2xl"],
-            fontWeight: theme.typography.fontWeights.semibold,
-            color: theme.colors.text.primary,
-            margin: 0,
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-          }}
-        >
+    <div style={theme.listView.card}>
+      <div style={theme.listView.cardHeader}>
+        <h1 style={theme.listView.title}>
           <Palette size={24} style={{ color: theme.colors.accent.primary }} />
           Theme Gallery
         </h1>
         <div style={{ display: "flex", gap: "12px" }}>
           <div
             style={{
-              ...tabStyle,
+              ...theme.listView.tab,
               backgroundColor: activeTab === "all" ? theme.colors.accent.primary : theme.colors.surface.tertiary,
               color: activeTab === "all" ? "#ffffff" : theme.colors.text.primary,
             }}
@@ -361,7 +198,7 @@ export const ThemesListView = () => {
           </div>
           <div
             style={{
-              ...tabStyle,
+              ...theme.listView.tab,
               backgroundColor: activeTab === "active" ? theme.colors.accent.primary : theme.colors.surface.tertiary,
               color: activeTab === "active" ? "#ffffff" : theme.colors.text.primary,
             }}
@@ -371,35 +208,25 @@ export const ThemesListView = () => {
           </div>
         </div>
       </div>
-      <div style={cardBodyStyle}>
-        <div style={{ position: "relative" }}>
+      <div style={theme.listView.cardBody}>
+        <div style={theme.listView.searchContainer}>
           <input
             type="text"
             placeholder="Search themes..."
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}
-            style={inputStyle}
+            style={theme.listView.searchInput}
           />
-          <Search
-            size={18}
-            style={{
-              position: "absolute",
-              right: "16px",
-              top: "50%",
-              transform: "translateY(-50%)",
-              marginTop: "-8px",
-              color: theme.colors.text.secondary,
-            }}
-          />
+          <Search size={18} style={theme.listView.searchIcon} />
         </div>
 
         <div style={{ overflowX: "auto" }}>
-          <table style={tableStyle}>
+          <table style={theme.listView.table}>
             <thead>
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
-                    <th key={header.id} style={tableHeaderStyle}>
+                    <th key={header.id} style={theme.listView.tableHeader}>
                       {flexRender(header.column.columnDef.header, header.getContext())}
                     </th>
                   ))}
@@ -411,19 +238,10 @@ export const ThemesListView = () => {
                 <tr>
                   <td
                     colSpan={themesColumns.length}
-                    style={{ ...tableCellStyle, textAlign: "center", padding: "24px" }}
+                    style={{ ...theme.listView.tableCell, textAlign: "center", padding: "24px" }}
                   >
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "12px" }}>
-                      <div
-                        className="animate-spin"
-                        style={{
-                          width: "20px",
-                          height: "20px",
-                          borderRadius: "50%",
-                          border: `2px solid ${theme.colors.accent.primary}`,
-                          borderTopColor: "transparent",
-                        }}
-                      ></div>
+                    <div style={theme.listView.loadingContainer}>
+                      <div className="animate-spin" style={theme.listView.loadingSpinner}></div>
                       Loading themes...
                     </div>
                   </td>
@@ -432,32 +250,14 @@ export const ThemesListView = () => {
                 <tr>
                   <td
                     colSpan={themesColumns.length}
-                    style={{ ...tableCellStyle, textAlign: "center", padding: "24px" }}
+                    style={{ ...theme.listView.tableCell, textAlign: "center", padding: "24px" }}
                   >
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
-                      <div
-                        style={{
-                          width: "64px",
-                          height: "64px",
-                          borderRadius: "50%",
-                          backgroundColor: `${theme.colors.surface.tertiary}`,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          marginBottom: "8px",
-                        }}
-                      >
+                    <div style={theme.listView.emptyContainer}>
+                      <div style={theme.listView.emptyIconContainer}>
                         <Palette size={32} style={{ color: theme.colors.text.secondary }} />
                       </div>
-                      <div
-                        style={{
-                          fontSize: theme.typography.fontSizes.lg,
-                          fontWeight: theme.typography.fontWeights.medium,
-                        }}
-                      >
-                        No themes found
-                      </div>
-                      <div style={{ color: theme.colors.text.secondary, maxWidth: "400px", textAlign: "center" }}>
+                      <div style={theme.listView.emptyTitle}>No themes found</div>
+                      <div style={theme.listView.emptyMessage}>
                         {activeTab === "active"
                           ? "You don't have any active theme. Try switching to 'All Themes' to activate one."
                           : "Try adjusting your search or contact your administrator to add themes to your collection."}
@@ -487,7 +287,7 @@ export const ThemesListView = () => {
                     }
                   >
                     {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} style={tableCellStyle}>
+                      <td key={cell.id} style={theme.listView.tableCell}>
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </td>
                     ))}
@@ -498,12 +298,12 @@ export const ThemesListView = () => {
           </table>
         </div>
 
-        <div style={paginationStyle}>
+        <div style={theme.listView.pagination}>
           <button
             onClick={() => table.setPageIndex(0)}
             disabled={!table.getCanPreviousPage()}
             style={{
-              ...paginationButtonStyle,
+              ...theme.listView.paginationButton,
               opacity: !table.getCanPreviousPage() ? 0.5 : 1,
               cursor: !table.getCanPreviousPage() ? "not-allowed" : "pointer",
             }}
@@ -515,7 +315,7 @@ export const ThemesListView = () => {
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
             style={{
-              ...paginationButtonStyle,
+              ...theme.listView.paginationButton,
               opacity: !table.getCanPreviousPage() ? 0.5 : 1,
               cursor: !table.getCanPreviousPage() ? "not-allowed" : "pointer",
             }}
@@ -523,14 +323,14 @@ export const ThemesListView = () => {
           >
             <ChevronLeft size={16} />
           </button>
-          <span style={paginationTextStyle}>
+          <span style={theme.listView.paginationText}>
             Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
           </span>
           <button
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
             style={{
-              ...paginationButtonStyle,
+              ...theme.listView.paginationButton,
               opacity: !table.getCanNextPage() ? 0.5 : 1,
               cursor: !table.getCanNextPage() ? "not-allowed" : "pointer",
             }}
@@ -542,7 +342,7 @@ export const ThemesListView = () => {
             onClick={() => table.setPageIndex(table.getPageCount() - 1)}
             disabled={!table.getCanNextPage()}
             style={{
-              ...paginationButtonStyle,
+              ...theme.listView.paginationButton,
               opacity: !table.getCanNextPage() ? 0.5 : 1,
               cursor: !table.getCanNextPage() ? "not-allowed" : "pointer",
             }}

@@ -1,6 +1,4 @@
 "use client"
-
-import type React from "react"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import {
@@ -16,6 +14,15 @@ import useCurrentUser from "@/modules/auth/hooks/useCurrentUser"
 import { authFetch, authPost } from "@/modules/auth/utils/authFetch"
 import { websiteURL } from "@/config/config"
 import { theme } from "@/lib/theme"
+
+// Define a type for the settings data
+interface Setting {
+  id: string
+  name: string
+  value: string
+  created_at: string
+  updated_at: string
+}
 
 const SettingsColumns = [
   {
@@ -43,7 +50,7 @@ const SettingsColumns = [
   },
 ]
 
-function ActionsItemView({ data }: any) {
+function ActionsItemView({ data }: { data: Setting }) {
   const router = useRouter()
 
   const handleView = () => router.push(`./settings/view?id=${data.id}`)
@@ -55,23 +62,12 @@ function ActionsItemView({ data }: any) {
     }
   }
 
-  const buttonStyle: React.CSSProperties = {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "32px",
-    height: "32px",
-    borderRadius: theme.borderRadius.md,
-    transition: theme.transitions.normal,
-    marginRight: theme.spacing[2],
-  }
-
   return (
     <div className="flex items-center">
       <button
         onClick={handleView}
         style={{
-          ...buttonStyle,
+          ...theme.listView.iconButton,
           backgroundColor: theme.colors.state.hover,
           color: theme.colors.text.primary,
         }}
@@ -82,7 +78,7 @@ function ActionsItemView({ data }: any) {
       <button
         onClick={handleEdit}
         style={{
-          ...buttonStyle,
+          ...theme.listView.iconButton,
           backgroundColor: theme.colors.accent.muted,
           color: theme.colors.accent.primary,
         }}
@@ -93,7 +89,7 @@ function ActionsItemView({ data }: any) {
       <button
         onClick={handleDelete}
         style={{
-          ...buttonStyle,
+          ...theme.listView.iconButton,
           backgroundColor: "rgba(239, 68, 68, 0.15)",
           color: theme.colors.feedback.error,
         }}
@@ -107,7 +103,7 @@ function ActionsItemView({ data }: any) {
 
 function SettingsListView() {
   const [isLoading, setIsLoading] = useState(true)
-  const [data, setData] = useState([])
+  const [data, setData] = useState<Setting[]>([])
   const [user, token, loading] = useCurrentUser()
   const [searchValue, setSearchValue] = useState("")
 
@@ -137,153 +133,42 @@ function SettingsListView() {
     },
   })
 
-  const cardStyle: React.CSSProperties = {
-    backgroundColor: theme.colors.surface.secondary,
-    borderRadius: theme.borderRadius.lg,
-    boxShadow: theme.shadows.md,
-    overflow: "hidden",
-    border: `1px solid ${theme.colors.border.light}`,
-  }
-
-  const cardHeaderStyle: React.CSSProperties = {
-    padding: theme.spacing[6],
-    borderBottom: `1px solid ${theme.colors.border.light}`,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-  }
-
-  const cardBodyStyle: React.CSSProperties = {
-    padding: theme.spacing[6],
-  }
-
-  const tableStyle: React.CSSProperties = {
-    width: "100%",
-    borderCollapse: "collapse",
-    borderSpacing: "0",
-  }
-
-  const tableHeaderStyle: React.CSSProperties = {
-    backgroundColor: theme.colors.surface.tertiary,
-    color: theme.colors.text.secondary,
-    fontSize: theme.typography.fontSizes.sm,
-    fontWeight: theme.typography.fontWeights.semibold,
-    textAlign: "left",
-    padding: theme.table.cellPadding,
-    borderBottom: `1px solid ${theme.colors.border.light}`,
-  }
-
-  const tableCellStyle: React.CSSProperties = {
-    padding: theme.table.cellPadding,
-    borderBottom: `1px solid ${theme.colors.border.light}`,
-    color: theme.colors.text.primary,
-    fontSize: theme.typography.fontSizes.sm,
-  }
-
-  const inputStyle: React.CSSProperties = {
-    width: "100%",
-    padding: "10px 16px",
-    backgroundColor: theme.colors.surface.tertiary,
-    border: `1px solid ${theme.colors.border.light}`,
-    borderRadius: theme.borderRadius.md,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing[4],
-    fontSize: theme.typography.fontSizes.sm,
-    outline: "none",
-    transition: theme.transitions.normal,
-  }
-
-  const buttonPrimaryStyle: React.CSSProperties = {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: "8px 16px",
-    backgroundColor: theme.colors.accent.primary,
-    color: "#ffffff",
-    borderRadius: theme.borderRadius.md,
-    fontWeight: theme.typography.fontWeights.medium,
-    transition: theme.transitions.normal,
-    cursor: "pointer",
-    border: "none",
-    fontSize: theme.typography.fontSizes.sm,
-  }
-
-  const paginationStyle: React.CSSProperties = {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "flex-end",
-    marginTop: theme.spacing[4],
-    gap: theme.spacing[2],
-  }
-
-  const paginationButtonStyle: React.CSSProperties = {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "32px",
-    height: "32px",
-    backgroundColor: theme.colors.surface.tertiary,
-    color: theme.colors.text.primary,
-    borderRadius: theme.borderRadius.md,
-    transition: theme.transitions.normal,
-    cursor: "pointer",
-    border: "none",
-  }
-
-  const paginationTextStyle: React.CSSProperties = {
-    color: theme.colors.text.secondary,
-    fontSize: theme.typography.fontSizes.sm,
-    margin: `0 ${theme.spacing[2]}`,
-  }
-
   return (
     <div style={{ maxWidth: theme.content.maxWidth, margin: "0 auto" }}>
-      <div style={cardStyle}>
-        <div style={cardHeaderStyle}>
-          <h1
+      <div style={theme.listView.card}>
+        <div style={theme.listView.cardHeader}>
+          <h1 style={theme.listView.title}>Settings</h1>
+          <a
+            href="./settings/add"
             style={{
-              fontSize: theme.typography.fontSizes["2xl"],
-              fontWeight: theme.typography.fontWeights.semibold,
-              color: theme.colors.text.primary,
-              margin: 0,
+              ...theme.listView.actionButton,
+              backgroundColor: theme.colors.accent.primary,
+              color: "#ffffff",
             }}
           >
-            Settings
-          </h1>
-          <a href="./settings/add" style={buttonPrimaryStyle}>
             <Plus size={16} style={{ marginRight: "8px" }} />
             Add New
           </a>
         </div>
-        <div style={cardBodyStyle}>
-          <div style={{ position: "relative" }}>
+        <div style={theme.listView.cardBody}>
+          <div style={theme.listView.searchContainer}>
             <input
               type="text"
               placeholder="Search settings..."
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
-              style={inputStyle}
+              style={theme.listView.searchInput}
             />
-            <Search
-              size={18}
-              style={{
-                position: "absolute",
-                right: "16px",
-                top: "50%",
-                transform: "translateY(-50%)",
-                marginTop: "-8px",
-                color: theme.colors.text.secondary,
-              }}
-            />
+            <Search size={18} style={theme.listView.searchIcon} />
           </div>
 
           <div style={{ overflowX: "auto" }}>
-            <table style={tableStyle}>
+            <table style={theme.listView.table}>
               <thead>
                 {table.getHeaderGroups().map((headerGroup) => (
                   <tr key={headerGroup.id}>
                     {headerGroup.headers.map((header) => (
-                      <th key={header.id} style={tableHeaderStyle}>
+                      <th key={header.id} style={theme.listView.tableHeader}>
                         {flexRender(header.column.columnDef.header, header.getContext())}
                       </th>
                     ))}
@@ -295,19 +180,10 @@ function SettingsListView() {
                   <tr>
                     <td
                       colSpan={SettingsColumns.length}
-                      style={{ ...tableCellStyle, textAlign: "center", padding: "24px" }}
+                      style={{ ...theme.listView.tableCell, textAlign: "center", padding: "24px" }}
                     >
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "12px" }}>
-                        <div
-                          className="animate-spin"
-                          style={{
-                            width: "20px",
-                            height: "20px",
-                            borderRadius: "50%",
-                            border: `2px solid ${theme.colors.accent.primary}`,
-                            borderTopColor: "transparent",
-                          }}
-                        ></div>
+                      <div style={theme.listView.loadingContainer}>
+                        <div className="animate-spin" style={theme.listView.loadingSpinner}></div>
                         Loading settings...
                       </div>
                     </td>
@@ -316,9 +192,9 @@ function SettingsListView() {
                   <tr>
                     <td
                       colSpan={SettingsColumns.length}
-                      style={{ ...tableCellStyle, textAlign: "center", padding: "24px" }}
+                      style={{ ...theme.listView.tableCell, textAlign: "center", padding: "24px" }}
                     >
-                      No settings found
+                      <div style={theme.listView.emptyMessage}>No settings found</div>
                     </td>
                   </tr>
                 ) : (
@@ -333,7 +209,7 @@ function SettingsListView() {
                       onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = theme.colors.surface.secondary)}
                     >
                       {row.getVisibleCells().map((cell) => (
-                        <td key={cell.id} style={tableCellStyle}>
+                        <td key={cell.id} style={theme.listView.tableCell}>
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
                         </td>
                       ))}
@@ -344,12 +220,12 @@ function SettingsListView() {
             </table>
           </div>
 
-          <div style={paginationStyle}>
+          <div style={theme.listView.pagination}>
             <button
               onClick={() => table.setPageIndex(0)}
               disabled={!table.getCanPreviousPage()}
               style={{
-                ...paginationButtonStyle,
+                ...theme.listView.paginationButton,
                 opacity: !table.getCanPreviousPage() ? 0.5 : 1,
                 cursor: !table.getCanPreviousPage() ? "not-allowed" : "pointer",
               }}
@@ -361,7 +237,7 @@ function SettingsListView() {
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
               style={{
-                ...paginationButtonStyle,
+                ...theme.listView.paginationButton,
                 opacity: !table.getCanPreviousPage() ? 0.5 : 1,
                 cursor: !table.getCanPreviousPage() ? "not-allowed" : "pointer",
               }}
@@ -369,14 +245,14 @@ function SettingsListView() {
             >
               <ChevronLeft size={16} />
             </button>
-            <span style={paginationTextStyle}>
+            <span style={theme.listView.paginationText}>
               Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
             </span>
             <button
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
               style={{
-                ...paginationButtonStyle,
+                ...theme.listView.paginationButton,
                 opacity: !table.getCanNextPage() ? 0.5 : 1,
                 cursor: !table.getCanNextPage() ? "not-allowed" : "pointer",
               }}
@@ -388,7 +264,7 @@ function SettingsListView() {
               onClick={() => table.setPageIndex(table.getPageCount() - 1)}
               disabled={!table.getCanNextPage()}
               style={{
-                ...paginationButtonStyle,
+                ...theme.listView.paginationButton,
                 opacity: !table.getCanNextPage() ? 0.5 : 1,
                 cursor: !table.getCanNextPage() ? "not-allowed" : "pointer",
               }}
