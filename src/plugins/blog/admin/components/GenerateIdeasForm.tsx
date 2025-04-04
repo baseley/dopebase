@@ -1,111 +1,290 @@
-// @ts-nocheck
-'use client'
-import React, { useState } from 'react'
-import { Formik } from 'formik'
-import styles from '../../../../admin/themes/admin.module.css'
-import { authPost } from '../../../../modules/auth/utils/authFetch'
-import { pluginsAPIURL } from '../../../../config/config'
+"use client"
+
+import { useState } from "react"
+import { Formik, Form, ErrorMessage } from "formik"
+import { Sparkles, Loader2, Lightbulb, Folder } from "lucide-react"
+import { authPost } from "@/modules/auth/utils/authFetch"
+import { pluginsAPIURL } from "@/config/config"
+import { theme } from "@/lib/theme"
+
+interface GenerateIdeasFormValues {
+  prompt: string
+  category: string
+}
 
 const GenerateIdeasForm = () => {
   const [isLoading, setIsLoading] = useState(false)
-  const [originalData, setOriginalData] = useState({
-    prompt: 'Generate 10 title ideas for a blog post about X topic',
-    category: 'Uncategorized',
-  })
+  const [formSubmitted, setFormSubmitted] = useState(false)
 
-  const generateIdeas = async (modifiedData, setSubmitting) => {
-    console.log(modifiedData)
+  const initialValues: GenerateIdeasFormValues = {
+    prompt: "Generate 10 title ideas for a blog post about X topic",
+    category: "Uncategorized",
+  }
+
+  const validateForm = (values: GenerateIdeasFormValues) => {
+    const errors: Partial<GenerateIdeasFormValues> = {}
+
+    if (!values.prompt) {
+      errors.prompt = "Prompt is required"
+    }
+
+    return errors
+  }
+
+  const handleSubmit = async (values: GenerateIdeasFormValues, { setSubmitting }) => {
     setIsLoading(true)
-    const res = await authPost(`${pluginsAPIURL}admin/blog/ai/generate-ideas`, {
-      ...modifiedData,
-    })
-    console.log(res)
-    setSubmitting(false)
-    // setIsLoading(false)
-    // reload
-    window.location.reload()
+    setFormSubmitted(true)
+
+    try {
+      const response = await authPost(`${pluginsAPIURL}admin/blog/ai/generate-ideas`, values)
+      console.log("Generated ideas:", response)
+      window.location.reload()
+    } catch (error) {
+      console.error("Error generating ideas:", error)
+      setIsLoading(false)
+      setFormSubmitted(false)
+      alert("Failed to generate ideas. Please try again.")
+    }
   }
 
   if (isLoading) {
-    return <>Generating ideas...</>
+    return (
+      <div
+        style={{
+          padding: "2rem",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "1rem",
+          backgroundColor: theme.colors.surface.secondary,
+          borderRadius: theme.borderRadius.lg,
+          border: `1px solid ${theme.colors.border.light}`,
+        }}
+      >
+        <div
+          className="animate-spin"
+          style={{
+            width: "40px",
+            height: "40px",
+            borderRadius: "50%",
+            border: `3px solid ${theme.colors.accent.primary}`,
+            borderTopColor: "transparent",
+          }}
+        ></div>
+        <p
+          style={{
+            fontSize: theme.typography.fontSizes.lg,
+            fontWeight: theme.typography.fontWeights.medium,
+            color: theme.colors.text.primary,
+          }}
+        >
+          Generating ideas...
+        </p>
+        <p
+          style={{
+            fontSize: theme.typography.fontSizes.sm,
+            color: theme.colors.text.secondary,
+            textAlign: "center",
+            maxWidth: "400px",
+          }}
+        >
+          This may take a moment as our AI crafts creative article ideas for you.
+        </p>
+      </div>
+    )
   }
 
   return (
-    <div className={`${styles.Card} ${styles.FormCard} Card FormCard`}>
-      <div className={`${styles.CardBody} CardBody`}>
-        <h3>Generate article ideas</h3>
-        <Formik
-          initialValues={originalData}
-          validate={values => {
-            values = { ...values }
-            const errors = {}
-            {
-              if (!values.prompt) {
-                errors.prompt = 'Field Required!'
-              }
-            }
-
-            return errors
+    <div
+      style={{
+        backgroundColor: theme.colors.surface.secondary,
+        borderRadius: theme.borderRadius.lg,
+        border: `1px solid ${theme.colors.border.light}`,
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          padding: "1rem 1.5rem",
+          borderBottom: `1px solid ${theme.colors.border.light}`,
+          backgroundColor: theme.colors.surface.tertiary,
+          display: "flex",
+          alignItems: "center",
+          gap: "0.5rem",
+        }}
+      >
+        <Lightbulb size={18} style={{ color: theme.colors.accent.primary }} />
+        <h3
+          style={{
+            fontSize: theme.typography.fontSizes.lg,
+            fontWeight: theme.typography.fontWeights.semibold,
+            color: theme.colors.text.primary,
+            margin: 0,
           }}
-          onSubmit={(values, { setSubmitting }) => {
-            generateIdeas(values, setSubmitting)
-          }}>
-          {({
-            values,
-            errors,
-            touched,
-            handleChange,
-            handleBlur,
-            handleSubmit,
-            isSubmitting,
-            /* and other goodies */
-          }) => (
-            <form onSubmit={handleSubmit}>
-              {/* Insert all edit form fields here */}
-              <div
-                className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                <label className={`${styles.FormLabel} FormLabel`}>
+        >
+          Generate Article Ideas with AI
+        </h3>
+      </div>
+
+      <div style={{ padding: "1.5rem" }}>
+        <Formik initialValues={initialValues} validate={validateForm} onSubmit={handleSubmit}>
+          {({ isSubmitting, values, handleChange, handleBlur }) => (
+            <Form>
+              <div style={{ marginBottom: "1.5rem" }}>
+                <label
+                  htmlFor="prompt"
+                  style={{
+                    display: "block",
+                    marginBottom: "0.5rem",
+                    fontSize: theme.typography.fontSizes.sm,
+                    fontWeight: theme.typography.fontWeights.medium,
+                    color: theme.colors.text.primary,
+                  }}
+                >
                   AI Prompt
                 </label>
-                <input
-                  className={`${styles.FormTextField} FormTextField`}
-                  type="prompt"
+                <textarea
+                  id="prompt"
                   name="prompt"
+                  value={values.prompt}
                   onChange={handleChange}
                   onBlur={handleBlur}
-                  value={values.prompt}
+                  disabled={isSubmitting}
+                  style={{
+                    width: "100%",
+                    padding: "0.75rem 1rem",
+                    borderRadius: theme.borderRadius.md,
+                    border: `1px solid ${theme.colors.border.medium}`,
+                    backgroundColor: theme.colors.surface.primary,
+                    fontSize: theme.typography.fontSizes.sm,
+                    color: theme.colors.text.primary,
+                    minHeight: "100px",
+                    resize: "vertical",
+                  }}
+                  placeholder="Describe what kind of article ideas you want to generate..."
                 />
-                <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                  {errors.prompt && touched.prompt && errors.prompt}
-                </p>
+                <ErrorMessage name="prompt">
+                  {(msg) => (
+                    <div
+                      style={{
+                        color: theme.colors.feedback.error,
+                        fontSize: theme.typography.fontSizes.xs,
+                        marginTop: "0.5rem",
+                      }}
+                    >
+                      {msg}
+                    </div>
+                  )}
+                </ErrorMessage>
+                <div
+                  style={{
+                    fontSize: theme.typography.fontSizes.xs,
+                    color: theme.colors.text.tertiary,
+                    marginTop: "0.5rem",
+                  }}
+                >
+                  Example: "Generate 10 title ideas for a blog post about artificial intelligence in healthcare"
+                </div>
               </div>
-              <div
-                className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                <label className={`${styles.FormLabel} FormLabel`}>
+
+              <div style={{ marginBottom: "2rem" }}>
+                <label
+                  htmlFor="category"
+                  style={{
+                    display: "block",
+                    marginBottom: "0.5rem",
+                    fontSize: theme.typography.fontSizes.sm,
+                    fontWeight: theme.typography.fontWeights.medium,
+                    color: theme.colors.text.primary,
+                  }}
+                >
                   Category
                 </label>
-                <input
-                  className={`${styles.FormTextField} FormTextField`}
-                  type="category"
-                  name="category"
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  value={values.category}
-                />
-                <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                  {errors.category && touched.category && errors.category}
-                </p>
+                <div style={{ position: "relative" }}>
+                  <Folder
+                    size={16}
+                    style={{
+                      position: "absolute",
+                      left: "0.75rem",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      color: theme.colors.text.tertiary,
+                    }}
+                  />
+                  <input
+                    id="category"
+                    name="category"
+                    value={values.category}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    disabled={isSubmitting}
+                    style={{
+                      width: "100%",
+                      padding: "0.75rem 1rem 0.75rem 2.5rem",
+                      borderRadius: theme.borderRadius.md,
+                      border: `1px solid ${theme.colors.border.medium}`,
+                      backgroundColor: theme.colors.surface.primary,
+                      fontSize: theme.typography.fontSizes.sm,
+                      color: theme.colors.text.primary,
+                    }}
+                    placeholder="Enter a category for the generated ideas"
+                  />
+                </div>
+                <ErrorMessage name="category">
+                  {(msg) => (
+                    <div
+                      style={{
+                        color: theme.colors.feedback.error,
+                        fontSize: theme.typography.fontSizes.xs,
+                        marginTop: "0.5rem",
+                      }}
+                    >
+                      {msg}
+                    </div>
+                  )}
+                </ErrorMessage>
               </div>
+
               <div
-                className={`${styles.FormActionContainer} FormActionContainer`}>
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                }}
+              >
                 <button
-                  className={`${styles.PrimaryButton} PrimaryButton`}
                   type="submit"
-                  disabled={isSubmitting}>
-                  Generate ideas with AI
+                  disabled={isSubmitting}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: "0.75rem 1.5rem",
+                    borderRadius: theme.borderRadius.md,
+                    backgroundColor: theme.colors.accent.primary,
+                    color: "#ffffff",
+                    fontSize: theme.typography.fontSizes.sm,
+                    fontWeight: theme.typography.fontWeights.medium,
+                    border: "none",
+                    cursor: isSubmitting ? "not-allowed" : "pointer",
+                    opacity: isSubmitting ? 0.7 : 1,
+                    transition: theme.transitions.normal,
+                  }}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 size={18} className="mr-2 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles size={18} className="mr-2" />
+                      Generate Ideas with AI
+                    </>
+                  )}
                 </button>
               </div>
-            </form>
+            </Form>
           )}
         </Formik>
       </div>
@@ -114,3 +293,4 @@ const GenerateIdeasForm = () => {
 }
 
 export default GenerateIdeasForm
+
