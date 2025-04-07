@@ -661,7 +661,11 @@ function TaxiCarCategoriesListView() {
                                 }}
                                 style={{ marginRight: "0.5rem" }}
                               />
-                              <label htmlFor={`column-${column.id}`}>{column.header as string}</label>
+                              <label htmlFor={`column-${column.id}`}>
+                                {typeof column.header === "string"
+                                  ? column.header
+                                  : column.id.charAt(0).toUpperCase() + column.id.slice(1)}
+                              </label>
                             </div>
                           )
                         })}
