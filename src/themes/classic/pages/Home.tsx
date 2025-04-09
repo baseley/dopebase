@@ -5,7 +5,22 @@ import NavigationMenu from "../components/NavigationMenu"
 import Footer from "../components/Footer"
 import MetaHeader from "../components/MetaHeader"
 import { theme } from "@/lib/theme"
-import { ArrowDown, ArrowRight, Sparkles, Zap, CheckCircle } from "lucide-react"
+import {
+  ArrowDown,
+  ArrowRight,
+  Sparkles,
+  Zap,
+  CheckCircle,
+  Code,
+  Layers,
+  Rocket,
+  Smartphone,
+  Globe,
+  Database,
+  PenTool,
+  Users,
+  Shield,
+} from "lucide-react"
 
 const seoConfig = {
   seoDescription: "Open-source WordPress alternative. Website builder, app maker, blog builder, and more.",
@@ -113,7 +128,7 @@ const Section = ({ title, description, children, dark = false, centered = false 
               marginBottom: theme.spacing[4],
               textAlign: centered ? "center" : "left",
               position: "relative",
-              display: "inline-block",
+              display: centered ? "block" : "inline-block",
             }}
           >
             {title}
@@ -294,7 +309,7 @@ const ThemePreview = ({ title, description, imageSrc }) => {
         }}
       >
         <img
-          src={imageSrc || "/placeholder.svg"}
+          src={imageSrc || "/placeholder.svg?height=200&width=400"}
           alt={title}
           style={{
             width: "100%",
@@ -359,6 +374,96 @@ const ThemePreview = ({ title, description, imageSrc }) => {
         >
           {description}
         </p>
+      </div>
+    </div>
+  )
+}
+
+// Testimonial component
+const Testimonial = ({ quote, author, role, company, avatarSrc }) => {
+  return (
+    <div
+      style={{
+        backgroundColor: theme.colors.surface.primary,
+        borderRadius: theme.borderRadius.lg,
+        padding: theme.spacing[6],
+        boxShadow: theme.shadows.md,
+        border: `1px solid ${theme.colors.border.light}`,
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <div
+        style={{
+          marginBottom: theme.spacing[4],
+        }}
+      >
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path
+            d="M10.667 13.333H5.33366C5.33366 8 9.33366 5.333 13.3337 5.333L12.0003 8C10.667 9.333 10.667 11.333 10.667 13.333ZM21.3337 13.333H16.0003C16.0003 8 20.0003 5.333 24.0003 5.333L22.667 8C21.3337 9.333 21.3337 11.333 21.3337 13.333ZM24.0003 16V18.667C24.0003 20 22.667 21.333 21.3337 21.333H18.667V24C18.667 25.333 17.3337 26.667 16.0003 26.667H13.3337C12.0003 26.667 10.667 25.333 10.667 24V16C10.667 14.667 12.0003 13.333 13.3337 13.333H22.667C23.0003 13.333 23.3337 13.333 23.3337 13.667C23.3337 14 23.3337 14.333 23.3337 14.667C23.3337 15.333 23.667 16 24.0003 16Z"
+            fill={theme.colors.accent.primary}
+            fillOpacity="0.4"
+          />
+        </svg>
+      </div>
+      <p
+        style={{
+          fontSize: theme.typography.fontSizes.md,
+          color: theme.colors.text.primary,
+          lineHeight: theme.typography.lineHeights.relaxed,
+          marginBottom: theme.spacing[6],
+          flex: 1,
+        }}
+      >
+        {quote}
+      </p>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: theme.spacing[3],
+        }}
+      >
+        <div
+          style={{
+            width: "48px",
+            height: "48px",
+            borderRadius: "50%",
+            overflow: "hidden",
+          }}
+        >
+          <img
+            src={avatarSrc || "/placeholder.svg?height=48&width=48"}
+            alt={author}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+            }}
+          />
+        </div>
+        <div>
+          <p
+            style={{
+              fontSize: theme.typography.fontSizes.md,
+              fontWeight: theme.typography.fontWeights.semibold,
+              color: theme.colors.text.primary,
+              margin: 0,
+            }}
+          >
+            {author}
+          </p>
+          <p
+            style={{
+              fontSize: theme.typography.fontSizes.sm,
+              color: theme.colors.text.secondary,
+              margin: 0,
+            }}
+          >
+            {role}, {company}
+          </p>
+        </div>
       </div>
     </div>
   )
@@ -803,6 +908,382 @@ const HomePage = () => {
           </div>
         </div>
       </section>
+
+      {/* AI Features Section */}
+      <Section
+        id="ai-section"
+        title="AI-Powered Development"
+        description="Leverage the power of artificial intelligence to accelerate your development process. Dopebase integrates cutting-edge AI tools to help you build faster and smarter."
+      >
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(1, 1fr)",
+            gap: theme.spacing[6],
+            marginTop: theme.spacing[8],
+          }}
+          className="features-grid"
+        >
+          <FeatureCard
+            title="AI Content Generation"
+            description="Generate high-quality content, blog posts, and marketing copy with advanced AI models integrated directly into your workflow."
+            icon={PenTool}
+          />
+          <FeatureCard
+            title="Smart Code Assistance"
+            description="Get intelligent code suggestions and automate repetitive tasks with AI-powered development tools."
+            icon={Code}
+          />
+          <FeatureCard
+            title="Automated Design"
+            description="Create beautiful, responsive designs with AI assistance that adapts to your brand guidelines and user preferences."
+            icon={Layers}
+          />
+        </div>
+
+        <style jsx>{`
+          @media (min-width: 768px) {
+            .features-grid {
+              grid-template-columns: repeat(3, 1fr);
+            }
+          }
+        `}</style>
+      </Section>
+
+      {/* Core Features Section */}
+      <Section
+        title="Build Anything, Deploy Everywhere"
+        description="Dopebase provides all the tools you need to create stunning websites, mobile apps, and digital experiences without limitations."
+        dark={true}
+        centered={true}
+      >
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(1, 1fr)",
+            gap: theme.spacing[6],
+            marginTop: theme.spacing[8],
+          }}
+          className="features-grid"
+        >
+          <FeatureCard
+            title="Websites & Blogs"
+            description="Create responsive, SEO-friendly websites and content-rich blogs with our intuitive builder."
+            icon={Globe}
+          />
+          <FeatureCard
+            title="Mobile Applications"
+            description="Build native-quality mobile apps for iOS and Android from a single codebase."
+            icon={Smartphone}
+          />
+          <FeatureCard
+            title="SaaS Products"
+            description="Develop scalable SaaS applications with built-in user management, billing, and analytics."
+            icon={Database}
+          />
+          <FeatureCard
+            title="Rapid Deployment"
+            description="Deploy your projects to production with one click using our integrated deployment pipeline."
+            icon={Rocket}
+          />
+        </div>
+
+        <style jsx>{`
+          @media (min-width: 768px) {
+            .features-grid {
+              grid-template-columns: repeat(2, 1fr);
+            }
+          }
+          @media (min-width: 1024px) {
+            .features-grid {
+              grid-template-columns: repeat(4, 1fr);
+            }
+          }
+        `}</style>
+      </Section>
+
+      {/* Metrics Section */}
+      <Section centered={true} title={undefined} description={undefined}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(1, 1fr)",
+            gap: theme.spacing[6],
+            marginTop: theme.spacing[4],
+          }}
+          className="metrics-grid"
+        >
+          <MetricCard number="10x" label="Faster Development" icon={Rocket} />
+          <MetricCard number="50+" label="Integrations" icon={Layers} />
+          <MetricCard number="24/7" label="Community Support" icon={Users} />
+          <MetricCard number="99.9%" label="Uptime Guarantee" icon={Shield} />
+        </div>
+
+        <style jsx>{`
+          @media (min-width: 768px) {
+            .metrics-grid {
+              grid-template-columns: repeat(2, 1fr);
+            }
+          }
+          @media (min-width: 1024px) {
+            .metrics-grid {
+              grid-template-columns: repeat(4, 1fr);
+            }
+          }
+        `}</style>
+      </Section>
+
+      {/* Templates Section */}
+      <Section
+        title="Ready-to-Use Templates"
+        description="Get started quickly with our professionally designed templates for various industries and use cases."
+        centered={true}
+      >
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(1, 1fr)",
+            gap: theme.spacing[6],
+            marginTop: theme.spacing[8],
+          }}
+          className="templates-grid"
+        >
+          <ThemePreview
+            title="E-Commerce Store"
+            description="Complete online store with product catalog, cart, and checkout."
+            imageSrc="/placeholder.svg?height=200&width=400"
+          />
+          <ThemePreview
+            title="Portfolio"
+            description="Showcase your work with this elegant portfolio template."
+            imageSrc="/placeholder.svg?height=200&width=400"
+          />
+          <ThemePreview
+            title="Blog"
+            description="Content-focused blog with categories and featured posts."
+            imageSrc="/placeholder.svg?height=200&width=400"
+          />
+          <ThemePreview
+            title="SaaS Landing Page"
+            description="Convert visitors with this optimized SaaS landing page."
+            imageSrc="/placeholder.svg?height=200&width=400"
+          />
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            marginTop: theme.spacing[10],
+          }}
+        >
+          <button
+            style={{
+              backgroundColor: "transparent",
+              color: theme.colors.text.primary,
+              border: `1px solid ${theme.colors.border.medium}`,
+              borderRadius: theme.borderRadius.md,
+              padding: `${theme.spacing[3]} ${theme.spacing[6]}`,
+              fontSize: theme.typography.fontSizes.md,
+              fontWeight: theme.typography.fontWeights.medium,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: theme.spacing[2],
+              transition: theme.transitions.normal,
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.backgroundColor = theme.colors.surface.secondary
+              e.currentTarget.style.borderColor = theme.colors.border.focus
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.backgroundColor = "transparent"
+              e.currentTarget.style.borderColor = theme.colors.border.medium
+            }}
+          >
+            View All Templates <ArrowRight size={18} />
+          </button>
+        </div>
+
+        <style jsx>{`
+          @media (min-width: 768px) {
+            .templates-grid {
+              grid-template-columns: repeat(2, 1fr);
+            }
+          }
+        `}</style>
+      </Section>
+
+      {/* Testimonials Section */}
+      <Section
+        title="What Our Users Say"
+        description="Join thousands of developers and businesses who have transformed their workflow with Dopebase."
+        dark={true}
+        centered={true}
+      >
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(1, 1fr)",
+            gap: theme.spacing[6],
+            marginTop: theme.spacing[8],
+          }}
+          className="testimonials-grid"
+        >
+          <Testimonial
+            quote="Dopebase has completely transformed how we build websites for our clients. What used to take weeks now takes days, and the AI features are a game-changer for content creation."
+            author="Sarah Johnson"
+            role="Lead Developer"
+            company="DigitalCraft"
+            avatarSrc="/placeholder.svg?height=48&width=48"
+          />
+          <Testimonial
+            quote="As a solo entrepreneur, Dopebase gives me the power to build and launch products that would normally require an entire team. The templates and AI tools have saved me countless hours."
+            author="Michael Chen"
+            role="Founder"
+            company="TechNova"
+            avatarSrc="/placeholder.svg?height=48&width=48"
+          />
+          <Testimonial
+            quote="We migrated from WordPress to Dopebase and haven't looked back. Our site is faster, more secure, and much easier to maintain. The developer experience is simply superior."
+            author="Alex Rodriguez"
+            role="CTO"
+            company="GrowthLabs"
+            avatarSrc="/placeholder.svg?height=48&width=48"
+          />
+        </div>
+
+        <style jsx>{`
+          @media (min-width: 768px) {
+            .testimonials-grid {
+              grid-template-columns: repeat(3, 1fr);
+            }
+          }
+        `}</style>
+      </Section>
+
+      {/* CTA Section */}
+      <Section title={undefined} description={undefined}>
+        <div
+          style={{
+            backgroundColor: theme.colors.surface.primary,
+            borderRadius: theme.borderRadius.xl,
+            padding: `${theme.spacing[12]} ${theme.spacing[6]}`,
+            textAlign: "center",
+            boxShadow: theme.shadows.lg,
+            border: `1px solid ${theme.colors.border.light}`,
+            position: "relative",
+            overflow: "hidden",
+          }}
+        >
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              right: 0,
+              width: "300px",
+              height: "300px",
+              background: `radial-gradient(circle, ${theme.colors.accent.primary}20 0%, transparent 70%)`,
+              zIndex: 1,
+            }}
+          ></div>
+
+          <div
+            style={{
+              position: "relative",
+              zIndex: 2,
+              maxWidth: "800px",
+              margin: "0 auto",
+            }}
+          >
+            <h2
+              style={{
+                fontSize: theme.typography.fontSizes["4xl"],
+                fontWeight: theme.typography.fontWeights.bold,
+                color: theme.colors.text.primary,
+                marginBottom: theme.spacing[4],
+              }}
+            >
+              Ready to build something amazing?
+            </h2>
+            <p
+              style={{
+                fontSize: theme.typography.fontSizes.xl,
+                color: theme.colors.text.secondary,
+                marginBottom: theme.spacing[8],
+                lineHeight: theme.typography.lineHeights.relaxed,
+              }}
+            >
+              Join thousands of developers who are already building the future with Dopebase. Get started for free
+              today.
+            </p>
+            <div
+              style={{
+                display: "flex",
+                gap: theme.spacing[4],
+                justifyContent: "center",
+                flexWrap: "wrap",
+              }}
+            >
+              <button
+                style={{
+                  backgroundColor: theme.colors.accent.primary,
+                  color: "#ffffff",
+                  border: "none",
+                  borderRadius: theme.borderRadius.md,
+                  padding: `${theme.spacing[4]} ${theme.spacing[8]}`,
+                  fontSize: theme.typography.fontSizes.lg,
+                  fontWeight: theme.typography.fontWeights.semibold,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: theme.spacing[2],
+                  boxShadow: theme.shadows.md,
+                  transition: theme.transitions.normal,
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.backgroundColor = theme.colors.accent.hover
+                  e.currentTarget.style.transform = "translateY(-2px)"
+                  e.currentTarget.style.boxShadow = theme.shadows.lg
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.backgroundColor = theme.colors.accent.primary
+                  e.currentTarget.style.transform = "translateY(0)"
+                  e.currentTarget.style.boxShadow = theme.shadows.md
+                }}
+              >
+                Start Building Now <ArrowRight size={20} />
+              </button>
+              <button
+                style={{
+                  backgroundColor: "transparent",
+                  color: theme.colors.text.primary,
+                  border: `1px solid ${theme.colors.border.medium}`,
+                  borderRadius: theme.borderRadius.md,
+                  padding: `${theme.spacing[4]} ${theme.spacing[8]}`,
+                  fontSize: theme.typography.fontSizes.lg,
+                  fontWeight: theme.typography.fontWeights.medium,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: theme.spacing[2],
+                  transition: theme.transitions.normal,
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.backgroundColor = theme.colors.surface.secondary
+                  e.currentTarget.style.borderColor = theme.colors.border.focus
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.backgroundColor = "transparent"
+                  e.currentTarget.style.borderColor = theme.colors.border.medium
+                }}
+              >
+                Schedule a Demo
+              </button>
+            </div>
+          </div>
+        </div>
+      </Section>
 
       <Footer />
     </div>

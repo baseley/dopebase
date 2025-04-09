@@ -300,7 +300,7 @@ function ArticleCategoriesListView() {
             Article Categories
           </h1>
           <button
-            onClick={() => router.push("./article_categories/add")}
+            onClick={() => router.push("./add")}
             style={{
               ...theme.listView.actionButton,
               backgroundColor: theme.colors.accent.primary,
