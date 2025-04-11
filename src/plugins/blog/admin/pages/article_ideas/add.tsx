@@ -4,16 +4,16 @@ import type React from "react"
 import { useEffect, useState } from "react"
 import { Formik, type FormikHelpers } from "formik"
 import dynamic from "next/dynamic"
-import { Toaster } from "@/components/ui/sonner"
-import { Loader2, Calendar, Tag, FileText, MessageSquare } from "lucide-react"
+import { toast } from "react-toastify"
+import { Loader2, Calendar, Tag, FileText, MessageSquare, Lightbulb, Share2 } from "lucide-react"
 
 import { theme, styledComponents as sc } from "@/lib/theme"
-import IMDatePicker from "../../../../../admin/components/forms/IMDatePicker"
+import IMDatePicker from "@/admin/components/forms/IMDatePicker"
 
 /* Insert extra imports here */
 
-import { pluginsAPIURL } from "../../../../../config/config"
-import { authPost } from "../../../../../modules/auth/utils/authFetch"
+import { pluginsAPIURL } from "@/config/config"
+import { authPost } from "@/modules/auth/utils/authFetch"
 
 // Dynamic import for CodeMirror to avoid SSR issues
 const CodeMirror = dynamic(() => import("@uiw/react-codemirror"), { ssr: false })
@@ -403,434 +403,430 @@ const AddNewArticleIdeaView: React.FC = () => {
   }
 
   return (
-    <>
-      <Sonner position="top-right" />
-      <div style={sc.formCard}>
-        <div style={sc.formHeader}>
-          <h1 style={sc.formTitle}>
-            <FileText size={24} color={theme.colors.accent.primary} />
-            Create New Article Idea
-          </h1>
-        </div>
-        <div style={sc.formContent}>
-          <Formik
-            initialValues={{} as FormValues}
-            validate={(values) => {
-              const combinedValues = { ...values, ...modifiedNonFormData }
-              const errors: Record<string, string> = {}
+    <div style={sc.formCard}>
+      <div style={sc.formHeader}>
+        <h1 style={sc.formTitle}>
+          <Lightbulb size={24} color={theme.colors.accent.primary} />
+          Create New Article Idea
+        </h1>
+      </div>
+      <div style={sc.formContent}>
+        <Formik
+          initialValues={{} as FormValues}
+          validate={(values) => {
+            const combinedValues = { ...values, ...modifiedNonFormData }
+            const errors: Record<string, string> = {}
 
-              // Add validation rules
-              if (!combinedValues.title) {
-                errors.title = "Title is required"
-              }
+            // Add validation rules
+            if (!combinedValues.title) {
+              errors.title = "Title is required"
+            }
 
-              if (!combinedValues.created_at) {
-                errors.created_at = "Created date is required"
-              }
+            if (!combinedValues.created_at) {
+              errors.created_at = "Created date is required"
+            }
 
-              if (!combinedValues.updated_at) {
-                errors.updated_at = "Updated date is required"
-              }
+            if (!combinedValues.updated_at) {
+              errors.updated_at = "Updated date is required"
+            }
 
-              return errors
-            }}
-            onSubmit={(values: FormValues, { setSubmitting }: FormikHelpers<FormValues>) => {
-              console.log("📝 Form submitted")
-              console.log("📋 Formik values:", values)
-              console.log("🗄️ Modified non-form data:", modifiedNonFormData)
+            return errors
+          }}
+          onSubmit={(values: FormValues, { setSubmitting }: FormikHelpers<FormValues>) => {
+            console.log("📝 Form submitted")
+            console.log("📋 Formik values:", values)
+            console.log("🗄️ Modified non-form data:", modifiedNonFormData)
 
-              const combinedData = { ...values, ...modifiedNonFormData } as ArticleIdeaData
-              console.log("🔄 Combined data:", combinedData)
+            const combinedData = { ...values, ...modifiedNonFormData } as ArticleIdeaData
+            console.log("🔄 Combined data:", combinedData)
 
-              // Check for required fields
-              const requiredFields = ["title", "created_at", "updated_at"]
-              const missingFields = requiredFields.filter((field) => !combinedData[field])
+            // Check for required fields
+            const requiredFields = ["title", "created_at", "updated_at"]
+            const missingFields = requiredFields.filter((field) => !combinedData[field])
 
-              if (missingFields.length > 0) {
-                console.error("❌ Missing required fields:", missingFields)
-                toast.error(`Missing required fields: ${missingFields.join(", ")}`)
-                setSubmitting(false)
-                return
-              }
+            if (missingFields.length > 0) {
+              console.error("❌ Missing required fields:", missingFields)
+              toast.error(`Missing required fields: ${missingFields.join(", ")}`)
+              setSubmitting(false)
+              return
+            }
 
-              createArticleIdea(combinedData, setSubmitting)
-            }}
-          >
-            {({ values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
-              <form onSubmit={handleSubmit}>
-                {/* Main content section */}
-                <div style={{ marginBottom: theme.spacing[8] }}>
-                  <h2
-                    style={{
-                      fontSize: theme.typography.fontSizes.xl,
-                      fontWeight: theme.typography.fontWeights.semibold,
-                      marginBottom: theme.spacing[4],
-                      color: theme.colors.text.primary,
-                    }}
-                  >
-                    Basic Information
-                  </h2>
-
-                  {/* Title field */}
-                  <div style={formField.container}>
-                    <label htmlFor="title" style={formField.label}>
-                      <FileText size={16} color={theme.colors.accent.primary} />
-                      Title <span style={{ color: theme.colors.feedback.error }}>*</span>
-                    </label>
-                    <input
-                      id="title"
-                      name="title"
-                      type="text"
-                      placeholder="Enter article idea title"
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      value={values.title || ""}
-                      style={{
-                        ...formField.input,
-                        borderColor:
-                          errors.title && touched.title ? theme.colors.feedback.error : theme.forms.input.borderColor,
-                      }}
-                    />
-                    {errors.title && touched.title && <p style={formField.error}>{errors.title}</p>}
-                  </div>
-
-                  {/* Topic field */}
-                  <div style={formField.container}>
-                    <label htmlFor="topic" style={formField.label}>
-                      <MessageSquare size={16} color={theme.colors.accent.primary} />
-                      Topic
-                    </label>
-                    <input
-                      id="topic"
-                      name="topic"
-                      type="text"
-                      placeholder="Main topic of the article"
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      value={values.topic || ""}
-                      style={formField.input}
-                    />
-                    {errors.topic && touched.topic && <p style={formField.error}>{errors.topic}</p>}
-                    <p style={formField.hint}>The main subject or focus of your article idea</p>
-                  </div>
-
-                  {/* Category field */}
-                  <div style={formField.container}>
-                    <label htmlFor="category" style={formField.label}>
-                      <Tag size={16} color={theme.colors.accent.primary} />
-                      Category
-                    </label>
-                    <input
-                      id="category"
-                      name="category"
-                      type="text"
-                      placeholder="Article category"
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      value={values.category || ""}
-                      style={formField.input}
-                    />
-                    {errors.category && touched.category && <p style={formField.error}>{errors.category}</p>}
-                  </div>
-
-                  {/* Summary field */}
-                  <div style={formField.container}>
-                    <label htmlFor="summary" style={formField.label}>
-                      Summary
-                    </label>
-                    <textarea
-                      id="summary"
-                      name="summary"
-                      placeholder="Brief summary of the article idea"
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      value={values.summary || ""}
-                      style={formField.textarea}
-                    />
-                    {errors.summary && touched.summary && <p style={formField.error}>{errors.summary}</p>}
-                  </div>
-                </div>
-
-                {/* Content planning section */}
-                <div
+            createArticleIdea(combinedData, setSubmitting)
+          }}
+        >
+          {({ values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
+            <form onSubmit={handleSubmit}>
+              {/* Main content section */}
+              <div style={{ marginBottom: theme.spacing[8] }}>
+                <h2
                   style={{
-                    height: "1px",
-                    backgroundColor: theme.colors.border.light,
-                    margin: `${theme.spacing[6]} 0`,
-                  }}
-                ></div>
-
-                <div style={{ marginBottom: theme.spacing[8] }}>
-                  <h2
-                    style={{
-                      fontSize: theme.typography.fontSizes.xl,
-                      fontWeight: theme.typography.fontWeights.semibold,
-                      marginBottom: theme.spacing[4],
-                      color: theme.colors.text.primary,
-                    }}
-                  >
-                    Content Planning
-                  </h2>
-
-                  {/* Sections field */}
-                  <div style={formField.container}>
-                    <label htmlFor="sections" style={formField.label}>
-                      Sections
-                    </label>
-                    <textarea
-                      id="sections"
-                      name="sections"
-                      placeholder="List the main sections of your article"
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      value={values.sections || ""}
-                      style={formField.textarea}
-                    />
-                    {errors.sections && touched.sections && <p style={formField.error}>{errors.sections}</p>}
-                    <p style={formField.hint}>Outline the main sections or headings for your article</p>
-                  </div>
-
-                  {/* Tags field */}
-                  <div style={formField.container}>
-                    <label htmlFor="tags" style={formField.label}>
-                      <Tag size={16} color={theme.colors.accent.primary} />
-                      Tags
-                    </label>
-                    <input
-                      id="tags"
-                      name="tags"
-                      type="text"
-                      placeholder="Comma-separated tags"
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      value={values.tags || ""}
-                      style={formField.input}
-                    />
-                    {errors.tags && touched.tags && <p style={formField.error}>{errors.tags}</p>}
-                    <p style={formField.hint}>Add relevant tags separated by commas</p>
-                  </div>
-
-                  {/* Extra Prompt field */}
-                  <div style={formField.container}>
-                    <label htmlFor="extra_prompt" style={formField.label}>
-                      Extra Prompt
-                    </label>
-                    <textarea
-                      id="extra_prompt"
-                      name="extra_prompt"
-                      placeholder="Additional notes or prompts for the writer"
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      value={values.extra_prompt || ""}
-                      style={formField.textarea}
-                    />
-                    {errors.extra_prompt && touched.extra_prompt && (
-                      <p style={formField.error}>{errors.extra_prompt}</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* SEO & Social section */}
-                <div
-                  style={{
-                    height: "1px",
-                    backgroundColor: theme.colors.border.light,
-                    margin: `${theme.spacing[6]} 0`,
-                  }}
-                ></div>
-
-                <div style={{ marginBottom: theme.spacing[8] }}>
-                  <h2
-                    style={{
-                      fontSize: theme.typography.fontSizes.xl,
-                      fontWeight: theme.typography.fontWeights.semibold,
-                      marginBottom: theme.spacing[4],
-                      color: theme.colors.text.primary,
-                    }}
-                  >
-                    SEO & Social Media
-                  </h2>
-
-                  {/* SEO Description field */}
-                  <div style={formField.container}>
-                    <label htmlFor="seo_description" style={formField.label}>
-                      SEO Description
-                    </label>
-                    <textarea
-                      id="seo_description"
-                      name="seo_description"
-                      placeholder="SEO meta description"
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      value={values.seo_description || ""}
-                      style={formField.textarea}
-                    />
-                    {errors.seo_description && touched.seo_description && (
-                      <p style={formField.error}>{errors.seo_description}</p>
-                    )}
-                    <p style={formField.hint}>
-                      A concise description for search engines (recommended: 150-160 characters)
-                    </p>
-                  </div>
-
-                  {/* Social Media Post field */}
-                  <div style={formField.container}>
-                    <label htmlFor="social_media_post" style={formField.label}>
-                      Social Media Post
-                    </label>
-                    <textarea
-                      id="social_media_post"
-                      name="social_media_post"
-                      placeholder="Draft social media post to promote this article"
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      value={values.social_media_post || ""}
-                      style={formField.textarea}
-                    />
-                    {errors.social_media_post && touched.social_media_post && (
-                      <p style={formField.error}>{errors.social_media_post}</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Status & Dates section */}
-                <div
-                  style={{
-                    height: "1px",
-                    backgroundColor: theme.colors.border.light,
-                    margin: `${theme.spacing[6]} 0`,
-                  }}
-                ></div>
-
-                <div style={{ marginBottom: theme.spacing[8] }}>
-                  <h2
-                    style={{
-                      fontSize: theme.typography.fontSizes.xl,
-                      fontWeight: theme.typography.fontWeights.semibold,
-                      marginBottom: theme.spacing[4],
-                      color: theme.colors.text.primary,
-                    }}
-                  >
-                    Status & Dates
-                  </h2>
-
-                  {/* Status field */}
-                  <div style={formField.container}>
-                    <label htmlFor="status" style={formField.label}>
-                      Status
-                    </label>
-                    <select
-                      id="status"
-                      name="status"
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      value={values.status || ""}
-                      style={{
-                        ...formField.input,
-                        appearance: "none",
-                        backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`,
-                        backgroundRepeat: "no-repeat",
-                        backgroundPosition: "right 1rem center",
-                        backgroundSize: "1em",
-                      }}
-                    >
-                      <option value="">Select status</option>
-                      <option value="draft">Draft</option>
-                      <option value="in_progress">In Progress</option>
-                      <option value="review">Review</option>
-                      <option value="approved">Approved</option>
-                      <option value="rejected">Rejected</option>
-                    </select>
-                    {errors.status && touched.status && <p style={formField.error}>{errors.status}</p>}
-                  </div>
-
-                  {/* Date fields */}
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: theme.spacing[6] }}>
-                    <div style={formField.container}>
-                      <label style={formField.label}>
-                        <Calendar size={16} color={theme.colors.accent.primary} />
-                        Created Date <span style={{ color: theme.colors.feedback.error }}>*</span>
-                      </label>
-                      <div
-                        style={{
-                          border: `1px solid ${theme.colors.border.light}`,
-                          borderRadius: theme.borderRadius.md,
-                          padding: theme.spacing[2],
-                          backgroundColor: theme.colors.surface.primary,
-                        }}
-                      >
-                        <IMDatePicker
-                          selected={modifiedNonFormData.created_at}
-                          onChange={(toDate) => onDateChange(toDate, "created_at")}
-                        />
-                      </div>
-                      {errors.created_at && <p style={formField.error}>{errors.created_at}</p>}
-                    </div>
-
-                    <div style={formField.container}>
-                      <label style={formField.label}>
-                        <Calendar size={16} color={theme.colors.accent.primary} />
-                        Updated Date <span style={{ color: theme.colors.feedback.error }}>*</span>
-                      </label>
-                      <div
-                        style={{
-                          border: `1px solid ${theme.colors.border.light}`,
-                          borderRadius: theme.borderRadius.md,
-                          padding: theme.spacing[2],
-                          backgroundColor: theme.colors.surface.primary,
-                        }}
-                      >
-                        <IMDatePicker
-                          selected={modifiedNonFormData.updated_at}
-                          onChange={(toDate) => onDateChange(toDate, "updated_at")}
-                        />
-                      </div>
-                      {errors.updated_at && <p style={formField.error}>{errors.updated_at}</p>}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Form actions */}
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "flex-end",
-                    marginTop: theme.spacing[6],
-                    paddingTop: theme.spacing[4],
-                    borderTop: `1px solid ${theme.colors.border.light}`,
+                    fontSize: theme.typography.fontSizes.xl,
+                    fontWeight: theme.typography.fontWeights.semibold,
+                    marginBottom: theme.spacing[4],
+                    color: theme.colors.text.primary,
                   }}
                 >
-                  <button
-                    type="button"
+                  Basic Information
+                </h2>
+
+                {/* Title field */}
+                <div style={formField.container}>
+                  <label htmlFor="title" style={formField.label}>
+                    <FileText size={16} color={theme.colors.accent.primary} />
+                    Title <span style={{ color: theme.colors.feedback.error }}>*</span>
+                  </label>
+                  <input
+                    id="title"
+                    name="title"
+                    type="text"
+                    placeholder="Enter article idea title"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.title || ""}
                     style={{
-                      ...sc.secondaryButton,
-                      marginRight: theme.spacing[3],
+                      ...formField.input,
+                      borderColor:
+                        errors.title && touched.title ? theme.colors.feedback.error : theme.forms.input.borderColor,
                     }}
-                    onClick={() => window.history.back()}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    style={{
-                      ...sc.primaryButton,
-                      opacity: isSubmitting ? 0.7 : 1,
-                      cursor: isSubmitting ? "not-allowed" : "pointer",
-                    }}
-                  >
-                    {isSubmitting && (
-                      <Loader2 size={16} className="animate-spin" style={{ marginRight: theme.spacing[2] }} />
-                    )}
-                    Create Article Idea
-                  </button>
+                  />
+                  {errors.title && touched.title && <p style={formField.error}>{errors.title}</p>}
                 </div>
-              </form>
-            )}
-          </Formik>
-        </div>
+
+                {/* Topic field */}
+                <div style={formField.container}>
+                  <label htmlFor="topic" style={formField.label}>
+                    <MessageSquare size={16} color={theme.colors.accent.primary} />
+                    Topic
+                  </label>
+                  <input
+                    id="topic"
+                    name="topic"
+                    type="text"
+                    placeholder="Main topic of the article"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.topic || ""}
+                    style={formField.input}
+                  />
+                  {errors.topic && touched.topic && <p style={formField.error}>{errors.topic}</p>}
+                  <p style={formField.hint}>The main subject or focus of your article idea</p>
+                </div>
+
+                {/* Category field */}
+                <div style={formField.container}>
+                  <label htmlFor="category" style={formField.label}>
+                    <Tag size={16} color={theme.colors.accent.primary} />
+                    Category
+                  </label>
+                  <input
+                    id="category"
+                    name="category"
+                    type="text"
+                    placeholder="Article category"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.category || ""}
+                    style={formField.input}
+                  />
+                  {errors.category && touched.category && <p style={formField.error}>{errors.category}</p>}
+                </div>
+
+                {/* Summary field */}
+                <div style={formField.container}>
+                  <label htmlFor="summary" style={formField.label}>
+                    Summary
+                  </label>
+                  <textarea
+                    id="summary"
+                    name="summary"
+                    placeholder="Brief summary of the article idea"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.summary || ""}
+                    style={formField.textarea}
+                  />
+                  {errors.summary && touched.summary && <p style={formField.error}>{errors.summary}</p>}
+                </div>
+              </div>
+
+              {/* Content planning section */}
+              <div
+                style={{
+                  height: "1px",
+                  backgroundColor: theme.colors.border.light,
+                  margin: `${theme.spacing[6]} 0`,
+                }}
+              ></div>
+
+              <div style={{ marginBottom: theme.spacing[8] }}>
+                <h2
+                  style={{
+                    fontSize: theme.typography.fontSizes.xl,
+                    fontWeight: theme.typography.fontWeights.semibold,
+                    marginBottom: theme.spacing[4],
+                    color: theme.colors.text.primary,
+                  }}
+                >
+                  Content Planning
+                </h2>
+
+                {/* Sections field */}
+                <div style={formField.container}>
+                  <label htmlFor="sections" style={formField.label}>
+                    Sections
+                  </label>
+                  <textarea
+                    id="sections"
+                    name="sections"
+                    placeholder="List the main sections of your article"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.sections || ""}
+                    style={formField.textarea}
+                  />
+                  {errors.sections && touched.sections && <p style={formField.error}>{errors.sections}</p>}
+                  <p style={formField.hint}>Outline the main sections or headings for your article</p>
+                </div>
+
+                {/* Tags field */}
+                <div style={formField.container}>
+                  <label htmlFor="tags" style={formField.label}>
+                    <Tag size={16} color={theme.colors.accent.primary} />
+                    Tags
+                  </label>
+                  <input
+                    id="tags"
+                    name="tags"
+                    type="text"
+                    placeholder="Comma-separated tags"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.tags || ""}
+                    style={formField.input}
+                  />
+                  {errors.tags && touched.tags && <p style={formField.error}>{errors.tags}</p>}
+                  <p style={formField.hint}>Add relevant tags separated by commas</p>
+                </div>
+
+                {/* Extra Prompt field */}
+                <div style={formField.container}>
+                  <label htmlFor="extra_prompt" style={formField.label}>
+                    Extra Prompt
+                  </label>
+                  <textarea
+                    id="extra_prompt"
+                    name="extra_prompt"
+                    placeholder="Additional notes or prompts for the writer"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.extra_prompt || ""}
+                    style={formField.textarea}
+                  />
+                  {errors.extra_prompt && touched.extra_prompt && <p style={formField.error}>{errors.extra_prompt}</p>}
+                </div>
+              </div>
+
+              {/* SEO & Social section */}
+              <div
+                style={{
+                  height: "1px",
+                  backgroundColor: theme.colors.border.light,
+                  margin: `${theme.spacing[6]} 0`,
+                }}
+              ></div>
+
+              <div style={{ marginBottom: theme.spacing[8] }}>
+                <h2
+                  style={{
+                    fontSize: theme.typography.fontSizes.xl,
+                    fontWeight: theme.typography.fontWeights.semibold,
+                    marginBottom: theme.spacing[4],
+                    color: theme.colors.text.primary,
+                  }}
+                >
+                  SEO & Social Media
+                </h2>
+
+                {/* SEO Description field */}
+                <div style={formField.container}>
+                  <label htmlFor="seo_description" style={formField.label}>
+                    SEO Description
+                  </label>
+                  <textarea
+                    id="seo_description"
+                    name="seo_description"
+                    placeholder="SEO meta description"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.seo_description || ""}
+                    style={formField.textarea}
+                  />
+                  {errors.seo_description && touched.seo_description && (
+                    <p style={formField.error}>{errors.seo_description}</p>
+                  )}
+                  <p style={formField.hint}>
+                    A concise description for search engines (recommended: 150-160 characters)
+                  </p>
+                </div>
+
+                {/* Social Media Post field */}
+                <div style={formField.container}>
+                  <label htmlFor="social_media_post" style={formField.label}>
+                    <Share2 size={16} color={theme.colors.accent.primary} />
+                    Social Media Post
+                  </label>
+                  <textarea
+                    id="social_media_post"
+                    name="social_media_post"
+                    placeholder="Draft social media post to promote this article"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.social_media_post || ""}
+                    style={formField.textarea}
+                  />
+                  {errors.social_media_post && touched.social_media_post && (
+                    <p style={formField.error}>{errors.social_media_post}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Status & Dates section */}
+              <div
+                style={{
+                  height: "1px",
+                  backgroundColor: theme.colors.border.light,
+                  margin: `${theme.spacing[6]} 0`,
+                }}
+              ></div>
+
+              <div style={{ marginBottom: theme.spacing[8] }}>
+                <h2
+                  style={{
+                    fontSize: theme.typography.fontSizes.xl,
+                    fontWeight: theme.typography.fontWeights.semibold,
+                    marginBottom: theme.spacing[4],
+                    color: theme.colors.text.primary,
+                  }}
+                >
+                  Status & Dates
+                </h2>
+
+                {/* Status field */}
+                <div style={formField.container}>
+                  <label htmlFor="status" style={formField.label}>
+                    Status
+                  </label>
+                  <select
+                    id="status"
+                    name="status"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.status || ""}
+                    style={{
+                      ...formField.input,
+                      appearance: "none",
+                      backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`,
+                      backgroundRepeat: "no-repeat",
+                      backgroundPosition: "right 1rem center",
+                      backgroundSize: "1em",
+                    }}
+                  >
+                    <option value="">Select status</option>
+                    <option value="draft">Draft</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="review">Review</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                  </select>
+                  {errors.status && touched.status && <p style={formField.error}>{errors.status}</p>}
+                </div>
+
+                {/* Date fields */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: theme.spacing[6] }}>
+                  <div style={formField.container}>
+                    <label style={formField.label}>
+                      <Calendar size={16} color={theme.colors.accent.primary} />
+                      Created Date <span style={{ color: theme.colors.feedback.error }}>*</span>
+                    </label>
+                    <div
+                      style={{
+                        border: `1px solid ${theme.colors.border.light}`,
+                        borderRadius: theme.borderRadius.md,
+                        padding: theme.spacing[2],
+                        backgroundColor: theme.colors.surface.primary,
+                      }}
+                    >
+                      <IMDatePicker
+                        selected={modifiedNonFormData.created_at}
+                        onChange={(toDate) => onDateChange(toDate, "created_at")}
+                      />
+                    </div>
+                    {errors.created_at && <p style={formField.error}>{errors.created_at}</p>}
+                  </div>
+
+                  <div style={formField.container}>
+                    <label style={formField.label}>
+                      <Calendar size={16} color={theme.colors.accent.primary} />
+                      Updated Date <span style={{ color: theme.colors.feedback.error }}>*</span>
+                    </label>
+                    <div
+                      style={{
+                        border: `1px solid ${theme.colors.border.light}`,
+                        borderRadius: theme.borderRadius.md,
+                        padding: theme.spacing[2],
+                        backgroundColor: theme.colors.surface.primary,
+                      }}
+                    >
+                      <IMDatePicker
+                        selected={modifiedNonFormData.updated_at}
+                        onChange={(toDate) => onDateChange(toDate, "updated_at")}
+                      />
+                    </div>
+                    {errors.updated_at && <p style={formField.error}>{errors.updated_at}</p>}
+                  </div>
+                </div>
+              </div>
+
+              {/* Form actions */}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  marginTop: theme.spacing[6],
+                  paddingTop: theme.spacing[4],
+                  borderTop: `1px solid ${theme.colors.border.light}`,
+                }}
+              >
+                <button
+                  type="button"
+                  style={{
+                    ...sc.secondaryButton,
+                    marginRight: theme.spacing[3],
+                  }}
+                  onClick={() => window.history.back()}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  style={{
+                    ...sc.primaryButton,
+                    opacity: isSubmitting ? 0.7 : 1,
+                    cursor: isSubmitting ? "not-allowed" : "pointer",
+                  }}
+                >
+                  {isSubmitting && (
+                    <Loader2 size={16} className="animate-spin" style={{ marginRight: theme.spacing[2] }} />
+                  )}
+                  Create Article Idea
+                </button>
+              </div>
+            </form>
+          )}
+        </Formik>
       </div>
-    </>
+    </div>
   )
 }
 
