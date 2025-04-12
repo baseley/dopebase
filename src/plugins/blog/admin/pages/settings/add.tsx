@@ -2,74 +2,100 @@
 'use client'
 import React, { useEffect, useState } from 'react'
 import { Formik } from 'formik'
-import { ClipLoader } from 'react-spinners'
-import ReactMarkdown from 'react-markdown'
-import dynamic from 'next/dynamic'
-import CodeMirror from '@uiw/react-codemirror'
-import { javascript } from '@codemirror/lang-javascript'
-import { css } from '@codemirror/lang-css'
-import { html } from '@codemirror/lang-html'
+import { toast } from 'react-toastify'
+import { Loader2, Settings, Calendar } from 'lucide-react'
 import { markdown } from '@codemirror/lang-markdown'
-import IMDatePicker from '../../../../../admin/components/forms/IMDatePicker'
-import { LocationPicker } from '../../../../../admin/components/forms/locationPicker'
-import {
-  TypeaheadComponent,
-  IMObjectInputComponent,
-  IMMultimediaComponent,
-  IMArrayInputComponent,
-  IMColorPicker,
-  IMColorsContainer,
-  IMColorBoxComponent,
-  IMStaticMultiSelectComponent,
-  IMStaticSelectComponent,
-  IMPhoto,
-  IMModal,
-  IMToggleSwitchComponent,
-} from '../../../../../admin/components/forms/fields'
-import styles from '../../../../../admin/themes/admin.module.css'
+import dynamic from 'next/dynamic'
+
+import { theme, styledComponents as sc } from '@/lib/theme'
+import IMDatePicker from '@/admin/components/forms/IMDatePicker'
+import { IMPhoto, IMToggleSwitchComponent } from '@/admin/components/forms/fields'
 
 /* Insert extra imports here */
+import { pluginsAPIURL } from '@/config/config'
+import { authPost } from '@/modules/auth/utils/authFetch'
+import ReactMarkdown from 'react-markdown'
 
-import { pluginsAPIURL } from '../../../../../config/config'
-import { authPost } from '../../../../../modules/auth/utils/authFetch'
+// Dynamic import for CodeMirror to avoid SSR issues
+const CodeMirror = dynamic(() => import('@uiw/react-codemirror'), { ssr: false })
 
 const beautify_html = require('js-beautify').html
 const baseAPIURL = `${pluginsAPIURL}`
 
+interface NonFormData {
+  created_at?: string
+  updated_at?: string
+  [key: string]: any
+}
+
+interface FormValues {
+  name?: string
+  value?: string
+  [key: string]: any
+}
+
+interface SettingsData extends FormValues, NonFormData {}
+
 const AddNewSettingsView = () => {
-  const [isLoading, setIsLoading] = useState(false)
-  const [modifiedNonFormData, setModifiedNonFormData] = useState({})
-  const [originalData, setOriginalData] = useState(null)
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [modifiedNonFormData, setModifiedNonFormData] = useState<NonFormData>({})
+  const [originalData, setOriginalData] = useState<SettingsData | null>(null)
 
   useEffect(() => {
     setModifiedNonFormData({
       created_at: Math.floor(new Date().getTime() / 1000).toString(),
+      updated_at: Math.floor(new Date().getTime() / 1000).toString(),
     })
   }, [])
 
-  const createSettings = async (data, setSubmitting) => {
+  const createSettings = async (data: SettingsData, setSubmitting: (isSubmitting: boolean) => void) => {
     setIsLoading(true)
+    console.log("🔍 Starting settings creation...")
+
     const url = `${baseAPIURL}admin/blog/settings/add`
-    const response = await authPost(
-      url,
-      JSON.stringify({ ...data, ...modifiedNonFormData }),
-    )
-    const resData = response.data
-    if (resData?.error) {
-      alert(resData?.error)
+    console.log("🌐 API URL:", url)
+
+    try {
+      console.log("🔄 Making API request...")
+      const response = await authPost(url, JSON.stringify({ ...data, ...modifiedNonFormData }))
+
+      console.log("✅ API response received:", response)
+
+      if (!response) {
+        console.error("❌ No response received from server")
+        toast.error("No response received from server")
+        return
+      }
+
+      const resData = response.data
+      console.log("📊 Response data:", resData)
+
+      if (resData?.error) {
+        console.error("❌ Server returned error:", resData.error)
+        toast.error(resData.error)
+      } else {
+        console.log("✅ Settings created successfully!")
+        toast.success("Settings created successfully")
+      }
+    } catch (error: any) {
+      console.error("❌ Error during API call:", error)
+      console.error("Error details:", error.message)
+      console.error("Error stack:", error.stack)
+      toast.error(`Error creating settings: ${error.message || "Unknown error"}`)
+    } finally {
+      setSubmitting(false)
+      setIsLoading(false)
     }
-    setSubmitting(false)
-    setIsLoading(false)
   }
 
-  const onTypeaheadSelect = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const onTypeaheadSelect = (value: any, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
     newData[fieldName] = value
     setModifiedNonFormData(newData)
   }
 
-  const onMultipleTypeaheadSelect = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const onMultipleTypeaheadSelect = (value: any, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
     if (newData[fieldName] != undefined) {
       newData[fieldName].push(value)
     } else {
@@ -78,38 +104,38 @@ const AddNewSettingsView = () => {
     setModifiedNonFormData(newData)
   }
 
-  const onMultipleTypeaheadDelete = (index, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const onMultipleTypeaheadDelete = (index: number, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
     newData[fieldName].splice(index, 1)
     setModifiedNonFormData(newData)
   }
 
-  const handleSwitchChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const handleSwitchChange = (value: boolean, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
     newData[fieldName] = value ^ true
     setModifiedNonFormData(newData)
   }
 
-  const handleSelectChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const handleSelectChange = (value: any, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
     newData[fieldName] = value
     setModifiedNonFormData(newData)
   }
 
-  const handleColorChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const handleColorChange = (value: string, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
     newData[fieldName] = value
     setModifiedNonFormData(newData)
   }
 
-  const handleColorDelete = fieldName => {
-    var newData = { ...modifiedNonFormData }
+  const handleColorDelete = (fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
     delete newData[fieldName]
     setModifiedNonFormData(newData)
   }
 
-  const handleColorsChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const handleColorsChange = (value: string, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
     if (newData[fieldName] != undefined) {
       newData[fieldName].push(value)
     } else {
@@ -118,14 +144,14 @@ const AddNewSettingsView = () => {
     setModifiedNonFormData(newData)
   }
 
-  const handleColorsDelete = (index, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const handleColorsDelete = (index: number, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
     newData[fieldName].splice(index, 1)
     setModifiedNonFormData(newData)
   }
 
-  const handleArrayInput = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const handleArrayInput = (value: any, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
     if (newData[fieldName] != undefined) {
       newData[fieldName].push(value)
     } else {
@@ -134,14 +160,14 @@ const AddNewSettingsView = () => {
     setModifiedNonFormData(newData)
   }
 
-  const handleArrayDelete = (index, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const handleArrayDelete = (index: number, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
     newData[fieldName].splice(index, 1)
     setModifiedNonFormData(newData)
   }
 
-  const handleObjectInput = (key, value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const handleObjectInput = (key: string, value: any, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
     if (newData[fieldName] != undefined) {
       newData[fieldName][key] = value
     } else {
@@ -150,28 +176,25 @@ const AddNewSettingsView = () => {
     setModifiedNonFormData(newData)
   }
 
-  const handleObjectDelete = (key, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = Object.keys(newData[fieldName]).reduce(
-      (object, keys) => {
-        if (keys !== key) {
-          object[keys] = newData[fieldName][keys]
-        }
-        return object
-      },
-      {},
-    )
+  const handleObjectDelete = (key: string, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
+    newData[fieldName] = Object.keys(newData[fieldName]).reduce((object: Record<string, any>, keys) => {
+      if (keys !== key) {
+        object[keys] = newData[fieldName][keys]
+      }
+      return object
+    }, {})
     setModifiedNonFormData(newData)
   }
 
-  const onDateChange = (toDate, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const onDateChange = (toDate: string, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
     newData[fieldName] = toDate
     setModifiedNonFormData(newData)
   }
 
-  const onLocationChange = (addressObject, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const onLocationChange = (addressObject: any, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
     if (!addressObject || !addressObject.location || !addressObject.gmaps) {
       return
     }
@@ -186,36 +209,37 @@ const AddNewSettingsView = () => {
     setModifiedNonFormData(newData)
   }
 
-  const onSimpleLocationChange = (addressObject, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const onSimpleLocationChange = (addressObject: any, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
     if (!addressObject || !addressObject.location) {
       return
     }
     const location = {
       lng: addressObject.location.lng,
       lat: addressObject.location.lat,
-      // address: addressObject.label,
     }
     newData[fieldName] = location
     setModifiedNonFormData(newData)
   }
 
-  const onCodeChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const onCodeChange = (value: string, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
     newData[fieldName] = value
     setModifiedNonFormData(newData)
   }
 
-  const onMarkdownEditorChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const onMarkdownEditorChange = (value: string, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
     newData[fieldName] = value
     setModifiedNonFormData(newData)
   }
 
-  const handleImageUpload = (event, fieldName, isMultiple) => {
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>, fieldName: string, isMultiple: boolean) => {
     const files = event.target.files
+    if (!files || files.length === 0) return
+
     const formData = new FormData()
-    for (var i = 0; i < files.length; ++i) {
+    for (let i = 0; i < files.length; ++i) {
       formData.append('photos', files[i])
     }
 
@@ -223,19 +247,15 @@ const AddNewSettingsView = () => {
       method: 'POST',
       body: formData,
     })
-      .then(response => response.json())
-      .then(response => {
-        var newData = { ...modifiedNonFormData }
+      .then((response) => response.json())
+      .then((response) => {
+        const newData = { ...modifiedNonFormData }
         if (!isMultiple) {
           const url = response.data && response.data[0] && response.data[0].url
           newData[fieldName] = url
         } else {
-          // multiple photos
-          const urls = response.data && response.data.map(item => item.url)
-          if (
-            !modifiedNonFormData[fieldName] ||
-            modifiedNonFormData[fieldName].length <= 0
-          ) {
+          const urls = response.data && response.data.map((item: any) => item.url)
+          if (!modifiedNonFormData[fieldName] || modifiedNonFormData[fieldName].length <= 0) {
             newData[fieldName] = urls
           } else {
             newData[fieldName] = [...modifiedNonFormData[fieldName], ...urls]
@@ -244,54 +264,57 @@ const AddNewSettingsView = () => {
         setModifiedNonFormData(newData)
         console.log(response)
       })
-      .catch(error => {
+      .catch((error) => {
         console.error(error)
+        toast.error('Failed to upload image')
       })
   }
 
-  const handleDeletePhoto = (srcToBeRemoved, fieldName, isMultiple) => {
+  const handleDeletePhoto = (srcToBeRemoved: string, fieldName: string, isMultiple: boolean) => {
     if (isMultiple) {
-      var newData = { ...modifiedNonFormData }
-      var currentURLs = newData[fieldName]
+      const newData = { ...modifiedNonFormData }
+      const currentURLs = newData[fieldName]
       if (currentURLs) {
-        const newURLs = currentURLs.filter(src => src != srcToBeRemoved)
+        const newURLs = currentURLs.filter((src: string) => src != srcToBeRemoved)
         newData[fieldName] = newURLs
         setModifiedNonFormData(newData)
       }
     } else {
-      var newData = { ...modifiedNonFormData }
+      const newData = { ...modifiedNonFormData }
       newData[fieldName] = null
       setModifiedNonFormData(newData)
     }
   }
 
-  const handleMultimediaUpload = (event, fieldName, isMultiple) => {
+  const handleMultimediaUpload = (
+    event: React.ChangeEvent<HTMLInputElement>,
+    fieldName: string,
+    isMultiple: boolean,
+  ) => {
     const files = event.target.files
+    if (!files || files.length === 0) return
+
     const formData = new FormData()
-    for (var i = 0; i < files.length; ++i) {
+    for (let i = 0; i < files.length; ++i) {
       formData.append('multimedias', files[i])
     }
     fetch(pluginsAPIURL + '../media/uploadMultimedias', {
       method: 'POST',
       body: formData,
     })
-      .then(response => response.json())
-      .then(response => {
-        var newData = { ...modifiedNonFormData }
+      .then((response) => response.json())
+      .then((response) => {
+        const newData = { ...modifiedNonFormData }
         if (!isMultiple) {
           const url = response.data && response.data[0] && response.data[0].url
           newData[fieldName] = url
         } else {
-          // multiple media
           const data =
             response.data &&
-            response.data.map(item => {
+            response.data.map((item: any) => {
               return { url: item.url, mime: item.mimetype }
             })
-          if (
-            !modifiedNonFormData[fieldName] ||
-            modifiedNonFormData[fieldName].length <= 0
-          ) {
+          if (!modifiedNonFormData[fieldName] || modifiedNonFormData[fieldName].length <= 0) {
             newData[fieldName] = data
           } else {
             newData[fieldName] = [...modifiedNonFormData[fieldName], ...data]
@@ -300,27 +323,28 @@ const AddNewSettingsView = () => {
         setModifiedNonFormData(newData)
         console.log(response)
       })
-      .catch(error => {
+      .catch((error) => {
         console.error(error)
+        toast.error('Failed to upload multimedia')
       })
   }
 
-  const handleMultimediaDelete = (srcToBeRemoved, fieldName, isMultiple) => {
+  const handleMultimediaDelete = (srcToBeRemoved: string, fieldName: string, isMultiple: boolean) => {
     if (isMultiple) {
-      var newData = { ...modifiedNonFormData }
-      var currentData = newData[fieldName]
+      const newData = { ...modifiedNonFormData }
+      const currentData = newData[fieldName]
       if (currentData) {
-        const finalData = currentData.reduce((arrayAcumulator, curVal) => {
+        const finalData = currentData.reduce((arrayAcumulator: any[], curVal: any) => {
           if (srcToBeRemoved !== curVal.url) {
             arrayAcumulator.push(curVal)
           }
           return arrayAcumulator
-        })
+        }, [])
         newData[fieldName] = finalData
         setModifiedNonFormData(newData)
       }
     } else {
-      var newData = { ...modifiedNonFormData }
+      const newData = { ...modifiedNonFormData }
       newData[fieldName] = null
       setModifiedNonFormData(newData)
     }
@@ -328,120 +352,239 @@ const AddNewSettingsView = () => {
 
   if (isLoading) {
     return (
-      <div className="sweet-loading card">
-        <div className="spinner-container">
-          <ClipLoader
-            className="spinner"
-            sizeUnit={'px'}
-            size={50}
-            color={'#123abc'}
-            loading={isLoading}
-          />
-        </div>
+      <div style={sc.loadingContainer}>
+        <div style={sc.spinner}></div>
+        <p style={sc.loadingText}>Creating settings...</p>
       </div>
     )
   }
 
+  // Define form field styles
+  const formField = {
+    container: {
+      marginBottom: theme.spacing[6],
+    } as React.CSSProperties,
+    label: {
+      ...sc.formLabel,
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing[2],
+    } as React.CSSProperties,
+    input: {
+      ...sc.formInput,
+    } as React.CSSProperties,
+    textarea: {
+      ...sc.formTextarea,
+      minHeight: '120px',
+    } as React.CSSProperties,
+    error: {
+      ...sc.formError,
+    } as React.CSSProperties,
+    hint: {
+      fontSize: theme.typography.fontSizes.xs,
+      color: theme.colors.text.tertiary,
+      marginTop: theme.spacing[1],
+    } as React.CSSProperties,
+    datePickerContainer: {
+      border: `1px solid ${theme.colors.border.light}`,
+      borderRadius: theme.borderRadius.md,
+      padding: theme.spacing[2],
+      backgroundColor: theme.colors.surface.primary,
+    } as React.CSSProperties,
+  }
+
   return (
-    <div className={`${styles.FormCard} FormCard`}>
-      <div className={`${styles.CardBody} CardBody`}>
-        <h1>Create New Settings</h1>
+    <div style={sc.formCard}>
+      <div style={sc.formHeader}>
+        <h1 style={sc.formTitle}>
+          <Settings size={24} color={theme.colors.accent.primary} />
+          Create New Settings
+        </h1>
+      </div>
+      <div style={sc.formContent}>
         <Formik
-          initialValues={{}}
-          validate={values => {
-            values = { ...values, ...modifiedNonFormData }
-            const errors = {}
-            {
-              /* Insert all form errors here */
-        if (!values.name) {
-            errors.name = 'Field Required!'
-        }
+          initialValues={{} as FormValues}
+          validate={(values) => {
+            const combinedValues = { ...values, ...modifiedNonFormData }
+            const errors: Record<string, string> = {}
 
-        if (!values.created_at) {
-            errors.created_at = 'Field Required!'
-        }
+            if (!combinedValues.name) {
+              errors.name = 'Name is required'
+            }
 
-        if (!values.updated_at) {
-            errors.updated_at = 'Field Required!'
-        }
+            if (!combinedValues.value) {
+              errors.value = 'Value is required'
+            }
 
+            if (!combinedValues.created_at) {
+              errors.created_at = 'Created date is required'
+            }
+
+            if (!combinedValues.updated_at) {
+              errors.updated_at = 'Updated date is required'
             }
 
             return errors
           }}
-          onSubmit={(values, { setSubmitting }) => {
-            createSettings(values, setSubmitting)
-          }}>
-          {({
-            values,
-            errors,
-            touched,
-            handleChange,
-            handleBlur,
-            handleSubmit,
-            isSubmitting,
-            /* and other goodies */
-          }) => (
+          onSubmit={(values: FormValues, { setSubmitting }: FormikHelpers<FormValues>) => {
+            console.log('📝 Form submitted')
+            console.log('📋 Formik values:', values)
+            console.log('🗄️ Modified non-form data:', modifiedNonFormData)
+
+            const combinedData = { ...values, ...modifiedNonFormData } as SettingsData
+            console.log('🔄 Combined data:', combinedData)
+
+            createSettings(combinedData, setSubmitting)
+          }}
+        >
+          {({ values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
             <form onSubmit={handleSubmit}>
-              {/* Insert all add form fields here */}
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Settings Name</label>
-                        <input
-                            className={`${styles.FormTextField} FormTextField`}
-                            type="name"
-                            name="name"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.name}
-                        />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.name && touched.name && errors.name}
-                        </p>
-                    </div>
-    
+              {/* Basic Information section */}
+              <div style={{ marginBottom: theme.spacing[8] }}>
+                <h2
+                  style={{
+                    fontSize: theme.typography.fontSizes.xl,
+                    fontWeight: theme.typography.fontWeights.semibold,
+                    marginBottom: theme.spacing[4],
+                    color: theme.colors.text.primary,
+                  }}
+                >
+                  Basic Information
+                </h2>
 
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Settings Value</label>
-                        <input
-                            className={`${styles.FormTextField} FormTextField`}
-                            type="value"
-                            name="value"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.value}
-                        />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.value && touched.value && errors.value}
-                        </p>
-                    </div>
-    
+                {/* Name field */}
+                <div style={formField.container}>
+                  <label htmlFor="name" style={formField.label}>
+                    <Settings size={16} color={theme.colors.accent.primary} />
+                    Name <span style={{ color: theme.colors.feedback.error }}>*</span>
+                  </label>
+                  <input
+                    id="name"
+                    name="name"
+                    type="text"
+                    placeholder="Enter settings name"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.name || ''}
+                    style={{
+                      ...formField.input,
+                      borderColor:
+                        errors.name && touched.name ? theme.colors.feedback.error : theme.forms.input.borderColor,
+                    }}
+                  />
+                  {errors.name && touched.name && <p style={formField.error}>{errors.name}</p>}
+                </div>
 
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Created Date</label>
-                        <IMDatePicker
-                            selected={modifiedNonFormData.created_at}
-                            onChange={(toDate) => onDateChange(toDate, "created_at")}
-                        />
-                    </div>
-    
+                {/* Value field */}
+                <div style={formField.container}>
+                  <label htmlFor="value" style={formField.label}>
+                    <Settings size={16} color={theme.colors.accent.primary} />
+                    Value <span style={{ color: theme.colors.feedback.error }}>*</span>
+                  </label>
+                  <input
+                    id="value"
+                    name="value"
+                    type="text"
+                    placeholder="Enter settings value"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.value || ''}
+                    style={{
+                      ...formField.input,
+                      borderColor:
+                        errors.value && touched.value ? theme.colors.feedback.error : theme.forms.input.borderColor,
+                    }}
+                  />
+                  {errors.value && touched.value && <p style={formField.error}>{errors.value}</p>}
+                </div>
+              </div>
 
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Updated Date</label>
-                        <IMDatePicker
-                            selected={modifiedNonFormData.updated_at}
-                            onChange={(toDate) => onDateChange(toDate, "updated_at")}
-                        />
-                    </div>
-    
-
-
+              {/* Dates section */}
               <div
-                className={`${styles.FormActionContainer} FormActionContainer`}>
+                style={{
+                  height: '1px',
+                  backgroundColor: theme.colors.border.light,
+                  margin: `${theme.spacing[6]} 0`,
+                }}
+              ></div>
+
+              <div style={{ marginBottom: theme.spacing[8] }}>
+                <h2
+                  style={{
+                    fontSize: theme.typography.fontSizes.xl,
+                    fontWeight: theme.typography.fontWeights.semibold,
+                    marginBottom: theme.spacing[4],
+                    color: theme.colors.text.primary,
+                  }}
+                >
+                  Dates
+                </h2>
+
+                {/* Date fields */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: theme.spacing[6] }}>
+                  <div style={formField.container}>
+                    <label style={formField.label}>
+                      <Calendar size={16} color={theme.colors.accent.primary} />
+                      Created Date <span style={{ color: theme.colors.feedback.error }}>*</span>
+                    </label>
+                    <div style={formField.datePickerContainer}>
+                      <IMDatePicker
+                        selected={modifiedNonFormData.created_at}
+                        onChange={(toDate) => onDateChange(toDate, 'created_at')}
+                      />
+                    </div>
+                    {errors.created_at && <p style={formField.error}>{errors.created_at}</p>}
+                  </div>
+
+                  <div style={formField.container}>
+                    <label style={formField.label}>
+                      <Calendar size={16} color={theme.colors.accent.primary} />
+                      Updated Date <span style={{ color: theme.colors.feedback.error }}>*</span>
+                    </label>
+                    <div style={formField.datePickerContainer}>
+                      <IMDatePicker
+                        selected={modifiedNonFormData.updated_at}
+                        onChange={(toDate) => onDateChange(toDate, 'updated_at')}
+                      />
+                    </div>
+                    {errors.updated_at && <p style={formField.error}>{errors.updated_at}</p>}
+                  </div>
+                </div>
+              </div>
+
+              {/* Form actions */}
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  marginTop: theme.spacing[6],
+                  paddingTop: theme.spacing[4],
+                  borderTop: `1px solid ${theme.colors.border.light}`,
+                }}
+              >
                 <button
-                  className={`${styles.PrimaryButton} PrimaryButton`}
+                  type="button"
+                  style={{
+                    ...sc.secondaryButton,
+                    marginRight: theme.spacing[3],
+                  }}
+                  onClick={() => window.history.back()}
+                >
+                  Cancel
+                </button>
+                <button
                   type="submit"
-                  disabled={isSubmitting}>
-                  Create settings
+                  disabled={isSubmitting}
+                  style={{
+                    ...sc.primaryButton,
+                    opacity: isSubmitting ? 0.7 : 1,
+                    cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  {isSubmitting && (
+                    <Loader2 size={16} className="animate-spin" style={{ marginRight: theme.spacing[2] }} />
+                  )}
+                  Create Settings
                 </button>
               </div>
             </form>
