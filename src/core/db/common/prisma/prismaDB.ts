@@ -39,7 +39,7 @@ async function list(tableName, queryParams) {
   }
   console.log(`SELECT * FROM ${tableName} ${queryOrderBy} ${queryLimit}`)
   const dbResult = await prisma.$queryRawUnsafe(
-    `SELECT * FROM ${tableName} ${queryOrderBy} ${queryLimit}`,
+    `SELECT * FROM ${tableName} ${queryLimit}`,
   )
   const unescapedRes = dbResult.map(res => unescapeObject(res))
   if (queryParams.search?.length > 0) {

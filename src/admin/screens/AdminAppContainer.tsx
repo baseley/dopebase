@@ -22,7 +22,6 @@ interface AdminAppContainerProps {
 
 export const AdminAppContainer: React.FC<AdminAppContainerProps> = async ({ children, params = {}, searchParams }) => {
   const user = await getCurrentUser();
-
   // Ensure routes is always an array
   const generateBreadcrumbs = (routes?: string[]) => {
     if (!Array.isArray(routes) || routes.length === 0) {

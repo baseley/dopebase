@@ -209,6 +209,7 @@ const AddNewSubscriptionView = () => {
             return errors
           }}
           onSubmit={(values: FormValues, { setSubmitting }: FormikHelpers<FormValues>) => {
+            console.log('===============================================')
             console.log('📝 Form submitted')
             console.log('📋 Formik values:', values)
             console.log('🗄️ Modified non-form data:', modifiedNonFormData)

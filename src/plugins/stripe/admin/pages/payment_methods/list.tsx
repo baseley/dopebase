@@ -293,7 +293,7 @@ function PaymentMethodsListView() {
                   color: isExpired ? theme.colors.feedback.error : theme.colors.feedback.success,
                 }}
               >
-                <Calendar size={14} className="mr-1" />
+                <Calendar size={14} />
                 {month}/{year}
               </div>
             </div>
