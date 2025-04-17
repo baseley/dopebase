@@ -44,7 +44,6 @@ interface NonFormData {
 
 interface FormValues {
   title?: string
-  source_code_url?: string
   canonical_url?: string
   slug?: string
   seo_title?: string
@@ -827,25 +826,7 @@ const AddNewArticleView: React.FC = () => {
                 </div>
 
                 {/* Source Code URL field */}
-                <div style={formField.container}>
-                  <label htmlFor="source_code_url" style={formField.label}>
-                    <Code size={16} color={theme.colors.accent.primary} />
-                    GitHub URL
-                  </label>
-                  <input
-                    id="source_code_url"
-                    name="source_code_url"
-                    type="text"
-                    placeholder="https://github.com/username/repo"
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    value={values.source_code_url || ""}
-                    style={formField.input}
-                  />
-                  {errors.source_code_url && touched.source_code_url && (
-                    <p style={formField.error}>{errors.source_code_url}</p>
-                  )}
-                </div>
+                
 
                 {/* Canonical URL field */}
                 <div style={formField.container}>

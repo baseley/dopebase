@@ -437,36 +437,6 @@ function ArticlesListView() {
         },
       },
       {
-        id: "source_code_url",
-        header: "Source Code",
-        accessorKey: "source_code_url",
-        cell: ({ getValue }) => {
-          const url = getValue() as string | null
-          return (
-            <div className="flex justify-center">
-              {url ? (
-                <a
-                  href={url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    color: theme.colors.accent.primary,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.25rem",
-                  }}
-                >
-                  <Github size={14} />
-                  View
-                </a>
-              ) : (
-                <span style={{ fontSize: "0.875rem", color: theme.colors.text.tertiary }}>-</span>
-              )}
-            </div>
-          )
-        },
-      },
-      {
         id: "canonical_url",
         header: "Canonical URL",
         accessorKey: "canonical_url",
