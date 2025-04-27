@@ -68,33 +68,39 @@ async function insertOne(tableName, unescapedData) {
   const idValue = data?.id ? `'${data.id}'` : 'gen_random_uuid()'
   let query = `insert into ${tableName} (id`
 
-  for (var i = 0; i < dataKeys.length; ++i) {
-    if (dataKeys[i] === 'id') {
-      continue
-    }
-    query = `${query}, ${dataKeys[i]}`
+  for (let i = 0; i < dataKeys.length; ++i) {
+    if (dataKeys[i] === 'id') continue
+    query += `, ${dataKeys[i]}`
   }
+
   query += `) values(${idValue}`
-  for (var i = 0; i < dataKeys.length; ++i) {
+
+  for (let i = 0; i < dataKeys.length; ++i) {
     const key = dataKeys[i]
-    if (key === 'id') {
-      continue
-    }
+    if (key === 'id') continue
     const value = data[key]
     if (value === null) {
       query += ', null'
     } else if (Array.isArray(value)) {
-      query = `${query}, '{${value.toString()}}'`
-    } else {
-      query = `${query}, '${value}'`
+      if (value.length === 0) {
+        query += `, ARRAY[]::text[]` // or integer[], depending on your table
+      } else {
+        const escapedValues = value.map(v => `'${v.replace(/'/g, "''")}'`).join(', ')
+        query += `, ARRAY[${escapedValues}]`
+      }
     }
+     else {
+      const escapedValue = String(value).replace(/'/g, "''")
+      query += `, '${escapedValue}'`
+    }    
   }
+
   query += ')'
   console.log(query)
-
   const result = await prisma.$executeRawUnsafe(query)
   return result
 }
+
 
 async function deleteOne(tableName, id) {
   const query = `delete from ${tableName} where id='${id}'`
@@ -108,34 +114,26 @@ async function updateOne(tableName, id, unescapedData) {
   const dataKeys = Object.keys(data)
   let query = `update ${tableName} set `
 
-  for (let i = 0; i < dataKeys.length - 1; ++i) {
+  for (let i = 0; i < dataKeys.length; ++i) {
     const key = dataKeys[i]
-    const value = data[dataKeys[i]]
-    var modifiedValue = value
+    const value = data[key]
+    let modifiedValue
     if (value === null) {
       modifiedValue = 'null'
     } else if (Array.isArray(value)) {
-      modifiedValue = `'{${modifiedValue.toString()}}'`
+      const escapedValues = value.map(v => `'${v.replace(/'/g, "''")}'`).join(', ')
+      modifiedValue = `ARRAY[${escapedValues}]`
     } else {
-      modifiedValue = `'${modifiedValue}'`
+      modifiedValue = `'${value.replace(/'/g, "''")}'`
     }
-    query = `${query + key} = ${modifiedValue}, `
-  }
-  const lastIndex = dataKeys.length - 1
-  if (lastIndex >= 0) {
-    const value = data[dataKeys[lastIndex]]
-    const key = dataKeys[lastIndex]
-    var modifiedValue = value
-    if (value === null) {
-      modifiedValue = 'null'
-    } else if (Array.isArray(value)) {
-      modifiedValue = `'{${modifiedValue.toString()}}'`
-    } else {
-      modifiedValue = `'${modifiedValue}'`
+
+    query += `${key} = ${modifiedValue}`
+    if (i < dataKeys.length - 1) {
+      query += ', '
     }
-    query = `${query + key} = ${modifiedValue}`
   }
-  query = `${query} where id = '${id}' `
+
+  query += ` where id = '${id}'`
   console.log(query)
   const result = await prisma.$executeRawUnsafe(query)
   return result

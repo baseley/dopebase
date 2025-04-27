@@ -9,29 +9,29 @@ async function getUserByID(userID: string): Promise<User | null> {
 }
 
 async function getUserByToken(token: string): Promise<User | null> {
-  if (token?.length == 0) {
+  if (!token || token.length === 0) {
     return null
   }
+
   const auth = await prisma.auth.findFirst({
     where: { resetToken: Validator.escape(token) },
   })
-  const userId = auth?.userId
-  if (userId) {
-    return await prisma.user.findFirst({
-      where: { id: userId },
+
+  if (auth?.userId) {
+    return prisma.user.findFirst({
+      where: { id: auth.userId },
     })
   }
+
   return null
 }
 
-async function getUserByEmail(email: string) {
+async function getUserByEmail(email: string): Promise<User | null> {
   const user = await prisma.user.findFirst({
     where: { email: Validator.escape(email) },
   })
-  if (user) {
-    return user
-  }
-  return null
+
+  return user
 }
 
 async function createNewUser(
@@ -43,10 +43,9 @@ async function createNewUser(
   profilePictureURL?: string,
   role?: string,
   provider: string = '',
-  accessToken: string = '',
   metadata: string = '',
-) {
-  const dateStr = Math.floor(new Date().getTime() / 1000).toString()
+): Promise<User> {
+  const dateStr = new Date().toISOString() // ✅ Use ISO format
 
   const insertData = {
     email,
@@ -59,19 +58,21 @@ async function createNewUser(
     createdAt: dateStr,
     updatedAt: dateStr,
   }
+
   const user = await prisma.user.create({
     data: escapeObject(insertData),
   })
-  const auth = await prisma.auth.create({
+
+  await prisma.auth.create({
     data: {
       userId: user.id,
       encryptedPassword,
       providerType: provider ? provider : email ? 'email' : 'phone',
-      accessToken,
       createdAt: dateStr,
       updatedAt: dateStr,
     },
   })
+
   return user
 }
 
