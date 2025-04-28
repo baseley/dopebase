@@ -565,3 +565,33 @@ model Settings {
 
   @@map("settings")
 }
+
+model PaymentMethod {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("payment_methods")
+}
+
+model TaxiCarCategory {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("taxi_car_categories")
+}
+
+model TaxiTrips {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("taxi_trips")
+}

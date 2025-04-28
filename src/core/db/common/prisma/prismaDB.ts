@@ -15,7 +15,8 @@ async function getOne(tableName, id) {
 
 async function list(tableName, queryParams) {
   var queryLimit = ''
-  var queryOrderBy = 'order by updated_at desc'
+  // var queryOrderBy = 'order by updated_at desc' -- will come back to this if needed but for now the spelling isn't compatible with postgres
+  var queryOrderBy = 'order by "updatedAt" desc'
   // if (queryParams.search) {
   //   const keys = Object.keys(queryParams.search)
   //   const values = Object.values(queryParams.search)
@@ -39,8 +40,9 @@ async function list(tableName, queryParams) {
   }
   console.log(`SELECT * FROM ${tableName} ${queryOrderBy} ${queryLimit}`)
   const dbResult = await prisma.$queryRawUnsafe(
-    `SELECT * FROM ${tableName} ${queryLimit}`,
+    `SELECT * FROM ${tableName} ${queryOrderBy} ${queryLimit}`,
   )
+  
   const unescapedRes = dbResult.map(res => unescapeObject(res))
   if (queryParams.search?.length > 0) {
     var result = []
