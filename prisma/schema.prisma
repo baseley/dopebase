@@ -489,7 +489,7 @@ model TicketTag {
   slug      String?        @unique
   published Boolean        @default(true)
   createdAt String?        @map("created_at")
-  updatedAt DateTime       @updatedAt @map("updated_at")
+  updatedAt String?        @map("updated_at")
   tickets   TicketThread[]
 
   @@map("ticket_tags")
