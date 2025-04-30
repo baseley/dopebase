@@ -319,6 +319,7 @@ model ArticleCategory {
   logoURL        String? @map("logo_url")
   published      Boolean @default(false)
   createdAt      String? @map("created_at")
+  updatedAt      String? @map("updated_at")
   parentId       String? @map("parent_id")
   seoTitle       String? @map("seo_title")
   seoDescription String? @map("seo_description")
@@ -571,8 +572,13 @@ model PaymentMethod {
   id                 String   @id @default(uuid())
   provider           String
   details            String?
-  default            Boolean  @default(false)
-  stripeCustomerId   String?
+  default            Boolean  @default(false) @map("is_default")
+  userId             String    @map("userid")
+  brand              String?   
+  last4Digits        String?  @map("last4") 
+  expiryMonth        String?  @map("expirymonth")
+  expiryYear         String?  @map("expiryyear")
+  stripeCustomerId   String?  @map("stripecustomerid")
   cardInformation    String?
   expiryDate         String?
   user               String

@@ -6,6 +6,10 @@ import { escapeObject, unescapeObject } from '../../../../utils'
 const Validator = require('validator')
 
 async function getOne(tableName, id) {
+  // Reset connection to clear cached plans
+  await prisma.$disconnect();
+  await prisma.$connect();
+  
   const result = await prisma.$queryRawUnsafe(
     `SELECT * FROM ${tableName} where id='${Validator.escape(id)}'`,
   )
@@ -14,6 +18,10 @@ async function getOne(tableName, id) {
 }
 
 async function list(tableName, queryParams) {
+  // Reset connection to clear cached plans
+  await prisma.$disconnect();
+  await prisma.$connect();
+
   var queryLimit = ''
   var queryOrderBy = 'order by updated_at desc' 
   // var queryOrderBy = 'order by "updatedAt" desc'
@@ -65,6 +73,10 @@ async function list(tableName, queryParams) {
 }
 
 async function insertOne(tableName, unescapedData) {
+  // Reset connection to clear cached plans
+  await prisma.$disconnect();
+  await prisma.$connect();
+
   const data = escapeObject(unescapedData)
   const dataKeys = Object.keys(data)
   const idValue = data?.id ? `'${data.id}'` : 'gen_random_uuid()'
@@ -103,8 +115,11 @@ async function insertOne(tableName, unescapedData) {
   return result
 }
 
-
 async function deleteOne(tableName, id) {
+  // Reset connection to clear cached plans
+  await prisma.$disconnect();
+  await prisma.$connect();
+
   const query = `delete from ${tableName} where id='${id}'`
   const result = await prisma.$queryRawUnsafe(`${query}`)
   console.log(query)
@@ -112,6 +127,10 @@ async function deleteOne(tableName, id) {
 }
 
 async function updateOne(tableName, id, unescapedData) {
+  // Reset connection to clear cached plans
+  await prisma.$disconnect();
+  await prisma.$connect();
+
   const data = escapeObject(unescapedData)
   const dataKeys = Object.keys(data)
   let query = `update ${tableName} set `
@@ -142,6 +161,10 @@ async function updateOne(tableName, id, unescapedData) {
 }
 
 async function findOne(tableName, whereClauseDict) {
+  // Reset connection to clear cached plans
+  await prisma.$disconnect();
+  await prisma.$connect();
+
   const key = Object.keys(whereClauseDict)[0]
   const value = whereClauseDict[key]
   const result = await prisma.$queryRawUnsafe(
