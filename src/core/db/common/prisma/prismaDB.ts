@@ -15,8 +15,8 @@ async function getOne(tableName, id) {
 
 async function list(tableName, queryParams) {
   var queryLimit = ''
-  // var queryOrderBy = 'order by updated_at desc' -- will come back to this if needed but for now the spelling isn't compatible with postgres
-  var queryOrderBy = 'order by "updatedAt" desc'
+  var queryOrderBy = 'order by updated_at desc' 
+  // var queryOrderBy = 'order by "updatedAt" desc'
   // if (queryParams.search) {
   //   const keys = Object.keys(queryParams.search)
   //   const values = Object.values(queryParams.search)
