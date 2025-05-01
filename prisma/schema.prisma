@@ -575,13 +575,14 @@ model PaymentMethod {
   default            Boolean  @default(false) @map("is_default")
   userId             String    @map("userid")
   brand              String?   
-  last4Digits        String?  @map("last4") 
+  last4Digits        String?  @map("last4digits") 
+  last4              String?  @map("last4")
   expiryMonth        String?  @map("expirymonth")
   expiryYear         String?  @map("expiryyear")
   stripeCustomerId   String?  @map("stripecustomerid")
-  cardInformation    String?
-  expiryDate         String?
-  user               String
+  cardInformation    String?  @map("cardinformation")
+  expiryDate         String?  @map("expirydate")
+  // user               String   
   createdAt          String?  @map("created_at")
   updatedAt          String?  @map("updated_at")
   
@@ -624,8 +625,14 @@ model Post {
   id        String   @id @default(uuid())
   title     String
   content   String?
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt String?  @map("createdat")
+  updatedAt String?  @map("updated_at")
+  postText  String?  @map("posttext")
+  location  String?
+  commentCount String? @map("commentcount")
+  reactionsCount String? @map("reactionscount")
+  postMedia String? @map("postmedia")
+  authorId String? @map("authorid")
 
   @@map("posts") // <- this must match
 }

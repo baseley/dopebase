@@ -20,18 +20,22 @@ const baseAPIURL = `${pluginsAPIURL}`
 
 interface NonFormData {
   is_default?: boolean
-  userID?: string | number
+  userId?: string
+  created_at?: string
+  updated_at?: string
   [key: string]: any
 }
 
 interface FormValues {
   provider?: string
   details?: string
-  stripeCustomerID?: string
+  stripeCustomerId?: string
   brand?: string
-  last4?: string
+  last4Digits?: string
   expiryMonth?: string
   expiryYear?: string
+  cardInformation?: string
+  expiryDate?: string
   [key: string]: any
 }
 
@@ -46,7 +50,7 @@ const AddNewPaymentMethodView = () => {
     setModifiedNonFormData({
       created_at: Math.floor(new Date().getTime() / 1000).toString(),
       updated_at: Math.floor(new Date().getTime() / 1000).toString(),
-      is_default: false, // Default value
+      is_default: false,
     })
   }, [])
 
@@ -54,35 +58,43 @@ const AddNewPaymentMethodView = () => {
     setIsLoading(true)
     console.log("🔍 Starting payment method creation...")
 
+    // Prepare the data with proper field mappings
+    const formData = {
+      provider: data.provider,
+      details: data.details,
+      brand: data.brand,
+      last4Digits: data.last4Digits, // Will be mapped to 'last4' in the backend
+      expiryMonth: data.expiryMonth, // Will be mapped to 'expirymonth' in the backend
+      expiryYear: data.expiryYear, // Will be mapped to 'expiryyear' in the backend
+      cardInformation: data.cardInformation || null,
+      expiryDate: data.expiryDate || null,
+      stripeCustomerId: data.stripeCustomerId, // Will be mapped to 'stripecustomerid' in the backend
+      created_at: modifiedNonFormData.created_at,
+      updated_at: modifiedNonFormData.updated_at,
+      is_default: modifiedNonFormData.is_default,
+      userId: modifiedNonFormData.userId // Will be mapped to 'userid' in the backend
+    }
+
     const url = `${baseAPIURL}admin/subscriptions/payment_methods/add`
     console.log("🌐 API URL:", url)
+    console.log("📤 Data being sent:", formData)
 
     try {
-      console.log("🔄 Making API request...")
-      const response = await authPost(url, JSON.stringify({ ...data, ...modifiedNonFormData }))
-
+      const response = await authPost(url, JSON.stringify(formData))
       console.log("✅ API response received:", response)
 
       if (!response) {
-        console.error("❌ No response received from server")
-        toast.error("No response received from server")
-        return
+        throw new Error("No response received from server")
       }
 
       const resData = response.data
-      console.log("📊 Response data:", resData)
-
       if (resData?.error) {
-        console.error("❌ Server returned error:", resData.error)
-        toast.error(resData.error)
-      } else {
-        console.log("✅ Payment method created successfully!")
-        toast.success("Payment method created successfully")
+        throw new Error(resData.error)
       }
+
+      toast.success("Payment method created successfully")
     } catch (error: any) {
-      console.error("❌ Error during API call:", error)
-      console.error("Error details:", error.message)
-      console.error("Error stack:", error.stack)
+      console.error("❌ Error:", error)
       toast.error(`Error creating payment method: ${error.message || "Unknown error"}`)
     } finally {
       setSubmitting(false)
@@ -98,7 +110,7 @@ const AddNewPaymentMethodView = () => {
 
   const handleSwitchChange = (value: boolean, fieldName: string) => {
     const newData = { ...modifiedNonFormData }
-    newData[fieldName] = value ^ true
+    newData[fieldName] = value
     setModifiedNonFormData(newData)
   }
 
@@ -171,20 +183,14 @@ const AddNewPaymentMethodView = () => {
               errors.provider = 'Provider is required'
             }
 
-            if (!combinedValues.details) {
-              errors.details = 'Details are required'
+            if (!combinedValues.userId) {
+              errors.userId = 'User is required'
             }
 
             return errors
           }}
-          onSubmit={(values: FormValues, { setSubmitting }: FormikHelpers<FormValues>) => {
-            console.log('📝 Form submitted')
-            console.log('📋 Formik values:', values)
-            console.log('🗄️ Modified non-form data:', modifiedNonFormData)
-
+          onSubmit={(values: FormValues, { setSubmitting }) => {
             const combinedData = { ...values, ...modifiedNonFormData } as PaymentMethodData
-            console.log('🔄 Combined data:', combinedData)
-
             createPaymentMethod(combinedData, setSubmitting)
           }}
         >
@@ -192,34 +198,20 @@ const AddNewPaymentMethodView = () => {
             <form onSubmit={handleSubmit}>
               {/* Basic Information section */}
               <div style={{ marginBottom: theme.spacing[8] }}>
-                <h2
-                  style={{
-                    fontSize: theme.typography.fontSizes.xl,
-                    fontWeight: theme.typography.fontWeights.semibold,
-                    marginBottom: theme.spacing[4],
-                    color: theme.colors.text.primary,
-                  }}
-                >
-                  Payment Method Details
-                </h2>
+                <h2 style={sc.sectionTitle}>Payment Method Details</h2>
 
                 {/* Provider field */}
                 <div style={formField.container}>
                   <label htmlFor="provider" style={formField.label}>
-                    <CreditCard size={16} color={theme.colors.accent.primary} />
-                    Provider <span style={{ color: theme.colors.feedback.error }}>*</span>
+                    <CreditCard size={16} /> Provider *
                   </label>
                   <select
                     id="provider"
                     name="provider"
-                    onChange={(e) => handleSelectChange(e.target.value, 'provider')}
+                    onChange={handleChange}
                     onBlur={handleBlur}
                     value={values.provider || ''}
-                    style={{
-                      ...formField.input,
-                      borderColor:
-                        errors.provider && touched.provider ? theme.colors.feedback.error : theme.forms.input.borderColor,
-                    }}
+                    style={formField.input}
                   >
                     <option value="">Select a provider</option>
                     <option value="Stripe">Stripe</option>
@@ -232,24 +224,17 @@ const AddNewPaymentMethodView = () => {
                 {/* Details field */}
                 <div style={formField.container}>
                   <label htmlFor="details" style={formField.label}>
-                    <CreditCard size={16} color={theme.colors.accent.primary} />
-                    Details <span style={{ color: theme.colors.feedback.error }}>*</span>
+                    <CreditCard size={16} /> Details
                   </label>
                   <input
                     id="details"
                     name="details"
                     type="text"
-                    placeholder="Payment method details"
                     onChange={handleChange}
                     onBlur={handleBlur}
                     value={values.details || ''}
-                    style={{
-                      ...formField.input,
-                      borderColor:
-                        errors.details && touched.details ? theme.colors.feedback.error : theme.forms.input.borderColor,
-                    }}
+                    style={formField.input}
                   />
-                  {errors.details && touched.details && <p style={formField.error}>{errors.details}</p>}
                 </div>
 
                 {/* Is Default field */}
@@ -265,208 +250,168 @@ const AddNewPaymentMethodView = () => {
                     </label>
                     <IMToggleSwitchComponent
                       isChecked={modifiedNonFormData.is_default}
-                      onSwitchChange={() => handleSwitchChange(modifiedNonFormData["is_default"], "is_default")}
+                      onSwitchChange={() => handleSwitchChange(!modifiedNonFormData.is_default, "is_default")}
                     />
                   </div>
-                  <p style={formField.hint}>
-                    When enabled, this payment method will be used as the default for future payments
-                  </p>
                 </div>
               </div>
 
               {/* Card Details Section */}
-              <div
-                style={{
-                  height: '1px',
-                  backgroundColor: theme.colors.border.light,
-                  margin: `${theme.spacing[6]} 0`,
-                }}
-              ></div>
+              <div style={sc.sectionDivider}></div>
 
               <div style={{ marginBottom: theme.spacing[8] }}>
-                <h2
-                  style={{
-                    fontSize: theme.typography.fontSizes.xl,
-                    fontWeight: theme.typography.fontWeights.semibold,
-                    marginBottom: theme.spacing[4],
-                    color: theme.colors.text.primary,
-                  }}
-                >
-                  Card Information
-                </h2>
+                <h2 style={sc.sectionTitle}>Card Information</h2>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: theme.spacing[6] }}>
                   {/* Brand field */}
                   <div style={formField.container}>
                     <label htmlFor="brand" style={formField.label}>
-                      <CreditCard size={16} color={theme.colors.accent.primary} />
-                      Brand
+                      <CreditCard size={16} /> Brand
                     </label>
                     <input
                       id="brand"
                       name="brand"
                       type="text"
-                      placeholder="Visa, Mastercard, etc."
                       onChange={handleChange}
                       onBlur={handleBlur}
                       value={values.brand || ''}
                       style={formField.input}
                     />
-                    {errors.brand && touched.brand && <p style={formField.error}>{errors.brand}</p>}
                   </div>
 
-                  {/* Last 4 field */}
+                  {/* Last 4 Digits field */}
                   <div style={formField.container}>
-                    <label htmlFor="last4" style={formField.label}>
-                      <CreditCard size={16} color={theme.colors.accent.primary} />
-                      Last 4 Digits
+                    <label htmlFor="last4Digits" style={formField.label}>
+                      <CreditCard size={16} /> Last 4 Digits
                     </label>
                     <input
-                      id="last4"
-                      name="last4"
+                      id="last4Digits"
+                      name="last4Digits"
                       type="text"
-                      placeholder="4242"
                       maxLength={4}
                       onChange={handleChange}
                       onBlur={handleBlur}
-                      value={values.last4 || ''}
+                      value={values.last4Digits || ''}
                       style={formField.input}
                     />
-                    {errors.last4 && touched.last4 && <p style={formField.error}>{errors.last4}</p>}
                   </div>
 
                   {/* Expiry Month field */}
                   <div style={formField.container}>
                     <label htmlFor="expiryMonth" style={formField.label}>
-                      <Calendar size={16} color={theme.colors.accent.primary} />
-                      Expiry Month
+                      <Calendar size={16} /> Expiry Month
                     </label>
                     <input
                       id="expiryMonth"
                       name="expiryMonth"
                       type="text"
-                      placeholder="MM"
                       maxLength={2}
                       onChange={handleChange}
                       onBlur={handleBlur}
                       value={values.expiryMonth || ''}
                       style={formField.input}
                     />
-                    {errors.expiryMonth && touched.expiryMonth && <p style={formField.error}>{errors.expiryMonth}</p>}
                   </div>
 
                   {/* Expiry Year field */}
                   <div style={formField.container}>
                     <label htmlFor="expiryYear" style={formField.label}>
-                      <Calendar size={16} color={theme.colors.accent.primary} />
-                      Expiry Year
+                      <Calendar size={16} /> Expiry Year
                     </label>
                     <input
                       id="expiryYear"
                       name="expiryYear"
                       type="text"
-                      placeholder="YYYY"
                       maxLength={4}
                       onChange={handleChange}
                       onBlur={handleBlur}
                       value={values.expiryYear || ''}
                       style={formField.input}
                     />
-                    {errors.expiryYear && touched.expiryYear && <p style={formField.error}>{errors.expiryYear}</p>}
                   </div>
+                </div>
+
+                {/* Card Information field */}
+                <div style={formField.container}>
+                  <label htmlFor="cardInformation" style={formField.label}>
+                    <CreditCard size={16} /> Card Information
+                  </label>
+                  <input
+                    id="cardInformation"
+                    name="cardInformation"
+                    type="text"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.cardInformation || ''}
+                    style={formField.input}
+                  />
+                </div>
+
+                {/* Expiry Date field */}
+                <div style={formField.container}>
+                  <label htmlFor="expiryDate" style={formField.label}>
+                    <Calendar size={16} /> Expiry Date
+                  </label>
+                  <input
+                    id="expiryDate"
+                    name="expiryDate"
+                    type="text"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.expiryDate || ''}
+                    style={formField.input}
+                  />
                 </div>
 
                 {/* Stripe Customer ID field */}
                 <div style={formField.container}>
-                  <label htmlFor="stripeCustomerID" style={formField.label}>
-                    <CreditCard size={16} color={theme.colors.accent.primary} />
-                    Stripe Customer ID
+                  <label htmlFor="stripeCustomerId" style={formField.label}>
+                    <CreditCard size={16} /> Stripe Customer ID
                   </label>
                   <input
-                    id="stripeCustomerID"
-                    name="stripeCustomerID"
+                    id="stripeCustomerId"
+                    name="stripeCustomerId"
                     type="text"
-                    placeholder="cus_123..."
                     onChange={handleChange}
                     onBlur={handleBlur}
-                    value={values.stripeCustomerID || ''}
+                    value={values.stripeCustomerId || ''}
                     style={formField.input}
                   />
-                  {errors.stripeCustomerID && touched.stripeCustomerID && (
-                    <p style={formField.error}>{errors.stripeCustomerID}</p>
-                  )}
                 </div>
               </div>
 
               {/* User Section */}
-              <div
-                style={{
-                  height: '1px',
-                  backgroundColor: theme.colors.border.light,
-                  margin: `${theme.spacing[6]} 0`,
-                }}
-              ></div>
+              <div style={sc.sectionDivider}></div>
 
               <div style={{ marginBottom: theme.spacing[8] }}>
-                <h2
-                  style={{
-                    fontSize: theme.typography.fontSizes.xl,
-                    fontWeight: theme.typography.fontWeights.semibold,
-                    marginBottom: theme.spacing[4],
-                    color: theme.colors.text.primary,
-                  }}
-                >
-                  User Information
-                </h2>
+                <h2 style={sc.sectionTitle}>User Information</h2>
 
                 {/* User field */}
                 <div style={formField.container}>
                   <label style={formField.label}>
-                    <User size={16} color={theme.colors.accent.primary} />
-                    User
+                    <User size={16} /> User *
                   </label>
                   <div style={formField.typeaheadContainer}>
                     <PaymentMethodUserTypeaheadComponent
-                      onSelect={(value) => onTypeaheadSelect(value, "userID")}
-                      id={originalData && originalData.userID}
-                      name={originalData && originalData.userID}
+                      onSelect={(value) => onTypeaheadSelect(value, "userId")}
+                      id={modifiedNonFormData.userId}
                     />
                   </div>
+                  {errors.userId && <p style={formField.error}>{errors.userId}</p>}
                 </div>
               </div>
 
               {/* Form actions */}
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'flex-end',
-                  marginTop: theme.spacing[6],
-                  paddingTop: theme.spacing[4],
-                  borderTop: `1px solid ${theme.colors.border.light}`,
-                }}
-              >
-                <button
-                  type="button"
-                  style={{
-                    ...sc.secondaryButton,
-                    marginRight: theme.spacing[3],
-                  }}
-                  onClick={() => window.history.back()}
-                >
+              <div style={sc.formActions}>
+                <button type="button" style={sc.secondaryButton} onClick={() => window.history.back()}>
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  style={{
-                    ...sc.primaryButton,
-                    opacity: isSubmitting ? 0.7 : 1,
-                    cursor: isSubmitting ? 'not-allowed' : 'pointer',
-                  }}
+                  style={{ ...sc.primaryButton, opacity: isSubmitting ? 0.7 : 1 }}
                 >
-                  {isSubmitting && (
-                    <Loader2 size={16} className="animate-spin" style={{ marginRight: theme.spacing[2] }} />
-                  )}
+                  {isSubmitting && <Loader2 size={16} className="animate-spin" style={{ marginRight: 8 }} />}
                   Create Payment Method
                 </button>
               </div>

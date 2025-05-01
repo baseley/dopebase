@@ -30,6 +30,7 @@ interface NonFormData {
 interface FormValues {
   amount?: string
   provider_transaction_id?: string
+  provider_id?: string
   [key: string]: any
 }
 
@@ -195,6 +196,10 @@ const AddNewTransactionView = () => {
               errors.status = 'Status is required'
             }
 
+            if (!combinedValues.provider_id) {
+              errors.provider_id = 'Provider ID is required'
+            }
+
             if (!combinedValues.created_at) {
               errors.created_at = 'Created date is required'
             }
@@ -270,19 +275,30 @@ const AddNewTransactionView = () => {
                   {errors.amount && touched.amount && <p style={formField.error}>{errors.amount}</p>}
                 </div>
 
-                {/* Transaction Date field */}
+                {/* Provider ID field */}
                 <div style={formField.container}>
-                  <label style={formField.label}>
-                    <Calendar size={16} color={theme.colors.accent.primary} />
-                    Transaction Date <span style={{ color: theme.colors.feedback.error }}>*</span>
+                  <label htmlFor="provider_id" style={formField.label}>
+                    <CreditCard size={16} color={theme.colors.accent.primary} />
+                    Provider ID <span style={{ color: theme.colors.feedback.error }}>*</span>
                   </label>
-                  <div style={formField.datePickerContainer}>
-                    <IMDatePicker
-                      selected={modifiedNonFormData.transaction_date}
-                      onChange={(toDate) => onDateChange(toDate, 'transaction_date')}
-                    />
-                  </div>
-                  {errors.transaction_date && <p style={formField.error}>{errors.transaction_date}</p>}
+                  <input
+                    id="provider_id"
+                    name="provider_id"
+                    type="text"
+                    placeholder="e.g., stripe, paypal"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.provider_id || ''}
+                    style={{
+                      ...formField.input,
+                      borderColor:
+                        errors.provider_id && touched.provider_id ? theme.colors.feedback.error : theme.forms.input.borderColor,
+                    }}
+                  />
+                  {errors.provider_id && touched.provider_id && (
+                    <p style={formField.error}>{errors.provider_id}</p>
+                  )}
+                  <p style={formField.hint}>The payment provider (e.g., stripe, paypal)</p>
                 </div>
 
                 {/* Provider Transaction ID field */}
@@ -305,6 +321,21 @@ const AddNewTransactionView = () => {
                     <p style={formField.error}>{errors.provider_transaction_id}</p>
                   )}
                   <p style={formField.hint}>The transaction ID from your payment provider (e.g., Stripe)</p>
+                </div>
+
+                {/* Transaction Date field */}
+                <div style={formField.container}>
+                  <label style={formField.label}>
+                    <Calendar size={16} color={theme.colors.accent.primary} />
+                    Transaction Date <span style={{ color: theme.colors.feedback.error }}>*</span>
+                  </label>
+                  <div style={formField.datePickerContainer}>
+                    <IMDatePicker
+                      selected={modifiedNonFormData.transaction_date}
+                      onChange={(toDate) => onDateChange(toDate, 'transaction_date')}
+                    />
+                  </div>
+                  {errors.transaction_date && <p style={formField.error}>{errors.transaction_date}</p>}
                 </div>
               </div>
 
