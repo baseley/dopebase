@@ -126,39 +126,52 @@ async function deleteOne(tableName, id) {
   return result[0]
 }
 
-async function updateOne(tableName, id, unescapedData) {
-  // Reset connection to clear cached plans
-  await prisma.$disconnect();
-  await prisma.$connect();
+export async function updateOne(table: string, id: string, data: Record<string, any>) {
+  let query = `update ${table} set`
+  const setClauses = []
 
-  const data = escapeObject(unescapedData)
-  const dataKeys = Object.keys(data)
-  let query = `update ${tableName} set `
-
-  for (let i = 0; i < dataKeys.length; ++i) {
-    const key = dataKeys[i]
-    const value = data[key]
-    let modifiedValue
-    if (value === null) {
-      modifiedValue = 'null'
-    } else if (Array.isArray(value)) {
-      const escapedValues = value.map(v => `'${v.replace(/'/g, "''")}'`).join(', ')
-      modifiedValue = `ARRAY[${escapedValues}]`
-    } else {
-      modifiedValue = `'${value.replace(/'/g, "''")}'`
-    }
-
-    query += `${key} = ${modifiedValue}`
-    if (i < dataKeys.length - 1) {
-      query += ', '
-    }
+  const arrayFieldTypes: Record<string, string> = {
+    photo_urls: 'text',
+    // Add other array fields and their types here if needed
   }
 
+  for (const [key, value] of Object.entries(data)) {
+    let modifiedValue: string
+
+    if (value === null) {
+      modifiedValue = 'null'
+    } else if (typeof value === 'string') {
+      modifiedValue = `'${value.replace(/'/g, "''")}'`
+    } else if (typeof value === 'boolean') {
+      modifiedValue = value ? 'true' : 'false'
+    } else if (typeof value === 'number') {
+      modifiedValue = value.toString()
+    } else if (Array.isArray(value)) {
+      if (value.length === 0) {
+        const arrayType = arrayFieldTypes[key] || 'text'
+        modifiedValue = `ARRAY[]::${arrayType}[]`
+      } else {
+        const escapedValues = value.map(v => `'${v.replace(/'/g, "''")}'`).join(', ')
+        modifiedValue = `ARRAY[${escapedValues}]`
+      }
+    } else {
+      // fallback for unknown types
+      modifiedValue = `'${JSON.stringify(value).replace(/'/g, "''")}'`
+    }
+
+    setClauses.push(`${key} = ${modifiedValue}`)
+  }
+
+  query += ' ' + setClauses.join(', ')
   query += ` where id = '${id}'`
-  console.log(query)
+
+  console.log(query) // useful for debugging
+
   const result = await prisma.$executeRawUnsafe(query)
   return result
 }
+
+
 
 async function findOne(tableName, whereClauseDict) {
   // Reset connection to clear cached plans
