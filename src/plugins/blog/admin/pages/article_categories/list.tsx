@@ -168,7 +168,7 @@ function ActionsItemView({ data }: { data: any }) {
   }
 
   const handleEdit = (item: ArticleCategory) => {
-    router.push(`./article_categories/update?id=${item.id}`)
+    router.push(`./update?id=${item.id}`)
   }
 
   const handleDelete = async (item: ArticleCategory) => {
