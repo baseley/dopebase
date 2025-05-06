@@ -157,7 +157,12 @@ const UpdateSubscriptionView = () => {
     setModifiedNonFormData(newData)
   }
 
-  const getStatusIcon = (status: string) => {
+  const getStatusIcon = (status: string | object) => {
+    if (typeof status === "object") {
+      console.error("Invalid status object:", status)
+      return null
+    }
+
     switch (status) {
       case "active":
         return <CheckCircleIcon className="w-5 h-5 text-green-500" />
