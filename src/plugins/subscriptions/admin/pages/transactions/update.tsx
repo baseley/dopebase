@@ -102,12 +102,16 @@ const UpdateTransactionView = () => {
   const saveChanges = async (modifiedData: any, setSubmitting: (isSubmitting: boolean) => void) => {
     try {
       setError("")
+      const dataToSave = {
+        ...modifiedData,
+        ...modifiedNonFormData,
+        transaction_date: modifiedNonFormData.transaction_date || new Date().toISOString(),
+        created_at: modifiedNonFormData.created_at || new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }
       const response = await authPost(
         baseAPIURL + "transactions/update?id=" + id,
-        JSON.stringify({
-          ...modifiedData,
-          ...modifiedNonFormData,
-        }),
+        JSON.stringify(dataToSave),
       )
       const { data } = response
       if (data.success === true) {
@@ -137,9 +141,9 @@ const UpdateTransactionView = () => {
     setModifiedNonFormData(newData)
   }
 
-  const onDateChange = (toDate: Date, fieldName: string) => {
+  const onDateChange = (toDate: Date | null, fieldName: string) => {
     const newData = { ...modifiedNonFormData }
-    newData[fieldName as keyof NonFormData] = toDate.toISOString()
+    newData[fieldName as keyof NonFormData] = toDate ? toDate.toISOString() : new Date().toISOString()
     setModifiedNonFormData(newData)
   }
 

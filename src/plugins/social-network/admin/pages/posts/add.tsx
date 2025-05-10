@@ -28,6 +28,7 @@ interface NonFormData {
 }
 
 interface FormValues {
+  title: string // Added required title field
   authorID?: string
   commentCount?: number
   postText?: string
@@ -55,8 +56,16 @@ const AddNewPostView = () => {
     setIsLoading(true)
     const url = `${baseAPIURL}admin/social-network/posts/add`
     
+    // Prepare complete post data with all required fields
+    const postData = {
+      ...data,
+      ...modifiedNonFormData,
+      content: null, // Set explicitly as per schema
+      updated_at: null // Set explicitly as per schema
+    }
+
     try {
-      const response = await authPost(url, JSON.stringify({ ...data, ...modifiedNonFormData }))
+      const response = await authPost(url, JSON.stringify(postData))
       const resData = response.data
 
       if (resData?.error) {
@@ -176,10 +185,16 @@ const AddNewPostView = () => {
       </div>
       <div style={sc.formContent}>
         <Formik
-          initialValues={{} as FormValues}
+          initialValues={{
+            title: '', // Initialize title
+          } as FormValues}
           validate={(values) => {
             const combinedValues = { ...values, ...modifiedNonFormData }
             const errors: Record<string, string> = {}
+
+            if (!combinedValues.title) {
+              errors.title = 'Title is required'
+            }
 
             if (!combinedValues.authorID) {
               errors.authorID = 'Author is required'
@@ -211,6 +226,28 @@ const AddNewPostView = () => {
                 }}>
                   Post Details
                 </h2>
+
+                {/* Title Field */}
+                <div style={formField.container}>
+                  <label htmlFor="title" style={formField.label}>
+                    <Edit size={16} color={theme.colors.accent.primary} />
+                    Title <span style={{ color: theme.colors.feedback.error }}>*</span>
+                  </label>
+                  <input
+                    id="title"
+                    name="title"
+                    type="text"
+                    placeholder="Post title"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.title}
+                    style={{
+                      ...formField.input,
+                      borderColor: errors.title && touched.title ? theme.colors.feedback.error : theme.forms.input.borderColor,
+                    }}
+                  />
+                  {errors.title && touched.title && <p style={formField.error}>{errors.title}</p>}
+                </div>
 
                 {/* Author */}
                 <div style={formField.container}>
