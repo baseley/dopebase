@@ -9,92 +9,92 @@ import styles from '../../../../admin/themes/admin.module.css'
 const baseAPIURL = `${pluginsAPIURL}admin/social-network/`
 
 function PostAuthorTypeaheadComponent(props) {
+  const { id, name, onSelect } = props
   const [isLoading, setIsLoading] = useState(true)
-  const [users, setUsers] = useState(null)
-  const [typeaheadValue, setTypeaheadValue] = useState('')
-  const [inputValue, setInputValue] = useState(null)
+  const [users, setUsers] = useState([])
+  const [inputValue, setInputValue] = useState('')
   const [isTypeaheadVisible, setIsTypeaheadVisible] = useState(false)
-
   const [user, token, loading] = useCurrentUser()
 
-  const { id, name, onSelect } = props
-
+  // Fetch initial user data when id changes
   useEffect(() => {
-    const fetchData = async () => {
-      if (!id) {
-        setIsLoading(false)
-        return
-      }
+    if (!id) {
+      setIsLoading(false)
+      return
+    }
+
+    const fetchInitialUser = async () => {
       try {
-        const response = await authFetch(
-          baseAPIURL + 'users/view?id=' + id,
-        )
+        const response = await authFetch(`${baseAPIURL}users/view?id=${id}`)
         if (response?.data) {
-          const data = response.data
-          setInputValue(data.firstName + " " + data.lastName)
-          setIsLoading(false)
+          const { firstName, lastName } = response.data
+          setInputValue(`${firstName} ${lastName}`)
         }
       } catch (err) {
-        console.log(err)
+        console.error('Failed to fetch user:', err)
+      } finally {
         setIsLoading(false)
       }
     }
-    fetchData()
+
+    fetchInitialUser()
   }, [id])
 
+  // Fetch users when typeahead value changes
   useEffect(() => {
-    const fetchData = async () => {
-      if (typeaheadValue == null || loading == true) {
-        return
-      }
+    if (!inputValue || loading) return
+
+    const fetchUsers = async () => {
       try {
         const response = await authFetch(
-          baseAPIURL +
-            'users/list?limit=10&search=' +
-            typeaheadValue,
+          `${baseAPIURL}users/list?limit=10&search=${inputValue}`
         )
-        if (response?.data) {
-          console.log(response.data)
-          if (response?.data) {
-            setUsers(response.data)
-          }
-        }
+        setUsers(response?.data || [])
       } catch (err) {
-        console.log(err)
+        console.error('Failed to fetch users:', err)
+        setUsers([])
       }
     }
-    fetchData()
-  }, [typeaheadValue, loading])
 
-  const handleChange = event => {
-    const text = event.target.value
-    setTypeaheadValue(text)
-    setInputValue(text)
-  }
+    const debounceTimer = setTimeout(fetchUsers, 300)
+    return () => clearTimeout(debounceTimer)
+  }, [inputValue, loading])
 
-  const onFocus = () => {
+  const handleChange = (event) => {
+    setInputValue(event.target.value)
     setIsTypeaheadVisible(true)
   }
 
-  const onBlur = () => {
-    //setIsTypeaheadVisible(false)
-  }
-
-  const onClick = data => {
-    setInputValue(data.firstName + " " + data.lastName)
-    onSelect && onSelect(data.id)
+  const handleSelect = (user) => {
+    setInputValue(`${user.firstName} ${user.lastName}`)
+    onSelect?.(user.id)
     setIsTypeaheadVisible(false)
   }
 
-  const listItems =
-    users && users.length
-      ? users.map(
-          data => <li onClick={() => onClick(data)}><table key={data.id}><tr><td><img src={data.profilePictureURL} /></td><td><span>{data.firstName} {data.lastName} ({data.email})</span></td></tr></table></li>, // <li>{element.firstName} {element.lastName}</li>
-        )
-      : null
+  const renderUserItem = (user) => (
+    <li 
+      key={user.id}
+      className={styles.TypeaheadResultItem}
+      onClick={() => handleSelect(user)}
+    >
+      <div className={styles.UserResult}>
+        <img 
+          src={user.profilePictureURL} 
+          alt={`${user.firstName} ${user.lastName}`}
+          className={styles.UserAvatar}
+        />
+        <div className={styles.UserInfo}>
+          <span className={styles.UserName}>
+            {user.firstName} {user.lastName}
+          </span>
+          <span className={styles.UserEmail}>{user.email}</span>
+        </div>
+      </div>
+    </li>
+  )
 
   if (isLoading) {
-    console.log('Error loading data for: ' + id)
+    return <div>Loading...</div>
   }
 
   return (
@@ -102,20 +102,22 @@ function PostAuthorTypeaheadComponent(props) {
       <input
         className={`${styles.FormTextField} FormTextField`}
         autoComplete="off"
-        onFocus={onFocus}
-        onBlur={onBlur}
+        onFocus={() => setIsTypeaheadVisible(true)}
+        onBlur={() => setTimeout(() => setIsTypeaheadVisible(false), 200)}
         type="text"
         name={name}
         value={inputValue}
         onChange={handleChange}
+        placeholder="Search users..."
       />
-      {isTypeaheadVisible && (
-        <div
-          className={`${styles.TypeaheadResultsContainer} TypeaheadResultsContainer`}>
-          <ul
+      
+      {isTypeaheadVisible && users.length > 0 && (
+        <div className={`${styles.TypeaheadResultsContainer} TypeaheadResultsContainer`}>
+          <ul 
             className={`${styles.TypeaheadResultsList} TypeaheadResultsList`}
-            id={name}>
-            {listItems}
+            id={name}
+          >
+            {users.map(renderUserItem)}
           </ul>
         </div>
       )}

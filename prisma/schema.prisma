@@ -639,6 +639,7 @@ model Post {
 
 model Story {
   id        String   @id @default(uuid())
+  authorID  String   @map("authorid")
   title     String
   content   String?
   createdAt DateTime @default(now()) @map("created_at")

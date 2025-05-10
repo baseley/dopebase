@@ -38,14 +38,18 @@ interface StoryData extends FormValues, NonFormData {}
 
 const AddNewStoryView = () => {
   const [isLoading, setIsLoading] = useState(false)
-  const [modifiedNonFormData, setModifiedNonFormData] = useState<NonFormData>({})
+  const [modifiedNonFormData, setModifiedNonFormData] = useState<NonFormData>({
+    createdAt: '',
+    storyMediaURL: ''
+  })
   const [originalData, setOriginalData] = useState<StoryData | null>(null)
 
   useEffect(() => {
     const now = Math.floor(new Date().getTime() / 1000).toString()
-    setModifiedNonFormData({
+    setModifiedNonFormData(prev => ({
+      ...prev,
       createdAt: now,
-    })
+    }))
   }, [])
 
   const createStory = async (data: StoryData, setSubmitting: (isSubmitting: boolean) => void) => {
@@ -58,8 +62,11 @@ const AddNewStoryView = () => {
 
       if (resData?.error) {
         toast.error(resData.error)
+        throw new Error(resData.error)
       } else {
         toast.success("Story created successfully")
+        // Optional: redirect after success
+        // window.location.href = '/admin/stories'
       }
     } catch (error: any) {
       toast.error(`Error creating story: ${error.message || "Unknown error"}`)
@@ -70,54 +77,58 @@ const AddNewStoryView = () => {
     }
   }
 
-  const onTypeaheadSelect = (value: any, fieldName: string) => {
-    const newData = { ...modifiedNonFormData }
-    newData[fieldName] = value
-    setModifiedNonFormData(newData)
+  const onTypeaheadSelect = (value: string, fieldName: string) => {
+    setModifiedNonFormData(prev => ({
+      ...prev,
+      [fieldName]: value
+    }))
   }
 
-  const handleSelectChange = (value: any, fieldName: string) => {
-    const newData = { ...modifiedNonFormData }
-    newData[fieldName] = value
-    setModifiedNonFormData(newData)
+  const handleSelectChange = (value: string, fieldName: string) => {
+    setModifiedNonFormData(prev => ({
+      ...prev,
+      [fieldName]: value
+    }))
   }
 
   const onDateChange = (toDate: string, fieldName: string) => {
-    const newData = { ...modifiedNonFormData }
-    newData[fieldName] = toDate
-    setModifiedNonFormData(newData)
+    setModifiedNonFormData(prev => ({
+      ...prev,
+      [fieldName]: toDate
+    }))
   }
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
     const files = event.target.files
     if (!files || files.length === 0) return
 
     const formData = new FormData()
     formData.append('photos', files[0])
 
-    fetch(pluginsAPIURL + '../media/upload', {
-      method: 'POST',
-      body: formData,
-    })
-      .then(response => response.json())
-      .then(response => {
-        const newData = { ...modifiedNonFormData }
-        const url = response.data?.[0]?.url
-        if (url) {
-          newData[fieldName] = url
-          setModifiedNonFormData(newData)
-        }
+    try {
+      const response = await fetch(pluginsAPIURL + '../media/upload', {
+        method: 'POST',
+        body: formData,
       })
-      .catch(error => {
-        console.error(error)
-        toast.error('Failed to upload media')
-      })
+      const data = await response.json()
+      
+      if (data.data?.[0]?.url) {
+        setModifiedNonFormData(prev => ({
+          ...prev,
+          [fieldName]: data.data[0].url
+        }))
+      }
+    } catch (error) {
+      console.error(error)
+      toast.error('Failed to upload media')
+    }
   }
 
   const handleDeletePhoto = (srcToBeRemoved: string, fieldName: string) => {
-    const newData = { ...modifiedNonFormData }
-    newData[fieldName] = null
-    setModifiedNonFormData(newData)
+    setModifiedNonFormData(prev => ({
+      ...prev,
+      [fieldName]: ''
+    }))
   }
 
   if (isLoading) {
@@ -163,10 +174,13 @@ const AddNewStoryView = () => {
       </div>
       <div style={sc.formContent}>
         <Formik
-          initialValues={{} as FormValues}
+          initialValues={{
+            authorID: '',
+            storyType: '',
+          }}
           validate={(values) => {
             const combinedValues = { ...values, ...modifiedNonFormData }
-            const errors: Record<string, string> = {}
+            const errors: Partial<Record<keyof (FormValues & NonFormData), string>> = {}
 
             if (!combinedValues.authorID) {
               errors.authorID = 'Author is required'
@@ -212,9 +226,11 @@ const AddNewStoryView = () => {
                   <StoryAuthorTypeaheadComponent 
                     onSelect={(value) => onTypeaheadSelect(value, "authorID")} 
                     id={originalData?.authorID} 
-                    name={originalData?.authorID || ''} 
+                    name="authorID"
                   />
-                  {errors.authorID && <p style={formField.error}>{errors.authorID}</p>}
+                  {errors.authorID && touched.authorID && (
+                    <p style={formField.error}>{errors.authorID}</p>
+                  )}
                 </div>
 
                 {/* Date */}
@@ -227,7 +243,9 @@ const AddNewStoryView = () => {
                     selected={modifiedNonFormData.createdAt}
                     onChange={(toDate) => onDateChange(toDate, "createdAt")}
                   />
-                  {errors.createdAt && <p style={formField.error}>{errors.createdAt}</p>}
+                  {errors.createdAt && (
+                    <p style={formField.error}>{errors.createdAt}</p>
+                  )}
                 </div>
               </div>
 
@@ -259,7 +277,10 @@ const AddNewStoryView = () => {
                         { value: "video", label: "Video" },
                         { value: "image/jpeg", label: "JPEG Image" },
                         { value: "video/mp4", label: "MP4 Video" }
-                      ]}
+                      ].map(option => ({
+                        ...option,
+                        key: option.value
+                      }))}
                       name="storyType"
                       onChange={(value) => handleSelectChange(value, "storyType")}
                     />
@@ -268,6 +289,7 @@ const AddNewStoryView = () => {
                       name="storyType"
                       onChange={(e) => handleSelectChange(e.target.value, 'storyType')}
                       style={formField.input}
+                      value={values.storyType}
                     >
                       <option value="">Select media type</option>
                       <option value="image">Image</option>
@@ -276,7 +298,9 @@ const AddNewStoryView = () => {
                       <option value="video/mp4">MP4 Video</option>
                     </select>
                   )}
-                  {errors.storyType && <p style={formField.error}>{errors.storyType}</p>}
+                  {errors.storyType && touched.storyType && (
+                    <p style={formField.error}>{errors.storyType}</p>
+                  )}
                 </div>
 
                 {/* Media Upload */}
@@ -303,7 +327,9 @@ const AddNewStoryView = () => {
                     onChange={(event) => handleImageUpload(event, "storyMediaURL")}
                     style={{ marginTop: theme.spacing[2] }}
                   />
-                  {errors.storyMediaURL && <p style={formField.error}>{errors.storyMediaURL}</p>}
+                  {errors.storyMediaURL && (
+                    <p style={formField.error}>{errors.storyMediaURL}</p>
+                  )}
                 </div>
               </div>
 
