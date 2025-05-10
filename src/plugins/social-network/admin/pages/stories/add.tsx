@@ -2,7 +2,7 @@
 'use client'
 import React, { useEffect, useState } from 'react'
 import { Formik } from 'formik'
-import { Loader, BookOpen, User, Image, Video, Calendar } from 'lucide-react'
+import { Loader, BookOpen, User, Image as ImageIcon, Video, Calendar } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { toast } from 'react-toastify'
 import { theme, styledComponents as sc } from '@/lib/theme'
@@ -20,124 +20,127 @@ const StoryAuthorTypeaheadComponent = dynamic(() => import('../../components/Sto
 import { pluginsAPIURL } from '../../../../../config/config'
 import { authPost } from '../../../../../modules/auth/utils/authFetch'
 
-const baseAPIURL = `${pluginsAPIURL}`
+const baseAPIURL = `${pluginsAPIURL}admin/social-network/`
+
+interface StoryFormData {
+  authorID: string
+  storyType: string
+}
 
 interface NonFormData {
-  createdAt?: string
-  storyMediaURL?: string
-  [key: string]: any
+  createdAt: string
+  storyMediaURL: string
 }
-
-interface FormValues {
-  authorID?: string
-  storyType?: string
-  [key: string]: any
-}
-
-interface StoryData extends FormValues, NonFormData {}
 
 const AddNewStoryView = () => {
   const [isLoading, setIsLoading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
   const [modifiedNonFormData, setModifiedNonFormData] = useState<NonFormData>({
     createdAt: '',
     storyMediaURL: ''
   })
-  const [originalData, setOriginalData] = useState<StoryData | null>(null)
 
+  // Set initial timestamp
   useEffect(() => {
     const now = Math.floor(new Date().getTime() / 1000).toString()
-    setModifiedNonFormData(prev => ({
-      ...prev,
-      createdAt: now,
-    }))
+    setModifiedNonFormData(prev => ({ ...prev, createdAt: now }))
   }, [])
 
-  const createStory = async (data: StoryData, setSubmitting: (isSubmitting: boolean) => void) => {
+  const createStory = async (formData: StoryFormData, setSubmitting: (isSubmitting: boolean) => void) => {
     setIsLoading(true)
-    const url = `${baseAPIURL}admin/social-network/stories/add`
     
     try {
-      const response = await authPost(url, JSON.stringify({ ...data, ...modifiedNonFormData }))
-      const resData = response.data
-
-      if (resData?.error) {
-        toast.error(resData.error)
-        throw new Error(resData.error)
-      } else {
-        toast.success("Story created successfully")
-        // Optional: redirect after success
-        // window.location.href = '/admin/stories'
+      // Validate required fields
+      if (!modifiedNonFormData.storyMediaURL) {
+        throw new Error('Please upload media before submitting')
       }
+
+      // Prepare data for API
+      const storyData = {
+        authorid: formData.authorID,
+        storytype: formData.storyType,
+        createdat: modifiedNonFormData.createdAt,
+        storymediaurl: modifiedNonFormData.storyMediaURL
+      }
+
+      console.log('Submitting story:', storyData) // Debug log
+
+      const response = await authPost(`${baseAPIURL}stories/add`, JSON.stringify(storyData))
+      
+      if (response?.error) {
+        throw new Error(response.error)
+      }
+
+      toast.success("Story created successfully")
+      
+      // Reset form after successful submission
+      setModifiedNonFormData({
+        createdAt: Math.floor(new Date().getTime() / 1000).toString(),
+        storyMediaURL: ''
+      })
     } catch (error: any) {
-      toast.error(`Error creating story: ${error.message || "Unknown error"}`)
-      console.error(error)
+      console.error('Story creation failed:', error)
+      toast.error(error.message || "Failed to create story")
     } finally {
       setSubmitting(false)
       setIsLoading(false)
     }
   }
 
-  const onTypeaheadSelect = (value: string, fieldName: string) => {
-    setModifiedNonFormData(prev => ({
-      ...prev,
-      [fieldName]: value
-    }))
-  }
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
 
-  const handleSelectChange = (value: string, fieldName: string) => {
-    setModifiedNonFormData(prev => ({
-      ...prev,
-      [fieldName]: value
-    }))
-  }
-
-  const onDateChange = (toDate: string, fieldName: string) => {
-    setModifiedNonFormData(prev => ({
-      ...prev,
-      [fieldName]: toDate
-    }))
-  }
-
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
-    const files = event.target.files
-    if (!files || files.length === 0) return
-
-    const formData = new FormData()
-    formData.append('photos', files[0])
+    setIsLoading(true)
+    setUploadProgress(0)
 
     try {
-      const response = await fetch(pluginsAPIURL + '../media/upload', {
-        method: 'POST',
-        body: formData,
-      })
-      const data = await response.json()
-      
-      if (data.data?.[0]?.url) {
-        setModifiedNonFormData(prev => ({
-          ...prev,
-          [fieldName]: data.data[0].url
-        }))
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const xhr = new XMLHttpRequest()
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          setUploadProgress(Math.round((e.loaded / e.total) * 100))
+        }
       }
+
+      const uploadPromise = new Promise<string>((resolve, reject) => {
+        xhr.onreadystatechange = () => {
+          if (xhr.readyState === 4) {
+            if (xhr.status === 200) {
+              const response = JSON.parse(xhr.responseText)
+              resolve(response.url || response.data?.[0]?.url)
+            } else {
+              reject(new Error('Upload failed'))
+            }
+          }
+        }
+      })
+
+      xhr.open('POST', `${pluginsAPIURL}media/upload`, true)
+      xhr.send(formData)
+
+      const fileUrl = await uploadPromise
+      
+      setModifiedNonFormData(prev => ({
+        ...prev,
+        storyMediaURL: fileUrl
+      }))
+      toast.success('Media uploaded successfully')
     } catch (error) {
-      console.error(error)
+      console.error('Upload error:', error)
       toast.error('Failed to upload media')
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  const handleDeletePhoto = (srcToBeRemoved: string, fieldName: string) => {
+  const handleDeletePhoto = () => {
     setModifiedNonFormData(prev => ({
       ...prev,
-      [fieldName]: ''
+      storyMediaURL: ''
     }))
-  }
-
-  if (isLoading) {
-    return (
-      <div style={sc.loadingContainer}>
-        <Loader className="animate-spin" size={32} color={theme.colors.accent.primary} />
-        <p style={sc.loadingText}>Creating story...</p>
-      </div>
-    )
   }
 
   // Form field styles
@@ -157,11 +160,15 @@ const AddNewStoryView = () => {
     error: {
       ...sc.formError,
     } as React.CSSProperties,
-    grid2: {
-      display: 'grid',
-      gridTemplateColumns: '1fr 1fr',
-      gap: theme.spacing[6],
-    } as React.CSSProperties,
+  }
+
+  if (isLoading && !uploadProgress) {
+    return (
+      <div style={sc.loadingContainer}>
+        <Loader className="animate-spin" size={32} color={theme.colors.accent.primary} />
+        <p style={sc.loadingText}>Processing...</p>
+      </div>
+    )
   }
 
   return (
@@ -172,41 +179,25 @@ const AddNewStoryView = () => {
           Create New Story
         </h1>
       </div>
+      
       <div style={sc.formContent}>
         <Formik
           initialValues={{
             authorID: '',
-            storyType: '',
+            storyType: 'image', // Default to image
           }}
           validate={(values) => {
-            const combinedValues = { ...values, ...modifiedNonFormData }
-            const errors: Partial<Record<keyof (FormValues & NonFormData), string>> = {}
-
-            if (!combinedValues.authorID) {
-              errors.authorID = 'Author is required'
-            }
-
-            if (!combinedValues.createdAt) {
-              errors.createdAt = 'Date is required'
-            }
-
-            if (!combinedValues.storyMediaURL) {
-              errors.storyMediaURL = 'Media is required'
-            }
-
-            if (!combinedValues.storyType) {
-              errors.storyType = 'Type is required'
-            }
-
+            const errors: Partial<StoryFormData & { storyMediaURL?: string }> = {}
+            if (!values.authorID) errors.authorID = 'Author is required'
+            if (!values.storyType) errors.storyType = 'Type is required'
+            if (!modifiedNonFormData.storyMediaURL) errors.storyMediaURL = 'Media is required'
             return errors
           }}
-          onSubmit={(values: FormValues, { setSubmitting }) => {
-            createStory(values, setSubmitting)
-          }}
+          onSubmit={(values, { setSubmitting }) => createStory(values, setSubmitting)}
         >
-          {({ values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
+          {({ values, errors, touched, handleSubmit, isSubmitting }) => (
             <form onSubmit={handleSubmit}>
-              {/* Story Information */}
+              {/* Story Information Section */}
               <div style={{ marginBottom: theme.spacing[8] }}>
                 <h2 style={{
                   fontSize: theme.typography.fontSizes.xl,
@@ -217,15 +208,14 @@ const AddNewStoryView = () => {
                   Story Details
                 </h2>
 
-                {/* Author */}
+                {/* Author Selection */}
                 <div style={formField.container}>
                   <label style={formField.label}>
                     <User size={16} color={theme.colors.accent.primary} />
                     Author <span style={{ color: theme.colors.feedback.error }}>*</span>
                   </label>
                   <StoryAuthorTypeaheadComponent 
-                    onSelect={(value) => onTypeaheadSelect(value, "authorID")} 
-                    id={originalData?.authorID} 
+                    onSelect={(value) => values.authorID = value}
                     name="authorID"
                   />
                   {errors.authorID && touched.authorID && (
@@ -233,7 +223,7 @@ const AddNewStoryView = () => {
                   )}
                 </div>
 
-                {/* Date */}
+                {/* Date Picker */}
                 <div style={formField.container}>
                   <label style={formField.label}>
                     <Calendar size={16} color={theme.colors.accent.primary} />
@@ -241,11 +231,11 @@ const AddNewStoryView = () => {
                   </label>
                   <IMDatePicker
                     selected={modifiedNonFormData.createdAt}
-                    onChange={(toDate) => onDateChange(toDate, "createdAt")}
+                    onChange={(date) => setModifiedNonFormData(prev => ({
+                      ...prev,
+                      createdAt: date
+                    }))}
                   />
-                  {errors.createdAt && (
-                    <p style={formField.error}>{errors.createdAt}</p>
-                  )}
                 </div>
               </div>
 
@@ -260,44 +250,27 @@ const AddNewStoryView = () => {
                   Media Content
                 </h2>
 
-                {/* Media Type */}
+                {/* Media Type Selection */}
                 <div style={formField.container}>
                   <label style={formField.label}>
-                    {values.storyType?.includes('video') ? (
+                    {values.storyType.includes('video') ? (
                       <Video size={16} color={theme.colors.accent.primary} />
                     ) : (
-                      <Image size={16} color={theme.colors.accent.primary} />
+                      <ImageIcon size={16} color={theme.colors.accent.primary} />
                     )}
                     Media Type <span style={{ color: theme.colors.feedback.error }}>*</span>
                   </label>
-                  {IMStaticSelectComponent ? (
-                    <IMStaticSelectComponent
-                      options={[
-                        { value: "image", label: "Image" },
-                        { value: "video", label: "Video" },
-                        { value: "image/jpeg", label: "JPEG Image" },
-                        { value: "video/mp4", label: "MP4 Video" }
-                      ].map(option => ({
-                        ...option,
-                        key: option.value
-                      }))}
-                      name="storyType"
-                      onChange={(value) => handleSelectChange(value, "storyType")}
-                    />
-                  ) : (
-                    <select
-                      name="storyType"
-                      onChange={(e) => handleSelectChange(e.target.value, 'storyType')}
-                      style={formField.input}
-                      value={values.storyType}
-                    >
-                      <option value="">Select media type</option>
-                      <option value="image">Image</option>
-                      <option value="video">Video</option>
-                      <option value="image/jpeg">JPEG Image</option>
-                      <option value="video/mp4">MP4 Video</option>
-                    </select>
-                  )}
+                  <IMStaticSelectComponent
+                    options={[
+                      { value: "image", label: "Image" },
+                      { value: "video", label: "Video" },
+                      { value: "image/jpeg", label: "JPEG Image" },
+                      { value: "video/mp4", label: "MP4 Video" }
+                    ]}
+                    selectedOption={values.storyType}
+                    onChange={(value) => values.storyType = value}
+                    name="storyType"
+                  />
                   {errors.storyType && touched.storyType && (
                     <p style={formField.error}>{errors.storyType}</p>
                   )}
@@ -306,27 +279,58 @@ const AddNewStoryView = () => {
                 {/* Media Upload */}
                 <div style={formField.container}>
                   <label style={formField.label}>
-                    <Image size={16} color={theme.colors.accent.primary} />
+                    <ImageIcon size={16} color={theme.colors.accent.primary} />
                     Media <span style={{ color: theme.colors.feedback.error }}>*</span>
                   </label>
-                  {modifiedNonFormData.storyMediaURL && (
+                  
+                  {modifiedNonFormData.storyMediaURL ? (
                     <div style={{ marginBottom: theme.spacing[3] }}>
                       <IMPhoto 
                         openable 
                         dismissable 
                         src={modifiedNonFormData.storyMediaURL} 
-                        onDelete={() => handleDeletePhoto(modifiedNonFormData.storyMediaURL!, "storyMediaURL")} 
+                        onDelete={handleDeletePhoto} 
                       />
                     </div>
+                  ) : (
+                    <>
+                      <input
+                        id="storyMediaURL"
+                        name="storyMediaURL"
+                        type="file"
+                        accept={values.storyType.includes('image') ? 'image/*' : 'video/*'}
+                        onChange={handleImageUpload}
+                        style={{ marginTop: theme.spacing[2] }}
+                        disabled={isLoading}
+                      />
+                      {uploadProgress > 0 && uploadProgress < 100 && (
+                        <div style={{ marginTop: theme.spacing[2] }}>
+                          <div style={{
+                            width: '100%',
+                            backgroundColor: theme.colors.border.light,
+                            borderRadius: theme.borderRadius.md,
+                            height: '6px'
+                          }}>
+                            <div style={{
+                              width: `${uploadProgress}%`,
+                              height: '100%',
+                              backgroundColor: theme.colors.accent.primary,
+                              borderRadius: theme.borderRadius.md,
+                              transition: 'width 0.3s ease',
+                            }} />
+                          </div>
+                          <p style={{ 
+                            fontSize: theme.typography.fontSizes.sm,
+                            color: theme.colors.text.secondary,
+                            marginTop: theme.spacing[1],
+                            textAlign: 'center'
+                          }}>
+                            Uploading: {uploadProgress}%
+                          </p>
+                        </div>
+                      )}
+                    </>
                   )}
-                  <input
-                    id="storyMediaURL"
-                    name="storyMediaURL"
-                    type="file"
-                    accept={values.storyType?.includes('image') ? 'image/*' : 'video/*'}
-                    onChange={(event) => handleImageUpload(event, "storyMediaURL")}
-                    style={{ marginTop: theme.spacing[2] }}
-                  />
                   {errors.storyMediaURL && (
                     <p style={formField.error}>{errors.storyMediaURL}</p>
                   )}
@@ -348,19 +352,20 @@ const AddNewStoryView = () => {
                     marginRight: theme.spacing[3],
                   }}
                   onClick={() => window.history.back()}
+                  disabled={isLoading}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isLoading}
                   style={{
                     ...sc.primaryButton,
-                    opacity: isSubmitting ? 0.7 : 1,
-                    cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                    opacity: (isSubmitting || isLoading) ? 0.7 : 1,
+                    cursor: (isSubmitting || isLoading) ? 'not-allowed' : 'pointer',
                   }}
                 >
-                  {isSubmitting && (
+                  {(isSubmitting || isLoading) && (
                     <Loader className="animate-spin" size={16} style={{ marginRight: theme.spacing[2] }} />
                   )}
                   Create Story

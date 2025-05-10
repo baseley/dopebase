@@ -1,13 +1,13 @@
 // @ts-nocheck
 'use client'
-import React, { useEffect, useState } from 'react'
-import { Formik } from 'formik'
+import React, { useState } from 'react'
+import { Formik, Form, Field } from 'formik'
 import { Loader, MessageSquare, Mail, User, Calendar, Clock, Check } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { toast } from 'react-toastify'
 import { theme, styledComponents as sc } from '@/lib/theme'
 
-// Dynamic imports for components
+// Dynamic imports
 const IMDatePicker = dynamic(() => import('@/admin/components/forms/IMDatePicker'), {
   ssr: false,
   loading: () => <div style={{ height: '44px', display: 'flex', alignItems: 'center' }}>Loading date picker...</div>
@@ -24,76 +24,101 @@ import { authPost } from '../../../../../modules/auth/utils/authFetch'
 
 const baseAPIURL = `${pluginsAPIURL}`
 
-interface NonFormData {
-  created_at?: string
-  updated_at?: string
-  from_original_poster?: boolean
-  thread_id?: string | number
-  user_id?: string | number
-  [key: string]: any
+interface TicketMessageFormValues {
+  senderEmail: string
+  message: string
+  threadId?: string
+  userId?: string
+  fromOriginalPoster: boolean
+  createdAt?: string
+  updatedAt?: string
 }
 
-interface FormValues {
-  id?: string
-  sender_email?: string
-  message?: string
-  [key: string]: any
+const initialValues: TicketMessageFormValues = {
+  senderEmail: '',
+  message: '',
+  fromOriginalPoster: false,
+  threadId: undefined,
+  userId: undefined,
+  createdAt: undefined,
+  updatedAt: undefined
 }
-
-interface TicketMessageData extends FormValues, NonFormData {}
 
 const AddNewTicketMessageView = () => {
   const [isLoading, setIsLoading] = useState(false)
-  const [modifiedNonFormData, setModifiedNonFormData] = useState<NonFormData>({})
-  const [originalData, setOriginalData] = useState<TicketMessageData | null>(null)
 
-  useEffect(() => {
-    const now = Math.floor(new Date().getTime() / 1000).toString()
-    setModifiedNonFormData({
-      created_at: now,
-      updated_at: now,
-      from_original_poster: false,
-    })
-  }, [])
-
-  const createTicketMessage = async (data: TicketMessageData, setSubmitting: (isSubmitting: boolean) => void) => {
+  const handleSubmit = async (values: TicketMessageFormValues) => {
     setIsLoading(true)
     const url = `${baseAPIURL}admin/customer-support/ticket_messages/add`
     
     try {
-      const response = await authPost(url, JSON.stringify({ ...data, ...modifiedNonFormData }))
-      const resData = response.data
+      // Prepare the data according to your schema
+      const payload = {
+        author_email: values.senderEmail,
+        message: values.message,
+        from_original_poster: values.fromOriginalPoster,
+        thread_id: values.threadId,
+        user_id: values.userId,
+        created_at: values.createdAt || Math.floor(Date.now() / 1000).toString(),
+        updated_at: values.updatedAt || Math.floor(Date.now() / 1000).toString()
+      }
 
-      if (resData?.error) {
-        toast.error(resData.error)
+      const response = await authPost(url, JSON.stringify(payload))
+      
+      if (response?.data?.error) {
+        toast.error(response.data.error)
       } else {
         toast.success("Ticket message created successfully")
+        // You might want to redirect or reset the form here
       }
     } catch (error: any) {
       toast.error(`Error creating ticket message: ${error.message || "Unknown error"}`)
-      console.error(error)
+      console.error('Submission error:', error)
     } finally {
-      setSubmitting(false)
       setIsLoading(false)
     }
   }
 
-  const onTypeaheadSelect = (value: any, fieldName: string) => {
-    const newData = { ...modifiedNonFormData }
-    newData[fieldName] = value
-    setModifiedNonFormData(newData)
+  const validateForm = (values: TicketMessageFormValues) => {
+    const errors: Partial<TicketMessageFormValues> = {}
+
+    if (!values.message) {
+      errors.message = 'Message is required'
+    }
+
+    if (!values.threadId) {
+      errors.threadId = 'Thread is required'
+    }
+
+    return errors
   }
 
-  const handleSwitchChange = (value: boolean, fieldName: string) => {
-    const newData = { ...modifiedNonFormData }
-    newData[fieldName] = value ^ true
-    setModifiedNonFormData(newData)
-  }
-
-  const onDateChange = (toDate: string, fieldName: string) => {
-    const newData = { ...modifiedNonFormData }
-    newData[fieldName] = toDate
-    setModifiedNonFormData(newData)
+  // Form styles
+  const formStyles = {
+    container: {
+      marginBottom: theme.spacing[6],
+    },
+    label: {
+      ...sc.formLabel,
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing[2],
+    },
+    input: {
+      ...sc.formInput,
+    },
+    textarea: {
+      ...sc.formInput,
+      minHeight: '120px',
+    },
+    error: {
+      ...sc.formError,
+    },
+    grid2: {
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr',
+      gap: theme.spacing[6],
+    },
   }
 
   if (isLoading) {
@@ -105,34 +130,6 @@ const AddNewTicketMessageView = () => {
     )
   }
 
-  // Form field styles
-  const formField = {
-    container: {
-      marginBottom: theme.spacing[6],
-    } as React.CSSProperties,
-    label: {
-      ...sc.formLabel,
-      display: 'flex',
-      alignItems: 'center',
-      gap: theme.spacing[2],
-    } as React.CSSProperties,
-    input: {
-      ...sc.formInput,
-    } as React.CSSProperties,
-    textarea: {
-      ...sc.formInput,
-      minHeight: '120px',
-    } as React.CSSProperties,
-    error: {
-      ...sc.formError,
-    } as React.CSSProperties,
-    grid2: {
-      display: 'grid',
-      gridTemplateColumns: '1fr 1fr',
-      gap: theme.spacing[6],
-    } as React.CSSProperties,
-  }
-
   return (
     <div style={sc.formCard}>
       <div style={sc.formHeader}>
@@ -141,182 +138,118 @@ const AddNewTicketMessageView = () => {
           Create New Ticket Message
         </h1>
       </div>
+      
       <div style={sc.formContent}>
         <Formik
-          initialValues={{} as FormValues}
-          validate={(values) => {
-            const combinedValues = { ...values, ...modifiedNonFormData }
-            const errors: Record<string, string> = {}
-
-            if (!combinedValues.id) {
-              errors.id = 'ID is required'
-            }
-
-            if (!combinedValues.sender_email) {
-              errors.sender_email = 'Sender email is required'
-            } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(combinedValues.sender_email)) {
-              errors.sender_email = 'Invalid email address'
-            }
-
-            if (!combinedValues.message) {
-              errors.message = 'Message is required'
-            }
-
-            if (!combinedValues.thread_id) {
-              errors.thread_id = 'Thread is required'
-            }
-
-            return errors
-          }}
-          onSubmit={(values: FormValues, { setSubmitting }) => {
-            createTicketMessage(values, setSubmitting)
-          }}
+          initialValues={initialValues}
+          validate={validateForm}
+          onSubmit={handleSubmit}
         >
-          {({ values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
-            <form onSubmit={handleSubmit}>
+          {({ values, errors, touched, setFieldValue, isSubmitting }) => (
+            <Form>
               {/* Message Information */}
               <div style={{ marginBottom: theme.spacing[8] }}>
-                <h2 style={{
-                  fontSize: theme.typography.fontSizes.xl,
-                  fontWeight: theme.typography.fontWeights.semibold,
-                  marginBottom: theme.spacing[4],
-                  color: theme.colors.text.primary,
-                }}>
+                <h2 style={sectionTitleStyle}>
                   Message Details
                 </h2>
 
-                {/* ID */}
-                <div style={formField.container}>
-                  <label htmlFor="id" style={formField.label}>
-                    <Check size={16} color={theme.colors.accent.primary} />
-                    ID <span style={{ color: theme.colors.feedback.error }}>*</span>
-                  </label>
-                  <input
-                    id="id"
-                    name="id"
-                    type="text"
-                    placeholder="Unique message ID"
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    value={values.id || ''}
-                    style={{
-                      ...formField.input,
-                      borderColor: errors.id && touched.id ? theme.colors.feedback.error : theme.forms.input.borderColor,
-                    }}
-                  />
-                  {errors.id && touched.id && <p style={formField.error}>{errors.id}</p>}
-                </div>
-
                 {/* Sender Email */}
-                <div style={formField.container}>
-                  <label htmlFor="sender_email" style={formField.label}>
+                <div style={formStyles.container}>
+                  <label htmlFor="senderEmail" style={formStyles.label}>
                     <Mail size={16} color={theme.colors.accent.primary} />
-                    Sender Email <span style={{ color: theme.colors.feedback.error }}>*</span>
+                    Sender Email
                   </label>
-                  <input
-                    id="sender_email"
-                    name="sender_email"
+                  <Field
+                    id="senderEmail"
+                    name="senderEmail"
                     type="email"
                     placeholder="sender@example.com"
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    value={values.sender_email || ''}
                     style={{
-                      ...formField.input,
-                      borderColor: errors.sender_email && touched.sender_email ? theme.colors.feedback.error : theme.forms.input.borderColor,
+                      ...formStyles.input,
+                      borderColor: errors.senderEmail && touched.senderEmail 
+                        ? theme.colors.feedback.error 
+                        : theme.forms.input.borderColor,
                     }}
                   />
-                  {errors.sender_email && touched.sender_email && <p style={formField.error}>{errors.sender_email}</p>}
                 </div>
 
                 {/* From Original Poster */}
-                <div style={formField.container}>
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }}>
-                    <label style={formField.label}>
-                      {modifiedNonFormData.from_original_poster ? (
+                <div style={formStyles.container}>
+                  <div style={switchContainerStyle}>
+                    <label style={formStyles.label}>
+                      {values.fromOriginalPoster ? (
                         <Check size={16} color={theme.colors.accent.primary} />
                       ) : (
                         <User size={16} color={theme.colors.text.tertiary} />
                       )}
                       From Original Poster
                     </label>
-                    {IMToggleSwitchComponent ? (
+                    {IMToggleSwitchComponent && (
                       <IMToggleSwitchComponent
-                        isChecked={modifiedNonFormData.from_original_poster}
-                        onSwitchChange={() => handleSwitchChange(modifiedNonFormData["from_original_poster"], "from_original_poster")}
-                      />
-                    ) : (
-                      <input
-                        type="checkbox"
-                        checked={modifiedNonFormData.from_original_poster || false}
-                        onChange={() => handleSwitchChange(modifiedNonFormData["from_original_poster"], "from_original_poster")}
+                        isChecked={values.fromOriginalPoster}
+                        onSwitchChange={(checked) => setFieldValue('fromOriginalPoster', checked)}
                       />
                     )}
                   </div>
                 </div>
 
                 {/* Message */}
-                <div style={formField.container}>
-                  <label htmlFor="message" style={formField.label}>
+                <div style={formStyles.container}>
+                  <label htmlFor="message" style={formStyles.label}>
                     <MessageSquare size={16} color={theme.colors.accent.primary} />
                     Message <span style={{ color: theme.colors.feedback.error }}>*</span>
                   </label>
-                  <textarea
+                  <Field
+                    as="textarea"
                     id="message"
                     name="message"
                     placeholder="Enter your message here..."
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    value={values.message || ''}
                     style={{
-                      ...formField.textarea,
-                      borderColor: errors.message && touched.message ? theme.colors.feedback.error : theme.forms.input.borderColor,
+                      ...formStyles.textarea,
+                      borderColor: errors.message && touched.message 
+                        ? theme.colors.feedback.error 
+                        : theme.forms.input.borderColor,
                     }}
                   />
-                  {errors.message && touched.message && <p style={formField.error}>{errors.message}</p>}
+                  {errors.message && touched.message && (
+                    <p style={formStyles.error}>{errors.message}</p>
+                  )}
                 </div>
               </div>
 
               {/* Relationships */}
               <div style={{ marginBottom: theme.spacing[8] }}>
-                <h2 style={{
-                  fontSize: theme.typography.fontSizes.xl,
-                  fontWeight: theme.typography.fontWeights.semibold,
-                  marginBottom: theme.spacing[4],
-                  color: theme.colors.text.primary,
-                }}>
+                <h2 style={sectionTitleStyle}>
                   Relationships
                 </h2>
 
-                <div style={formField.grid2}>
+                <div style={formStyles.grid2}>
                   {/* Thread */}
-                  <div style={formField.container}>
-                    <label style={formField.label}>
+                  <div style={formStyles.container}>
+                    <label style={formStyles.label}>
                       <MessageSquare size={16} color={theme.colors.accent.primary} />
                       Thread <span style={{ color: theme.colors.feedback.error }}>*</span>
                     </label>
                     <TicketMessageThreadTypeaheadComponent 
-                      onSelect={(value) => onTypeaheadSelect(value, "thread_id")} 
-                      id={originalData?.thread_id} 
-                      name={originalData?.thread_id || ''} 
+                      onSelect={(value) => setFieldValue('threadId', value)} 
+                      id={values.threadId} 
+                      name={values.threadId || ''} 
                     />
-                    {errors.thread_id && touched.thread_id && <p style={formField.error}>{errors.thread_id}</p>}
+                    {errors.threadId && touched.threadId && (
+                      <p style={formStyles.error}>{errors.threadId}</p>
+                    )}
                   </div>
 
                   {/* User */}
-                  <div style={formField.container}>
-                    <label style={formField.label}>
+                  <div style={formStyles.container}>
+                    <label style={formStyles.label}>
                       <User size={16} color={theme.colors.accent.primary} />
                       User
                     </label>
                     <TicketMessageUserTypeaheadComponent 
-                      onSelect={(value) => onTypeaheadSelect(value, "user_id")} 
-                      id={originalData?.user_id} 
-                      name={originalData?.user_id || ''} 
+                      onSelect={(value) => setFieldValue('userId', value)} 
+                      id={values.userId} 
+                      name={values.userId || ''} 
                     />
                   </div>
                 </div>
@@ -324,81 +257,93 @@ const AddNewTicketMessageView = () => {
 
               {/* Date Information */}
               <div style={{ marginBottom: theme.spacing[8] }}>
-                <h2 style={{
-                  fontSize: theme.typography.fontSizes.xl,
-                  fontWeight: theme.typography.fontWeights.semibold,
-                  marginBottom: theme.spacing[4],
-                  color: theme.colors.text.primary,
-                }}>
+                <h2 style={sectionTitleStyle}>
                   Date Information
                 </h2>
 
-                <div style={formField.grid2}>
+                <div style={formStyles.grid2}>
                   {/* Created Date */}
-                  <div style={formField.container}>
-                    <label style={formField.label}>
+                  <div style={formStyles.container}>
+                    <label style={formStyles.label}>
                       <Calendar size={16} color={theme.colors.accent.primary} />
                       Created Date
                     </label>
                     <IMDatePicker
-                      selected={modifiedNonFormData.created_at}
-                      onChange={(toDate) => onDateChange(toDate, "created_at")}
+                      selected={values.createdAt}
+                      onChange={(date) => setFieldValue('createdAt', date)}
                     />
                   </div>
 
                   {/* Updated Date */}
-                  <div style={formField.container}>
-                    <label style={formField.label}>
+                  <div style={formStyles.container}>
+                    <label style={formStyles.label}>
                       <Clock size={16} color={theme.colors.accent.primary} />
                       Updated Date
                     </label>
                     <IMDatePicker
-                      selected={modifiedNonFormData.updated_at}
-                      onChange={(toDate) => onDateChange(toDate, "updated_at")}
+                      selected={values.updatedAt}
+                      onChange={(date) => setFieldValue('updatedAt', date)}
                     />
                   </div>
                 </div>
               </div>
 
               {/* Form Actions */}
-              <div style={{
-                display: 'flex',
-                justifyContent: 'flex-end',
-                marginTop: theme.spacing[6],
-                paddingTop: theme.spacing[4],
-                borderTop: `1px solid ${theme.colors.border.light}`,
-              }}>
+              <div style={formActionsStyle}>
                 <button
                   type="button"
-                  style={{
-                    ...sc.secondaryButton,
-                    marginRight: theme.spacing[3],
-                  }}
+                  style={sc.secondaryButton}
                   onClick={() => window.history.back()}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || Object.keys(errors).length > 0}
                   style={{
                     ...sc.primaryButton,
-                    opacity: isSubmitting ? 0.7 : 1,
-                    cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                    opacity: isSubmitting || Object.keys(errors).length > 0 ? 0.7 : 1,
+                    cursor: isSubmitting || Object.keys(errors).length > 0 ? 'not-allowed' : 'pointer',
                   }}
                 >
-                  {isSubmitting && (
-                    <Loader className="animate-spin" size={16} style={{ marginRight: theme.spacing[2] }} />
+                  {isSubmitting ? (
+                    <>
+                      <Loader className="animate-spin" size={16} style={{ marginRight: theme.spacing[2] }} />
+                      Creating...
+                    </>
+                  ) : (
+                    'Create Ticket Message'
                   )}
-                  Create Ticket Message
                 </button>
               </div>
-            </form>
+            </Form>
           )}
         </Formik>
       </div>
     </div>
   )
+}
+
+// Style constants
+const sectionTitleStyle = {
+  fontSize: theme.typography.fontSizes.xl,
+  fontWeight: theme.typography.fontWeights.semibold,
+  marginBottom: theme.spacing[4],
+  color: theme.colors.text.primary,
+}
+
+const switchContainerStyle = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+}
+
+const formActionsStyle = {
+  display: 'flex',
+  justifyContent: 'flex-end',
+  marginTop: theme.spacing[6],
+  paddingTop: theme.spacing[4],
+  borderTop: `1px solid ${theme.colors.border.light}`,
 }
 
 export default AddNewTicketMessageView
