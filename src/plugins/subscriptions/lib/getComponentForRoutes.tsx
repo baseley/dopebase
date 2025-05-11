@@ -2,7 +2,7 @@ import { getSettingsValue } from '../../../system/settings'
 import { getCurrentTheme } from '../../../system/themes'
 
 export const getComponentForRoutes = async (routes, searchParams) => {
-  console.log(`Finding component for routes ${JSON.stringify(routes)}`)
+  console.log(`Finding component for routes in subscriptions plugin ${JSON.stringify(routes)}`)
 
   if ((routes?.length ?? 0) === 0) {
     return null
