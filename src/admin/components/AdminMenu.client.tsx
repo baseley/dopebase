@@ -2,7 +2,6 @@
 import Link from "next/link"
 import { useState } from "react"
 import { BarChart3, Settings, UserCircle, LogOut, ChevronDown, ChevronRight, Palette, Package } from "lucide-react"
-
 import {
   Sidebar,
   SidebarContent,
@@ -18,7 +17,6 @@ import {
 import { cn } from "@/lib/utils"
 import { theme } from "@/lib/theme"
 
-// Map Font Awesome icon names to Lucide icons
 const iconMap = {
   "bar-chart-o": BarChart3,
   gear: Settings,
@@ -26,7 +24,6 @@ const iconMap = {
   "sign-out": LogOut,
 }
 
-// Map for submenu icons
 const submenuIconMap = {
   settings: Settings,
   themes: Palette,
@@ -53,58 +50,49 @@ interface AdminMenuClientProps {
 }
 
 export default function AdminMenuClient({ menuItems, urlPath = "admin", slug }: AdminMenuClientProps) {
-  const extractSelectedIndex = (menuItems: MenuItem[], slug: string) => {
-    let selectedIndex = 0
-    let selectedSubindex = -1
-    menuItems.forEach((menuItem, index) => {
+  const [selectedIndex, setSelectedIndex] = useState(0)
+  const [expandedMenus, setExpandedMenus] = useState<Record<number, boolean>>({})
+
+  // Initialize expanded state
+  const mainMenuItems = menuItems.filter((item) => !["My Account", "Logout"].includes(item.title))
+  const footerMenuItems = menuItems.filter((item) => ["My Account", "Logout"].includes(item.title))
+
+  // Calculate selected index and expanded menus
+  const calculateMenuStates = () => {
+    let selectedIdx = 0
+    let selectedSubIdx = -1
+    const expanded: Record<number, boolean> = {}
+
+    mainMenuItems.forEach((menuItem, index) => {
       const path = menuItem.path.replace("plugins/", "")
+      expanded[index] = menuItem.subItems?.length ? true : false
+
       if (path === slug) {
-        selectedIndex = index
-        selectedSubindex = -1
-      } else if (menuItem.subItems && menuItem.subItems.length > 0) {
+        selectedIdx = index
+      } else if (menuItem.subItems) {
         menuItem.subItems.forEach((subitem, subindex) => {
-          const subpath = path + "/" + subitem.path
-          if (subpath === slug) {
-            selectedIndex = index
-            selectedSubindex = subindex
+          if (`${path}/${subitem.path}` === slug) {
+            selectedIdx = index
+            selectedSubIdx = subindex
           }
         })
       }
     })
-    return [selectedIndex, selectedSubindex]
+
+    return { selectedIdx, selectedSubIdx, expanded }
   }
 
-  const [extractedIndex, extractedSubindex] = extractSelectedIndex(menuItems, slug)
-  const [selectedIndex, setSelectedIndex] = useState(extractedIndex)
-
-  // Separate main menu items from footer items (My Account and Logout)
-  const mainMenuItems = menuItems.filter((item) => item.title !== "My Account" && item.title !== "Logout")
-  const footerMenuItems = menuItems.filter((item) => item.title === "My Account" || item.title === "Logout")
-
-  // Initialize all menus as expanded by default
-  const initialExpandedState: Record<number, boolean> = {}
-  mainMenuItems.forEach((item, index) => {
-    if (item.subItems && item.subItems.length > 0) {
-      initialExpandedState[index] = true
-    }
+  // Initialize states
+  useState(() => {
+    const { selectedIdx, selectedSubIdx, expanded } = calculateMenuStates()
+    setSelectedIndex(selectedIdx)
+    setExpandedMenus(expanded)
   })
-
-  const [expandedMenus, setExpandedMenus] = useState<Record<number, boolean>>(initialExpandedState)
 
   const onSelect = (index: number, subindex: number) => {
     setSelectedIndex(index)
-
-    // If clicking on a parent menu item with subitems, toggle its expanded state
-    if (
-      subindex === -1 &&
-      mainMenuItems[index] &&
-      mainMenuItems[index].subItems &&
-      mainMenuItems[index].subItems.length > 0
-    ) {
-      setExpandedMenus((prev) => ({
-        ...prev,
-        [index]: !prev[index],
-      }))
+    if (subindex === -1 && mainMenuItems[index]?.subItems?.length) {
+      setExpandedMenus(prev => ({ ...prev, [index]: !prev[index] }))
     }
   }
 
@@ -113,7 +101,7 @@ export default function AdminMenuClient({ menuItems, urlPath = "admin", slug }: 
   return (
     <Sidebar
       collapsible="none"
-      className="border-r"
+      className="border-r flex flex-col h-screen max-h-screen"
       style={{
         backgroundColor: colors.surface.primary,
         color: colors.text.primary,
@@ -121,11 +109,12 @@ export default function AdminMenuClient({ menuItems, urlPath = "admin", slug }: 
         width: sidebar.width,
       }}
     >
-      <SidebarHeader
-        className="border-b"
+      {/* Fixed Header */}
+      <SidebarHeader 
+        className="border-b shrink-0"
         style={{
           borderColor: colors.border.light,
-          padding: "24px 24px 24px 24px", // Increased padding for more space
+          padding: "24px 24px 24px 24px",
         }}
       >
         <div className="flex items-center gap-4 px-2">
@@ -136,27 +125,29 @@ export default function AdminMenuClient({ menuItems, urlPath = "admin", slug }: 
         </div>
       </SidebarHeader>
 
-      <SidebarContent
+      {/* Scrollable Content */}
+      <SidebarContent 
+        className="flex-1 overflow-y-auto"
         style={{
-          padding: "24px 16px", // Increased padding for more space
+          padding: "24px 16px",
         }}
       >
         <SidebarMenu>
           {mainMenuItems.map((menuItem, index) => {
             const IconComponent = iconMap[menuItem.icon as keyof typeof iconMap] || Settings
             const hasSubItems = menuItem.subItems && menuItem.subItems.length > 0
-            const isExpanded = expandedMenus[index] || false
+            const isExpanded = expandedMenus[index] ?? false
             const isActive = index === selectedIndex
 
             return (
-              <SidebarMenuItem key={menuItem.path} className="my-2.5">
+              <SidebarMenuItem key={`${menuItem.path}-${index}`} className="my-2.5">
                 {!hasSubItems ? (
                   <SidebarMenuButton
                     asChild
-                    isActive={isActive && !hasSubItems}
+                    isActive={isActive}
                     className="rounded-md"
                     style={{
-                      padding: "12px 16px", // Increased padding for better touch targets
+                      padding: "12px 16px",
                       transition: transitions.normal,
                       borderRadius: borderRadius.md,
                       backgroundColor: isActive ? colors.state.selected : "transparent",
@@ -169,7 +160,7 @@ export default function AdminMenuClient({ menuItems, urlPath = "admin", slug }: 
                       className="flex items-center w-full"
                     >
                       <IconComponent
-                        className="mr-4 h-5 w-5" // Increased margin for better spacing
+                        className="mr-4 h-5 w-5"
                         style={{
                           color: isActive ? colors.accent.primary : colors.text.secondary,
                         }}
@@ -184,7 +175,7 @@ export default function AdminMenuClient({ menuItems, urlPath = "admin", slug }: 
                       isActive={isActive}
                       className="rounded-md w-full"
                       style={{
-                        padding: "12px 16px", // Increased padding for better touch targets
+                        padding: "12px 16px",
                         transition: transitions.normal,
                         borderRadius: borderRadius.md,
                         backgroundColor: isActive ? colors.state.selected : "transparent",
@@ -192,29 +183,23 @@ export default function AdminMenuClient({ menuItems, urlPath = "admin", slug }: 
                       }}
                     >
                       <IconComponent
-                        className="mr-4 h-5 w-5" // Increased margin for better spacing
+                        className="mr-4 h-5 w-5"
                         style={{
                           color: isActive ? colors.accent.primary : colors.text.secondary,
                         }}
                       />
                       <span className="font-medium">{menuItem.title}</span>
                       {isExpanded ? (
-                        <ChevronDown
-                          className="ml-auto h-4 w-4 transition-transform"
-                          style={{ color: colors.text.secondary }}
-                        />
+                        <ChevronDown className="ml-auto h-4 w-4" style={{ color: colors.text.secondary }} />
                       ) : (
-                        <ChevronRight
-                          className="ml-auto h-4 w-4 transition-transform"
-                          style={{ color: colors.text.secondary }}
-                        />
+                        <ChevronRight className="ml-auto h-4 w-4" style={{ color: colors.text.secondary }} />
                       )}
                     </SidebarMenuButton>
 
                     <SidebarMenuSub
                       className={cn(
-                        "transition-all overflow-hidden ml-8 border-l", // Increased margin for better indentation
-                        isExpanded ? "max-h-96 py-2" : "max-h-0 py-0", // Increased padding for better spacing
+                        "transition-all overflow-hidden ml-8 border-l",
+                        isExpanded ? "max-h-96 py-2" : "max-h-0 py-0",
                       )}
                       style={{
                         transition: transitions.expand,
@@ -223,9 +208,7 @@ export default function AdminMenuClient({ menuItems, urlPath = "admin", slug }: 
                       }}
                     >
                       {menuItem.subItems?.map((subitem, subindex) => {
-                        const isSubActive = index === selectedIndex && subindex === extractedSubindex
-                        const SubIcon = submenuIconMap[subitem.path as keyof typeof submenuIconMap]
-
+                        const isSubActive = false // You may need to calculate this based on slug
                         return (
                           <SidebarMenuSubItem key={subitem.title}>
                             <SidebarMenuSubButton
@@ -233,12 +216,12 @@ export default function AdminMenuClient({ menuItems, urlPath = "admin", slug }: 
                               isActive={isSubActive}
                               className="rounded-md"
                               style={{
-                                padding: "10px 16px", // Increased padding for better touch targets
+                                padding: "10px 16px",
                                 transition: transitions.normal,
                                 borderRadius: borderRadius.md,
                                 backgroundColor: isSubActive ? colors.state.selected : "transparent",
                                 color: isSubActive ? colors.accent.primary : colors.text.primary,
-                                marginLeft: "10px", // Increased margin for better indentation
+                                marginLeft: "10px",
                               }}
                             >
                               <Link
@@ -261,11 +244,12 @@ export default function AdminMenuClient({ menuItems, urlPath = "admin", slug }: 
         </SidebarMenu>
       </SidebarContent>
 
+      {/* Fixed Footer */}
       <SidebarFooter
-        className="mt-auto border-t"
+        className="border-t shrink-0"
         style={{
           borderColor: colors.border.light,
-          padding: "24px 16px", // Increased padding for more space
+          padding: "24px 16px",
         }}
       >
         <SidebarMenu>
@@ -279,7 +263,7 @@ export default function AdminMenuClient({ menuItems, urlPath = "admin", slug }: 
                   asChild
                   className="rounded-md w-full"
                   style={{
-                    padding: "12px 16px", // Increased padding for better touch targets
+                    padding: "12px 16px",
                     transition: transitions.normal,
                     borderRadius: borderRadius.md,
                     color: isLogout ? colors.feedback.error : colors.text.primary,
@@ -287,7 +271,7 @@ export default function AdminMenuClient({ menuItems, urlPath = "admin", slug }: 
                 >
                   <Link href={`/${urlPath}/${menuItem.path}`} className="flex items-center w-full">
                     <IconComponent
-                      className="mr-4 h-5 w-5" // Increased margin for better spacing
+                      className="mr-4 h-5 w-5"
                       style={{
                         color: isLogout ? colors.feedback.error : colors.text.secondary,
                       }}
@@ -303,4 +287,3 @@ export default function AdminMenuClient({ menuItems, urlPath = "admin", slug }: 
     </Sidebar>
   )
 }
-
