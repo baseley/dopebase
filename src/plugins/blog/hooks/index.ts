@@ -24,7 +24,7 @@ const registerAdminPanelHooks = () => {
             path: 'articles/list',
           },
           {
-            title: 'Categories',
+            title: 'Article Categories',
             path: 'article_categories/list',
           },
           {
@@ -36,8 +36,16 @@ const registerAdminPanelHooks = () => {
             path: 'article_ideas/list',
           },
           {
+            title: 'Categories',
+            path: 'categories/list',
+          },
+          {
             title: 'Settings',
             path: 'settings/list',
+          },
+          {
+            title: 'Users',
+            path: 'users/list',
           },
         ],
       },
