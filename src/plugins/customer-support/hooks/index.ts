@@ -25,8 +25,16 @@ const registerAdminPanelHooks = () => {
             path: 'ticket_tags/list',
           },
           {
+            title: 'Threads',
+            path: 'ticket_threads/list',
+          },
+          {
             title: 'Settings',
             path: 'settings/list',
+          },
+          {
+            title: 'Users',
+            path: 'users/list',
           },
         ],
       },
