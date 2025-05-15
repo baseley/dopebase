@@ -23,6 +23,14 @@ const registerAdminPanelHooks = () => {
             path: 'stories/list',
           },
           {
+            title: 'Comments',
+            path: 'comments/list',
+          },
+          {
+            title: 'Notifications',
+            path: 'notifications/list',
+          },
+          {
             title: 'Users',
             path: 'users/list',
           },
