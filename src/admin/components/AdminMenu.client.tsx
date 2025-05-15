@@ -227,29 +227,29 @@ export default function AdminMenuClient({ menuItems, urlPath = "admin", slug }: 
                         const SubIcon = submenuIconMap[subitem.path as keyof typeof submenuIconMap]
 
                         return (
-                          <SidebarMenuSubItem key={subitem.title}>
-                            <SidebarMenuSubButton
-                              asChild
-                              isActive={isSubActive}
-                              className="rounded-md"
-                              style={{
-                                padding: "10px 16px", // Increased padding for better touch targets
-                                transition: transitions.normal,
-                                borderRadius: borderRadius.md,
-                                backgroundColor: isSubActive ? colors.state.selected : "transparent",
-                                color: isSubActive ? colors.accent.primary : colors.text.primary,
-                                marginLeft: "10px", // Increased margin for better indentation
-                              }}
-                            >
-                              <Link
-                                href={`/${urlPath}/${menuItem.path}/${subitem.path}`}
-                                onClick={() => onSelect(index, subindex)}
-                                className="flex items-center w-full"
-                              >
-                                <span>{subitem.title}</span>
-                              </Link>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
+                    <SidebarMenuSubItem key={subitem.title}>
+                      <SidebarMenuSubButton
+                        asChild
+                        isActive={isSubActive}
+                        className="rounded-md"
+                        style={{
+                          padding: "10px 16px",
+                          transition: transitions.normal,
+                          borderRadius: borderRadius.md,
+                          backgroundColor: isSubActive ? colors.state.selected : "transparent",
+                          color: isSubActive ? colors.accent.primary : colors.text.primary,
+                          marginLeft: "10px",
+                        }}
+                      >
+                        <Link
+                          href={`/${urlPath}/${menuItem.path.replace('plugins/', '')}/${subitem.path}`}
+                          onClick={() => onSelect(index, subindex)}
+                          className="flex items-center w-full"
+                        >
+                          <span>{subitem.title}</span>
+                        </Link>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
                         )
                       })}
                     </SidebarMenuSub>
