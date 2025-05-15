@@ -22,6 +22,10 @@ const registerAdminPanelHooks = () => {
             title: 'Settings',
             path: 'settings/list',
           },
+          {
+            title: 'Users',
+            path: 'users/list',
+          },
         ],
       },
     ])
