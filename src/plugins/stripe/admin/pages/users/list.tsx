@@ -1,353 +1,791 @@
-// @ts-nocheck
-'use client'
-import React, { useMemo, useEffect, useState } from 'react'
-import { GetStaticProps } from 'next'
-import { useRouter } from 'next/navigation'
+"use client"
+
+import { useEffect, useState, useRef } from "react"
 import {
   useReactTable,
   getCoreRowModel,
-  getFilteredRowModel,
   getPaginationRowModel,
+  getFilteredRowModel,
   flexRender,
-} from '@tanstack/react-table'
+  type ColumnDef,
+  type VisibilityState,
+  type ColumnPinningState,
+  type Column,
+} from "@tanstack/react-table"
 import {
-  IMLocationTableCell,
-  IMSimpleLocationTableCell,
-  IMColorsTableCell,
-  IMMultimediaTableCell,
-  IMObjectTableCell,
-  IMImagesTableCell,
-  IMDateTableCell,
-  IMForeignKeyTableCell,
-  IMAddressTableCell,
-} from '../../../../../admin/components/forms/table'
-import {
-  IMColorBoxComponent,
-  IMPhoto,
-  IMModal,
-  IMToggleSwitchComponent,
-} from '../../../../../admin/components/forms/fields'
-import { pluginsAPIURL } from '../../../../../config/config'
-import useCurrentUser from '../../../../../modules/auth/hooks/useCurrentUser'
-import { authPost } from '../../../../../modules/auth/utils/authFetch'
-import styles from '../../../../../admin/themes/admin.module.css'
-/* Insert extra imports for table cells here */
+  Loader2,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Users,
+  Eye,
+  Edit,
+  Trash2,
+  SlidersHorizontal,
+  Pin,
+  PinOff,
+  Car,
+} from "lucide-react"
+import { IMDateTableCell, IMImagesTableCell } from "@/admin/components/forms/table"
+import { IMToggleSwitchComponent } from "@/admin/components/forms/fields"
+import useCurrentUser from "@/modules/auth/hooks/useCurrentUser"
+import { authPost } from "@/modules/auth/utils/authFetch"
+import { pluginsAPIURL } from "@/config/config"
+import { theme } from "@/lib/theme"
+import { useRouter } from "next/navigation"
+
+// Add these type definitions at the top of the file, after the imports
+interface UserType {
+  id: string
+  email: string
+  firstName: string
+  lastName: string
+  phone: string
+  role: string
+  carPictureURL: string
+  carName: string
+  carNumber: string
+  banned: boolean
+  createdAt: string
+  updatedAt: string
+  // Add other properties as needed
+}
 
 const baseAPIURL = `${pluginsAPIURL}admin/stripe/`
 
-export const getStaticProps: GetStaticProps = async () => {
-  return { props: { isAdminRoute: true } }
+// Column header with pin button
+function ColumnHeader({
+  column,
+  title,
+}: {
+  column: Column<UserType, unknown>
+  title: string
+}) {
+  const isPinned = column.getIsPinned()
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "4px" }}>
+      <span>{title}</span>
+      {column.id !== "actions" && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            if (isPinned) {
+              column.pin(false)
+            } else {
+              column.pin("left")
+            }
+          }}
+          style={{
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            padding: "2px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: isPinned ? theme.colors.accent.primary : theme.colors.text.secondary,
+          }}
+          title={isPinned ? "Unpin column" : "Pin column"}
+        >
+          {isPinned ? <PinOff size={12} /> : <Pin size={12} />}
+        </button>
+      )}
+    </div>
+  )
 }
 
-const UsersColumns = [
-  {
-      id: "email",
-      header: "Email",
-      accessorKey: "email",
-  },
-  {
-      id: "firstName",
-      header: "First Name",
-      accessorKey: "firstName",
-  },
-  {
-      id: "lastName",
-      header: "Last Name",
-      accessorKey: "lastName",
-  },
-  {
-      id: "phone",
-      header: "Phone",
-      accessorKey: "phone",
-  },
-  {
-      id: "role",
-      header: "Role",
-      accessorKey: "role",
-  },
-  {
-      id: "carPictureURL",
-      header: "Car Photo",
-      accessorKey: "carPictureURL",
-      cell: data => <IMImagesTableCell singleImageURL={data.value} />,
-  },
-  {
-      id: "carName",
-      header: "Car Model",
-      accessorKey: "carName",
-  },
-  {
-      id: "carNumber",
-      header: "License Plate",
-      accessorKey: "carNumber",
-  },
-  {
-      id: "banned",
-      header: "Banned",
-      accessorKey: "banned",
-      cell: data => <IMToggleSwitchComponent isChecked={data.value} disabled />,
-  },
-  {
-      id: "createdAt",
-      header: "Created At",
-      accessorKey: "createdAt",
-      cell: data => <IMDateTableCell timestamp={data.value} />,
-  },
-  {
-      id: "updatedAt",
-      header: "Updated At",
-      accessorKey: "updatedAt",
-      cell: data => <IMDateTableCell timestamp={data.value} />,
-  },
-  {
-      id: "actions",
-      header: "Actions",
-      accessorKey: "actions",
-      cell: data => <ActionsItemView data={data} />,
-  },
-];
-
-
-function ActionsItemView(props) {
-  const { data } = props
+function ActionsItemView({ data }: { data: UserType }) {
+  const [isProcessing, setIsProcessing] = useState(false)
   const router = useRouter()
 
-  const handleView = item => {
-    const viewPath = './view?id=' + item.id
+  const handleView = () => {
+    const viewPath = `./view?id=${data.id}`
     router.push(viewPath)
   }
 
-  const handleEdit = item => {
-    const editPath = './update?id=' + item.id
+  const handleEdit = () => {
+    const editPath = `./update?id=${data.id}`
     router.push(editPath)
   }
 
-  const handleDelete = async item => {
-    if (window.confirm('Are you sure you want to delete this item?')) {
-      const path = baseAPIURL + 'users/delete'
-      const response = await authPost(path, { id: item.id })
-      window.location.reload(false)
+  const handleDelete = async () => {
+    if (window.confirm("Are you sure you want to delete this user?")) {
+      setIsProcessing(true)
+      try {
+        const path = baseAPIURL + "users/delete"
+        await authPost(path, { id: data.id })
+        window.location.reload()
+      } catch (error) {
+        console.error("Error deleting user:", error)
+        alert("Failed to delete user. Please try again.")
+        setIsProcessing(false)
+      }
     }
   }
 
   return (
-    <div className={`${styles.inlineActionsContainer} inlineActionsContainer`}>
+    <div style={{ display: "flex", gap: "8px" }}>
       <button
-        onClick={() => handleView(data.row.original)}
-        type="button"
-        id="tooltip264453216"
-        className={`${styles.btnSm} btn-icon btn btn-info btn-sm`}>
-        <i className="fa fa-eye"></i>
+        onClick={handleView}
+        disabled={isProcessing}
+        style={{
+          ...theme.listView.actionButton,
+          backgroundColor: "rgba(13, 148, 255, 0.15)",
+          color: theme.colors.accent.primary,
+          opacity: isProcessing ? 0.7 : 1,
+          cursor: isProcessing ? "not-allowed" : "pointer",
+        }}
+        title="View user"
+      >
+        <Eye size={14} />
       </button>
       <button
-        onClick={() => handleEdit(data.row.original)}
-        type="button"
-        id="tooltip366246651"
-        className={`${styles.btnSm} btn-icon btn btn-success btn-sm`}>
-        <i className="fa fa-edit"></i>
+        onClick={handleEdit}
+        disabled={isProcessing}
+        style={{
+          ...theme.listView.actionButton,
+          backgroundColor: "rgba(34, 197, 94, 0.15)",
+          color: theme.colors.feedback.success,
+          opacity: isProcessing ? 0.7 : 1,
+          cursor: isProcessing ? "not-allowed" : "pointer",
+        }}
+        title="Edit user"
+      >
+        <Edit size={14} />
       </button>
       <button
-        onClick={() => handleDelete(data.row.original)}
-        type="button"
-        id="tooltip476609793"
-        className={`${styles.btnSm} btn-icon btn btn-danger btn-sm`}>
-        <i className="fa fa-times"></i>
+        onClick={handleDelete}
+        disabled={isProcessing}
+        style={{
+          ...theme.listView.actionButton,
+          backgroundColor: "rgba(239, 68, 68, 0.15)",
+          color: theme.colors.feedback.error,
+          opacity: isProcessing ? 0.7 : 1,
+          cursor: isProcessing ? "not-allowed" : "pointer",
+        }}
+        title="Delete user"
+      >
+        {isProcessing ? <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /> : <Trash2 size={14} />}
       </button>
     </div>
   )
 }
 
-function UsersListView(props) {
+export const UsersListView = () => {
+  const [users, setUsers] = useState<UserType[]>([])
+  const [globalFilter, setGlobalFilter] = useState("")
   const [isLoading, setIsLoading] = useState(true)
-  const [Users, setUsers] = useState([])
-  const [data, setData] = useState([])
-  const [globalFilter, setGlobalFilter] = useState('')
-
+  const [error, setError] = useState<string | null>(null)
   const [user, token, loading] = useCurrentUser()
+  const router = useRouter()
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
+  const [columnPinning, setColumnPinning] = useState<ColumnPinningState>({
+    left: ["email"],
+    right: ["actions"],
+  })
+  const [isColumnSelectorOpen, setIsColumnSelectorOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
-  const columns = useMemo(() => UsersColumns, [])
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsColumnSelectorOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [])
 
-  const table = useReactTable({
-    data: Users,
-    columns,
+  // Define all possible columns
+  const allColumns: ColumnDef<UserType>[] = [
+    {
+      id: "email",
+      header: ({ column }) => <ColumnHeader column={column} title="Email" />,
+      accessorKey: "email",
+      cell: ({ getValue }) => <div>{getValue() as string}</div>,
+      size: 200,
+    },
+    {
+      id: "firstName",
+      header: ({ column }) => <ColumnHeader column={column} title="First Name" />,
+      accessorKey: "firstName",
+      cell: ({ getValue }) => <div>{getValue() as string}</div>,
+      size: 150,
+    },
+    {
+      id: "lastName",
+      header: ({ column }) => <ColumnHeader column={column} title="Last Name" />,
+      accessorKey: "lastName",
+      cell: ({ getValue }) => <div>{getValue() as string}</div>,
+      size: 150,
+    },
+    {
+      id: "phone",
+      header: ({ column }) => <ColumnHeader column={column} title="Phone" />,
+      accessorKey: "phone",
+      cell: ({ getValue }) => <div>{(getValue() as string) || "-"}</div>,
+      size: 150,
+    },
+    {
+      id: "role",
+      header: ({ column }) => <ColumnHeader column={column} title="Role" />,
+      accessorKey: "role",
+      cell: ({ getValue }) => (
+        <div
+          style={{
+            display: "inline-block",
+            padding: "2px 8px",
+            backgroundColor: "rgba(99, 102, 241, 0.1)",
+            color: "#6366F1", // indigo-500
+            borderRadius: "4px",
+            fontSize: "12px",
+            fontWeight: "500",
+          }}
+        >
+          {(getValue() as string) || "User"}
+        </div>
+      ),
+      size: 120,
+    },
+    {
+      id: "carPictureURL",
+      header: ({ column }) => <ColumnHeader column={column} title="Car Photo" />,
+      accessorKey: "carPictureURL",
+      cell: ({ getValue }) => <IMImagesTableCell singleImageURL={getValue() as string} />,
+      size: 120,
+    },
+    {
+      id: "carName",
+      header: ({ column }) => <ColumnHeader column={column} title="Car Model" />,
+      accessorKey: "carName",
+      cell: ({ getValue }) => (
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <Car size={14} style={{ color: theme.colors.text.secondary }} />
+          <span>{(getValue() as string) || "-"}</span>
+        </div>
+      ),
+      size: 150,
+    },
+    {
+      id: "carNumber",
+      header: ({ column }) => <ColumnHeader column={column} title="License Plate" />,
+      accessorKey: "carNumber",
+      cell: ({ getValue }) => <div>{(getValue() as string) || "-"}</div>,
+      size: 150,
+    },
+    {
+      id: "banned",
+      header: ({ column }) => <ColumnHeader column={column} title="Banned" />,
+      accessorKey: "banned",
+      cell: ({ getValue }) => <IMToggleSwitchComponent isChecked={getValue() as boolean} disabled />,
+      size: 100,
+    },
+    {
+      id: "createdAt",
+      header: ({ column }) => <ColumnHeader column={column} title="Created At" />,
+      accessorKey: "createdAt",
+      cell: ({ getValue }) => <IMDateTableCell timestamp={getValue() as string} />,
+      size: 180,
+    },
+    {
+      id: "updatedAt",
+      header: ({ column }) => <ColumnHeader column={column} title="Updated At" />,
+      accessorKey: "updatedAt",
+      cell: ({ getValue }) => <IMDateTableCell timestamp={getValue() as string} />,
+      size: 180,
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      accessorKey: "actions",
+      cell: ({ row }) => <ActionsItemView data={row.original} />,
+      size: 120,
+    },
+  ]
+
+  // Set all columns visible by default
+  useEffect(() => {
+    const allVisible = allColumns.reduce(
+      (acc, column) => {
+        acc[column.id] = true
+        return acc
+      },
+      {} as Record<string, boolean>,
+    )
+    setColumnVisibility(allVisible)
+  }, [])
+
+  useEffect(() => {
+    if (!user || loading) return
+
+    const fetchData = async () => {
+      setIsLoading(true)
+      try {
+        const config = {
+          headers: { Authorization: token },
+        }
+        const response = await fetch(`${baseAPIURL}users/list`, config)
+        const data = await response.json()
+
+        if (data) {
+          setUsers(data)
+        } else {
+          setError("Access denied or no data available")
+        }
+      } catch (error) {
+        console.error("Error fetching users:", error)
+        setError("Failed to load users. Please try again later.")
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [user, token, loading])
+
+  const table = useReactTable<UserType>({
+    data: users,
+    columns: allColumns,
+    getCoreRowModel: getCoreRowModel<UserType>(),
+    getPaginationRowModel: getPaginationRowModel<UserType>(),
+    getFilteredRowModel: getFilteredRowModel<UserType>(),
     state: {
       globalFilter,
+      columnVisibility,
+      columnPinning,
     },
+    onColumnVisibilityChange: setColumnVisibility,
+    onColumnPinningChange: setColumnPinning,
     onGlobalFilterChange: setGlobalFilter,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
+    initialState: {
+      pagination: {
+        pageSize: 10,
+      },
+    },
   })
 
-  useEffect(() => {
-    if (loading) {
-      return
-    }
-    const config = {
-      headers: { Authorization: token },
-    }
+  const handleAddNew = () => {
+    router.push("./add")
+  }
 
-    const extraQueryParams = null
-    setIsLoading(true)
+  const toggleColumnSelector = () => {
+    setIsColumnSelectorOpen(!isColumnSelectorOpen)
+  }
 
-    fetch(
-      baseAPIURL +
-        'users/list' +
-        (extraQueryParams ? extraQueryParams : ''),
-      config,
+  // Create column groups for better organization
+  const columnGroups = [
+    {
+      name: "Basic Info",
+      columns: ["email", "firstName", "lastName", "phone", "role"],
+    },
+    {
+      name: "Vehicle Info",
+      columns: ["carPictureURL", "carName", "carNumber"],
+    },
+    {
+      name: "Admin",
+      columns: ["banned"],
+    },
+    {
+      name: "Timestamps",
+      columns: ["createdAt", "updatedAt"],
+    },
+  ]
+
+  if (error) {
+    return (
+      <div className="Card">
+        <div className="CardHeader">
+          <h1>
+            <Users size={24} style={{ color: theme.colors.accent.primary }} />
+            Users
+          </h1>
+        </div>
+        <div className="CardBody">
+          <div
+            style={{
+              padding: "24px",
+              textAlign: "center",
+              color: theme.colors.feedback.error,
+              fontSize: theme.typography.fontSizes.lg,
+            }}
+          >
+            {error}
+          </div>
+        </div>
+      </div>
     )
-      .then(response => response.json())
-      .then(data => {
-        console.log(data)
-        const users = data
-        setData(users)
-
-        setIsLoading(false)
-      })
-      .catch(err => {
-        console.log(err)
-      })
-  }, [loading])
-
-  useEffect(() => {
-    setUsers(data)
-  }, [table.getState().pagination.pageIndex, table.getState().pagination.pageSize, data])
+  }
 
   return (
-    <>
-      <div className={`${styles.adminContent} adminContent`}>
-        <div className="row">
-          <div className="col col-md-12">
-            <div className="Card">
-              <div className="CardHeader">
-                <a
-                  className={`${styles.Link} ${styles.AddLink} Link AddLink`}
-                  href="./add">
-                  Add New
-                </a>
-                <h1>Users</h1>
-              </div>
-              <div className={`${styles.CardBody} CardBody`}>
-                <div className={`${styles.TableContainer} TableContainer`}>
-                  <input
-                    className={`${styles.SearchInput} SearchInput`}
-                    type="text"
-                    placeholder="Search..."
-                    value={globalFilter ?? ''}
-                    onChange={e => setGlobalFilter(e.target.value)}
-                  />
-                  <table className={`${styles.Table} Table`}>
-                    <thead>
-                      {table.getHeaderGroups().map(headerGroup => (
-                        <tr key={headerGroup.id}>
-                          {headerGroup.headers.map(header => (
-                            <th key={header.id}>
-                              {flexRender(
-                                header.column.columnDef.header,
-                                header.getContext()
-                              )}
-                            </th>
-                          ))}
-                        </tr>
-                      ))}
-                    </thead>
-                    <tbody>
-                      {table.getRowModel().rows.map(row => (
-                        <tr key={row.id}>
-                          {row.getVisibleCells().map(cell => (
-                            <td key={cell.id}>
-                              {flexRender(
-                                cell.column.columnDef.cell,
-                                cell.getContext()
-                              )}
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
-                      <tr>
-                        {isLoading ? (
-                          <td colSpan={UsersColumns.length - 1}>
-                            <p>Loading...</p>
-                          </td>
-                        ) : (
-                          <td colSpan={UsersColumns.length - 1}>
-                            <p className={`${styles.PaginationDetails} PaginationDetails`}>
-                              Showing {table.getRowModel().rows.length} of {data.length} results
-                            </p>
-                          </td>
-                        )}
-                      </tr>
-                    </tbody>
-                  </table>
-                  <div className={`${styles.Pagination} Pagination`}>
-                    <div className={`${styles.LeftPaginationButtons} LeftPaginationButtons`}>
-                      <button
-                        onClick={() => table.setPageIndex(0)}
-                        className={`${styles.PaginationButton}`}
-                        disabled={!table.getCanPreviousPage()}>
-                        <i className="fa fa-angle-double-left"></i>
-                      </button>
-                      <button
-                        onClick={() => table.previousPage()}
-                        className={`${styles.PaginationButton}`}
-                        disabled={!table.getCanPreviousPage()}>
-                        <i className="fa fa-angle-left"></i>
-                      </button>
+    <div className="Card">
+      <div className="CardHeader">
+        <h1>Users</h1>
+        <div style={{ display: "flex", gap: "12px" }}>
+          <div style={{ position: "relative" }}>
+            <button
+              onClick={toggleColumnSelector}
+              style={{
+                backgroundColor: isColumnSelectorOpen ? "rgba(13, 148, 255, 0.15)" : theme.colors.surface.tertiary,
+                color: isColumnSelectorOpen ? theme.colors.accent.primary : theme.colors.text.primary,
+                padding: "8px",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer",
+              }}
+              title="Customize columns"
+            >
+              <SlidersHorizontal size={16} />
+              <span>Columns</span>
+            </button>
+
+            {isColumnSelectorOpen && (
+              <div
+                ref={dropdownRef}
+                style={{
+                  position: "absolute",
+                  top: "100%",
+                  right: 0,
+                  marginTop: "4px",
+                  backgroundColor: theme.colors.surface.primary,
+                  borderRadius: "8px",
+                  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+                  padding: "12px",
+                  zIndex: 10,
+                  width: "250px",
+                  border: `1px solid ${theme.colors.border.default}`,
+                  maxHeight: "400px",
+                  overflowY: "auto",
+                }}
+              >
+                <div
+                  style={{ marginBottom: "8px", fontWeight: 600, fontSize: "14px", color: theme.colors.text.primary }}
+                >
+                  Toggle Columns
+                </div>
+
+                {columnGroups.map((group) => (
+                  <div key={group.name} style={{ marginBottom: "12px" }}>
+                    <div
+                      style={{
+                        fontWeight: 500,
+                        fontSize: "13px",
+                        color: theme.colors.text.secondary,
+                        marginBottom: "4px",
+                        borderBottom: `1px solid ${theme.colors.border.default}`,
+                        paddingBottom: "2px",
+                      }}
+                    >
+                      {group.name}
                     </div>
-                    <div className={`${styles.CenterPaginationButtons}`}>
-                      <span>
-                        Page{' '}
-                        <strong>
-                          {table.getState().pagination.pageIndex + 1} of{' '}
-                          {table.getPageCount()}
-                        </strong>
-                      </span>
-                      <span>
-                        | Go to page:{' '}
-                        <input
-                          type="number"
-                          defaultValue={table.getState().pagination.pageIndex + 1}
-                          onChange={e => {
-                            const page = e.target.value ? Number(e.target.value) - 1 : 0
-                            table.setPageIndex(page)
-                          }}
-                          style={{ width: '100px' }}
-                        />
-                      </span>
-                      <select
-                        value={table.getState().pagination.pageSize}
-                        onChange={e => {
-                          table.setPageSize(Number(e.target.value))
-                        }}>
-                        {[10, 20, 30, 40, 50].map(pageSize => (
-                          <option key={pageSize} value={pageSize}>
-                            Show {pageSize}
-                          </option>
-                        ))}
-                      </select>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                      {group.columns.map((columnId) => {
+                        const column = allColumns.find((col) => col.id === columnId)
+                        if (!column) return null
+
+                        return (
+                          <label
+                            key={column.id}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px",
+                              cursor: "pointer",
+                              padding: "2px 0",
+                              fontSize: "14px",
+                              color: theme.colors.text.primary,
+                            }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={column.id === "actions" ? true : !!table.getState().columnVisibility[column.id]}
+                              onChange={(e) => {
+                                if (column.id === "actions") return // Don't allow toggling actions column
+                                table.toggleColumnVisibility(column.id, e.target.checked)
+                              }}
+                              disabled={column.id === "actions"} // Actions column is always visible
+                              style={{ cursor: "pointer" }}
+                            />
+                            {column.header as string}
+                          </label>
+                        )
+                      })}
                     </div>
-                    <div className={`${styles.RightPaginationButtons}`}>
-                      <button
-                        onClick={() => table.nextPage()}
-                        className={`${styles.PaginationButton}`}
-                        disabled={!table.getCanNextPage()}>
-                        <i className="fa fa-angle-right"></i>
-                      </button>
-                      <button
-                        onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                        className={`${styles.PaginationButton}`}
-                        disabled={!table.getCanNextPage()}>
-                        <i className="fa fa-angle-double-right"></i>
-                      </button>
-                    </div>
+                  </div>
+                ))}
+
+                <div
+                  style={{
+                    marginTop: "12px",
+                    borderTop: `1px solid ${theme.colors.border.default}`,
+                    paddingTop: "12px",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontWeight: 500,
+                      fontSize: "13px",
+                      color: theme.colors.text.secondary,
+                      marginBottom: "8px",
+                    }}
+                  >
+                    Pin Columns
+                  </div>
+                  <p style={{ fontSize: "12px", color: theme.colors.text.secondary, marginBottom: "8px" }}>
+                    Click the pin icon in any column header to pin/unpin that column.
+                  </p>
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <button
+                      onClick={() => {
+                        setColumnPinning({
+                          left: ["email"],
+                          right: ["actions"],
+                        })
+                      }}
+                      style={{
+                        flex: 1,
+                        padding: "6px",
+                        fontSize: "12px",
+                        backgroundColor: theme.colors.surface.tertiary,
+                        border: "none",
+                        borderRadius: "4px",
+                        cursor: "pointer",
+                        color: theme.colors.text.primary,
+                      }}
+                    >
+                      Reset Pins
+                    </button>
+                    <button
+                      onClick={() => {
+                        setColumnPinning({
+                          left: ["email", "firstName", "lastName"],
+                          right: ["actions"],
+                        })
+                      }}
+                      style={{
+                        flex: 1,
+                        padding: "6px",
+                        fontSize: "12px",
+                        backgroundColor: theme.colors.accent.primary,
+                        border: "none",
+                        borderRadius: "4px",
+                        cursor: "pointer",
+                        color: "white",
+                      }}
+                    >
+                      Pin Names
+                    </button>
                   </div>
                 </div>
               </div>
+            )}
+          </div>
+
+          <a
+            href="./add"
+            className="AddLink"
+            style={{
+              backgroundColor: theme.colors.accent.primary,
+              color: "white",
+              padding: "8px 16px",
+              textDecoration: "none",
+              borderRadius: "4px",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            Add New
+          </a>
+        </div>
+      </div>
+      <div className="CardBody">
+        <div className="TableContainer">
+          <input
+            className="SearchInput"
+            type="text"
+            placeholder="Search users..."
+            value={globalFilter}
+            onChange={(e) => setGlobalFilter(e.target.value)}
+          />
+
+          <div
+            style={{
+              fontSize: "12px",
+              color: theme.colors.text.secondary,
+              marginBottom: "8px",
+              display: "flex",
+              alignItems: "center",
+              gap: "4px",
+            }}
+          >
+            <Pin size={12} /> Tip: Click pin icons in headers to pin important columns
+          </div>
+
+          <div className="table-responsive" style={{ width: "100%", overflow: "auto" }}>
+            <table className="Table" style={{ minWidth: "100%" }}>
+              <thead>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <tr key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => (
+                      <th
+                        key={header.id}
+                        style={{
+                          position: header.column.getIsPinned() ? "sticky" : "relative",
+                          left:
+                            header.column.getIsPinned() === "left" ? `${header.column.getStart("left")}px` : undefined,
+                          right:
+                            header.column.getIsPinned() === "right"
+                              ? `${header.column.getStart("right")}px`
+                              : undefined,
+                          backgroundColor: header.column.getIsPinned()
+                            ? theme.colors.surface.primary
+                            : theme.colors.surface.secondary,
+                          zIndex: header.column.getIsPinned() ? 1 : 0,
+                          boxShadow: header.column.getIsPinned() ? `0 0 5px rgba(0,0,0,0.1)` : "none",
+                        }}
+                      >
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                      </th>
+                    ))}
+                  </tr>
+                ))}
+              </thead>
+              <tbody>
+                {isLoading ? (
+                  <tr>
+                    <td
+                      colSpan={Object.keys(columnVisibility).filter((key) => columnVisibility[key]).length || 1}
+                      style={{ textAlign: "center", padding: "24px" }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "12px" }}>
+                        <Loader2 size={24} style={{ animation: "spin 1s linear infinite" }} />
+                        Loading users...
+                      </div>
+                    </td>
+                  </tr>
+                ) : table.getRowModel().rows.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={Object.keys(columnVisibility).filter((key) => columnVisibility[key]).length || 1}
+                      style={{ textAlign: "center", padding: "24px" }}
+                    >
+                      <div>
+                        <div style={{ marginBottom: "12px" }}>
+                          <Users size={32} style={{ color: theme.colors.text.secondary }} />
+                        </div>
+                        <div style={{ fontWeight: 500, marginBottom: "4px" }}>No users found</div>
+                        <div style={{ color: theme.colors.text.secondary }}>
+                          Try adjusting your search or add new users to your collection.
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  table.getRowModel().rows.map((row) => (
+                    <tr key={row.id}>
+                      {row.getVisibleCells().map((cell) => (
+                        <td
+                          key={cell.id}
+                          style={{
+                            position: cell.column.getIsPinned() ? "sticky" : "relative",
+                            left:
+                              cell.column.getIsPinned() === "left" ? `${cell.column.getStart("left")}px` : undefined,
+                            right:
+                              cell.column.getIsPinned() === "right" ? `${cell.column.getStart("right")}px` : undefined,
+                            backgroundColor: "inherit",
+                            zIndex: cell.column.getIsPinned() ? 1 : 0,
+                            boxShadow: cell.column.getIsPinned() ? `0 0 5px rgba(0,0,0,0.1)` : "none",
+                          }}
+                        >
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </td>
+                      ))}
+                    </tr>
+                  ))
+                )}
+                <tr>
+                  <td colSpan={Object.keys(columnVisibility).filter((key) => columnVisibility[key]).length || 1}>
+                    <p className="PaginationDetails">
+                      Showing {table.getRowModel().rows.length} of {users.length} results
+                    </p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div className="Pagination">
+            <div className="LeftPaginationButtons">
+              <button
+                onClick={() => table.setPageIndex(0)}
+                className="PaginationButton"
+                disabled={!table.getCanPreviousPage()}
+              >
+                <ChevronsLeft size={16} />
+              </button>
+              <button
+                onClick={() => table.previousPage()}
+                className="PaginationButton"
+                disabled={!table.getCanPreviousPage()}
+              >
+                <ChevronLeft size={16} />
+              </button>
+            </div>
+            <div className="CenterPaginationButtons">
+              <span>
+                Page <strong>{table.getState().pagination.pageIndex + 1}</strong> of{" "}
+                <strong>{table.getPageCount()}</strong>
+              </span>
+              <span>
+                | Go to page:{" "}
+                <input
+                  type="number"
+                  defaultValue={table.getState().pagination.pageIndex + 1}
+                  onChange={(e) => {
+                    const page = e.target.value ? Number(e.target.value) - 1 : 0
+                    table.setPageIndex(page)
+                  }}
+                  style={{ width: "100px" }}
+                />
+              </span>
+              <select
+                value={table.getState().pagination.pageSize}
+                onChange={(e) => {
+                  table.setPageSize(Number(e.target.value))
+                }}
+              >
+                {[10, 20, 30, 40, 50].map((pageSize) => (
+                  <option key={pageSize} value={pageSize}>
+                    Show {pageSize}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="RightPaginationButtons">
+              <button onClick={() => table.nextPage()} className="PaginationButton" disabled={!table.getCanNextPage()}>
+                <ChevronRight size={16} />
+              </button>
+              <button
+                onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+                className="PaginationButton"
+                disabled={!table.getCanNextPage()}
+              >
+                <ChevronsRight size={16} />
+              </button>
             </div>
           </div>
         </div>
       </div>
-    </>
+    </div>
   )
 }
 
