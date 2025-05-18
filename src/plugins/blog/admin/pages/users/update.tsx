@@ -1,613 +1,221 @@
-// @ts-nocheck
-'use client'
-import React, { useEffect, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
-import { Formik } from 'formik'
-import { ClipLoader } from 'react-spinners'
-import IMDatePicker from '@/admin/components/forms/IMDatePicker'
-import { LocationPicker } from '@/admin/components/forms/locationPicker'
-import {
-  TypeaheadComponent,
-  IMColorPicker,
-  IMMultimediaComponent,
-  IMObjectInputComponent,
-  IMArrayInputComponent,
-  IMColorsContainer,
-  IMColorBoxComponent,
-  IMStaticMultiSelectComponent,
-  IMStaticSelectComponent,
-  IMPhoto,
-  IMModal,
-  IMToggleSwitchComponent,
-} from '@/admin/components/forms/fields'
-import ReactMarkdown from 'react-markdown'
-import dynamic from 'next/dynamic'
-import CodeMirror from '@uiw/react-codemirror'
-import { markdown } from '@codemirror/lang-markdown'
-import styles from '@/admin/themes/admin.module.css'
+"use client"
+import { useEffect, useState } from "react"
+import { useSearchParams } from "next/navigation"
+import { Formik } from "formik"
+import dynamic from "next/dynamic"
+import ReactMarkdown from "react-markdown"
+import { User, Calendar, Loader2 } from "lucide-react"
+import { toast } from "react-toastify"
 
-/* Insert extra imports here */
+import { theme, styledComponents as sc } from "@/lib/theme"
+import IMDatePicker from "@/admin/components/forms/IMDatePicker"
+import { IMToggleSwitchComponent } from "@/admin/components/forms/fields"
 
-const beautify_html = require('js-beautify').html
-import { pluginsAPIURL } from '../../../../../config/config'
-import {
-  authFetch,
-  authPost,
-} from '../../../../../modules/auth/utils/authFetch'
+import { pluginsAPIURL } from "@/config/config"
+import { authFetch, authPost } from "@/modules/auth/utils/authFetch"
+
+const CodeMirror = dynamic(
+  async () => {
+    const { markdown } = await import("@codemirror/lang-markdown")
+    const mod = await import("@uiw/react-codemirror")
+    return mod
+  },
+  { ssr: false },
+)
+
 const baseAPIURL = `${pluginsAPIURL}admin/blog/`
 
-const UpdateUserView = props => {
+const UpdateUserView = () => {
   const [isLoading, setIsLoading] = useState(true)
   const [originalData, setOriginalData] = useState(null)
   const [modifiedNonFormData, setModifiedNonFormData] = useState({})
 
   const searchParams = useSearchParams()
-  const id = searchParams.get('id')
+  const id = searchParams.get("id")
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await authFetch(
-          baseAPIURL + 'users/view?id=' + id,
-        )
+        const response = await authFetch(baseAPIURL + "users/view?id=" + id)
         if (response?.data) {
           setOriginalData(response.data)
           initializeModifieableNonFormData(response.data)
           setIsLoading(false)
         }
       } catch (err) {
-        console.log(err)
+        console.error(err)
+        toast.error("Failed to load user data")
         setIsLoading(false)
       }
     }
     fetchData()
   }, [id])
 
-  const initializeModifieableNonFormData = originalData => {
-    var nonFormData = {}
-
-    /* Insert non modifiable initialization data here */
-          if (originalData.bio_description) {
-              nonFormData['bio_description'] = originalData.bio_description
-          }
-          
-          if (originalData.banned) {
-              nonFormData['banned'] = originalData.banned
-          }
-          
-          if (originalData.created_at) {
-              nonFormData['created_at'] = originalData.created_at
-          }
-          
-          if (originalData.updated_at) {
-              nonFormData['updated_at'] = originalData.updated_at
-          }
-          
-
-    console.log(nonFormData)
+  const initializeModifieableNonFormData = (originalData) => {
+    const nonFormData = {}
+    if (originalData.bio_description) nonFormData["bio_description"] = originalData.bio_description
+    if (originalData.banned) nonFormData["banned"] = originalData.banned
+    if (originalData.created_at) nonFormData["created_at"] = originalData.created_at
+    if (originalData.updated_at) nonFormData["updated_at"] = originalData.updated_at
     setModifiedNonFormData(nonFormData)
   }
 
   const saveChanges = async (modifiedData, setSubmitting) => {
-    const response = await authPost(
-      baseAPIURL + 'users/update?id=' + id,
-      JSON.stringify({
-        ...modifiedData,
-        ...modifiedNonFormData,
-      }),
-    )
-    const { data } = response
-    if (data.success == true) {
-      window.location.reload()
-    } else {
-      alert(data.error)
+    try {
+      const response = await authPost(
+        baseAPIURL + "users/update?id=" + id,
+        JSON.stringify({ ...modifiedData, ...modifiedNonFormData }),
+      )
+      const { data } = response
+      if (data.success) {
+        toast.success("User updated successfully")
+        window.location.reload()
+      } else {
+        toast.error(data.error || "Failed to update user")
+      }
+    } catch (err) {
+      console.error(err)
+      toast.error("An error occurred while saving changes")
+    } finally {
+      setSubmitting(false)
     }
-    setSubmitting(false)
   }
 
-  const onTypeaheadSelect = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const onCodeChange = (value, fieldName) => {
+    const newData = { ...modifiedNonFormData }
     newData[fieldName] = value
-    setModifiedNonFormData(newData)
-  }
-
-  const onMultipleTypeaheadSelect = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (newData[fieldName] != undefined) {
-      newData[fieldName].push(value)
-    } else {
-      newData[fieldName] = [value]
-    }
-    setModifiedNonFormData(newData)
-  }
-
-  const onMultipleTypeaheadDelete = (index, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName].splice(index, 1)
     setModifiedNonFormData(newData)
   }
 
   const handleSwitchChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value ^ true
-    setModifiedNonFormData(newData)
-  }
-
-  const handleSelectChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value
-    setModifiedNonFormData(newData)
-  }
-
-  const handleColorChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value
-    setModifiedNonFormData(newData)
-  }
-
-  const handleColorDelete = fieldName => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = null
-    setModifiedNonFormData(newData)
-  }
-
-  const handleColorsChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (newData[fieldName] != undefined) {
-      newData[fieldName].push(value)
-    } else {
-      newData[fieldName] = [value]
-    }
-    setModifiedNonFormData(newData)
-  }
-
-  const handleColorsDelete = (index, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName].splice(index, 1)
-    setModifiedNonFormData(newData)
-  }
-
-  const handleArrayInput = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (newData[fieldName] != undefined) {
-      newData[fieldName].push(value)
-    } else {
-      newData[fieldName] = [value]
-    }
-    setModifiedNonFormData(newData)
-  }
-
-  const handleArrayDelete = (index, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName].splice(index, 1)
-    setModifiedNonFormData(newData)
-  }
-
-  const handleObjectInput = (key, value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (newData[fieldName] != undefined) {
-      newData[fieldName][key] = value
-    } else {
-      newData[fieldName] = { [key]: value }
-    }
-    setModifiedNonFormData(newData)
-  }
-
-  const handleObjectDelete = (key, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = Object.keys(newData[fieldName]).reduce(
-      (object, keys) => {
-        if (keys !== key) {
-          object[keys] = newData[fieldName][keys]
-        }
-        return object
-      },
-      {},
-    )
+    const newData = { ...modifiedNonFormData }
+    newData[fieldName] = !value
     setModifiedNonFormData(newData)
   }
 
   const onDateChange = (toDate, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+    const newData = { ...modifiedNonFormData }
     newData[fieldName] = toDate
     setModifiedNonFormData(newData)
   }
 
-  const onLocationChange = (addressObject, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    const location = {
-      longitude: addressObject.location.lng,
-      latitude: addressObject.location.lat,
-      address: addressObject.label,
-      placeID: addressObject.placeId,
-      detailedAddress: addressObject.gmaps.address_components,
-    }
-    newData[fieldName] = location
-    setModifiedNonFormData(newData)
-  }
-
-  const onSimpleLocationChange = (addressObject, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (!addressObject || !addressObject.location) {
-      return
-    }
-    const location = {
-      lng: addressObject.location.lng,
-      lat: addressObject.location.lat,
-      // address: addressObject.label,
-    }
-    newData[fieldName] = location
-    setModifiedNonFormData(newData)
-  }
-
-  const onCodeChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value
-    setModifiedNonFormData(newData)
-  }
-
-  const onMarkdownEditorChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value
-    setModifiedNonFormData(newData)
-  }
-
-  const handleImageUpload = (event, fieldName, isMultiple) => {
-    const files = event.target.files
-    const formData = new FormData()
-    for (var i = 0; i < files.length; ++i) {
-      formData.append('photos', files[i])
-    }
-
-    fetch(pluginsAPIURL + '../media/upload', {
-      method: 'POST',
-      body: formData,
-    })
-      .then(response => response.json())
-      .then(response => {
-        var newData = { ...modifiedNonFormData }
-        if (!isMultiple) {
-          const url = response.data && response.data[0] && response.data[0].url
-          newData[fieldName] = url
-        } else {
-          // multiple photos
-          const urls = response.data && response.data.map(item => item.url)
-          if (
-            !modifiedNonFormData[fieldName] ||
-            modifiedNonFormData[fieldName].length <= 0
-          ) {
-            newData[fieldName] = urls
-          } else {
-            newData[fieldName] = [...modifiedNonFormData[fieldName], ...urls]
-          }
-        }
-        setModifiedNonFormData(newData)
-        console.log(response)
-      })
-      .catch(error => {
-        console.error(error)
-      })
-  }
-
-  const handleDeletePhoto = (srcToBeRemoved, fieldName, isMultiple) => {
-    if (isMultiple) {
-      var newData = { ...modifiedNonFormData }
-      var currentURLs = newData[fieldName]
-      if (currentURLs) {
-        const newURLs = currentURLs.filter(src => src != srcToBeRemoved)
-        newData[fieldName] = newURLs
-        setModifiedNonFormData(newData)
-      }
-    } else {
-      var newData = { ...modifiedNonFormData }
-      newData[fieldName] = null
-      setModifiedNonFormData(newData)
-    }
-  }
-
-  const handleMultimediaUpload = (event, fieldName, isMultiple) => {
-    const files = event.target.files
-    const formData = new FormData()
-    for (var i = 0; i < files.length; ++i) {
-      formData.append('multimedias', files[i])
-    }
-
-    fetch(pluginsAPIURL + '../media/uploadMultimedias', {
-      method: 'POST',
-      body: formData,
-    })
-      .then(response => response.json())
-      .then(response => {
-        var newData = { ...modifiedNonFormData }
-        if (!isMultiple) {
-          const url = response.data && response.data[0] && response.data[0].url
-          newData[fieldName] = url
-        } else {
-          // multiple media
-          const data =
-            response.data &&
-            response.data.map(item => {
-              return { url: item.url, mime: item.mimetype }
-            })
-          if (
-            !modifiedNonFormData[fieldName] ||
-            modifiedNonFormData[fieldName].length <= 0
-          ) {
-            newData[fieldName] = data
-          } else {
-            newData[fieldName] = [...modifiedNonFormData[fieldName], ...data]
-          }
-        }
-        setModifiedNonFormData(newData)
-        console.log(response)
-      })
-      .catch(error => {
-        console.error(error)
-      })
-  }
-
-  const handleMultimediaDelete = (srcToBeRemoved, fieldName, isMultiple) => {
-    if (isMultiple) {
-      var newData = { ...modifiedNonFormData }
-      var currentData = newData[fieldName]
-      if (currentData) {
-        const finalData = currentData.reduce((arrayAcumulator, curVal) => {
-          if (srcToBeRemoved !== curVal.url) {
-            arrayAcumulator.push(curVal)
-          }
-          return arrayAcumulator
-        })
-        newData[fieldName] = finalData
-        setModifiedNonFormData(newData)
-      }
-    } else {
-      var newData = { ...modifiedNonFormData }
-      newData[fieldName] = null
-      setModifiedNonFormData(newData)
-    }
-  }
-
   if (isLoading) {
     return (
-      <div className="sweet-loading card">
-        <div className="spinner-container">
-          <ClipLoader
-            className="spinner"
-            sizeUnit={'px'}
-            size={50}
-            color={'#123abc'}
-            loading={isLoading}
-          />
-        </div>
+      <div style={sc.loadingContainer}>
+        <div style={sc.spinner}></div>
+        <p style={sc.loadingText}>Loading user data...</p>
       </div>
     )
   }
 
   return (
-    <div className={`${styles.Card} ${styles.FormCard} Card FormCard`}>
-      <div className={`${styles.CardBody} CardBody`}>
-        <h1>{originalData && originalData.name}</h1>
+    <div style={sc.formCard}>
+      <div style={sc.formHeader}>
+        <h1 style={sc.formTitle}>
+          <User size={24} color={theme.colors.accent.primary} />
+          {originalData?.name || "Update User"}
+        </h1>
+      </div>
+      <div style={sc.formContent}>
         <Formik
-          initialValues={originalData}
-          validate={values => {
-            values = { ...values, ...modifiedNonFormData }
+          initialValues={originalData || {}}
+          validate={(values) => {
             const errors = {}
-            {
-              /* Insert all form errors here */
-        if (!values.email) {
-            errors.email = 'Field Required!'
-        }
-
-        if (!values.created_at) {
-            errors.created_at = 'Field Required!'
-        }
-
-        if (!values.updated_at) {
-            errors.updated_at = 'Field Required!'
-        }
-
-            }
-
+            if (!values.email) errors.email = "Email is required"
+            if (!modifiedNonFormData.created_at) errors.created_at = "Created date is required"
+            if (!modifiedNonFormData.updated_at) errors.updated_at = "Updated date is required"
             return errors
           }}
-          onSubmit={(values, { setSubmitting }) => {
-            saveChanges(values, setSubmitting)
-          }}>
-          {({
-            values,
-            errors,
-            touched,
-            handleChange,
-            handleBlur,
-            handleSubmit,
-            isSubmitting,
-            /* and other goodies */
-          }) => (
+          onSubmit={(values, { setSubmitting }) => saveChanges(values, setSubmitting)}
+        >
+          {({ values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
             <form onSubmit={handleSubmit}>
-              {/* Insert all edit form fields here */}
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Email</label>
-                        <input
-                            className={`${styles.FormTextField} FormTextField`}
-                            type="email"
-                            name="email"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.email}
-                        />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.email && touched.email && errors.email}
-                        </p>
-                    </div>
-    
+              <div style={{ marginBottom: theme.spacing[8] }}>
+                <h2 style={{ ...sc.formTitle, fontSize: theme.typography.fontSizes.xl }}>Basic Information</h2>
 
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>First Name</label>
-                        <input
-                            className={`${styles.FormTextField} FormTextField`}
-                            type="first_name"
-                            name="first_name"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.first_name}
-                        />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.first_name && touched.first_name && errors.first_name}
-                        </p>
-                    </div>
-    
+                <div style={sc.formGroup}>
+                  <label style={sc.formLabel}>Email</label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={values.email || ""}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    style={sc.formInput}
+                  />
+                  {errors.email && touched.email && <p style={sc.formError}>{errors.email}</p>}
+                </div>
 
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Last Name</label>
-                        <input
-                            className={`${styles.FormTextField} FormTextField`}
-                            type="last_name"
-                            name="last_name"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.last_name}
-                        />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.last_name && touched.last_name && errors.last_name}
-                        </p>
-                    </div>
-    
+                <div style={sc.formGroup}>
+                  <label style={sc.formLabel}>Bio Description</label>
+                  <CodeMirror
+                    value={modifiedNonFormData.bio_description || ""}
+                    onChange={(value) => onCodeChange(value, "bio_description")}
+                    extensions={[markdown()]}
+                  />
+                  <div style={sc.markdownPreview}>
+                    <ReactMarkdown>{modifiedNonFormData.bio_description || ""}</ReactMarkdown>
+                  </div>
+                </div>
 
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Phone</label>
-                        <input
-                            className={`${styles.FormTextField} FormTextField`}
-                            type="phone"
-                            name="phone"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.phone}
-                        />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.phone && touched.phone && errors.phone}
-                        </p>
-                    </div>
-    
+                <div style={sc.formGroup}>
+                  <label style={sc.formLabel}>Banned</label>
+                  <IMToggleSwitchComponent
+                    isChecked={modifiedNonFormData.banned}
+                    onSwitchChange={() => handleSwitchChange(modifiedNonFormData.banned, "banned")}
+                  />
+                </div>
+              </div>
 
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Role</label>
-                        <input
-                            className={`${styles.FormTextField} FormTextField`}
-                            type="role"
-                            name="role"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.role}
-                        />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.role && touched.role && errors.role}
-                        </p>
-                    </div>
-    
+              <div style={{ marginBottom: theme.spacing[8] }}>
+                <h2 style={{ ...sc.formTitle, fontSize: theme.typography.fontSizes.xl }}>System Information</h2>
 
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Short Bio</label>
-                        <input
-                            className={`${styles.FormTextField} FormTextField`}
-                            type="bio_title"
-                            name="bio_title"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.bio_title}
-                        />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.bio_title && touched.bio_title && errors.bio_title}
-                        </p>
-                    </div>
-    
+                <div style={sc.formGroup}>
+                  <label style={sc.formLabel}>
+                    <Calendar size={16} color={theme.colors.accent.primary} />
+                    Created At
+                  </label>
+                  <IMDatePicker
+                    selected={modifiedNonFormData.created_at}
+                    onChange={(toDate) => onDateChange(toDate, "created_at")}
+                  />
+                  {errors.created_at && <p style={sc.formError}>{errors.created_at}</p>}
+                </div>
 
-    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-        <label className={`${styles.FormLabel} FormLabel`}>Long Bio</label>
+                <div style={sc.formGroup}>
+                  <label style={sc.formLabel}>
+                    <Calendar size={16} color={theme.colors.accent.primary} />
+                    Updated At
+                  </label>
+                  <IMDatePicker
+                    selected={modifiedNonFormData.updated_at}
+                    onChange={(toDate) => onDateChange(toDate, "updated_at")}
+                  />
+                  {errors.updated_at && <p style={sc.formError}>{errors.updated_at}</p>}
+                </div>
+              </div>
 
-        <div className={`${styles.FormEditorContainer} FormEditorContainer`}>
-          <CodeMirror
-            value={modifiedNonFormData.bio_description || ''}
-            onChange={(value) => onCodeChange(value, 'bio_description')}
-            extensions={[markdown()]}
-            className={`${styles.FormTextArea} FormTextArea`}
-          />
-          <div className={`${styles.MarkdownPreview} MarkdownPreview`}>
-            <ReactMarkdown>{modifiedNonFormData.bio_description || ''}</ReactMarkdown>
-          </div>
-        </div>
-        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-            {errors.bio_description && touched.bio_description && errors.bio_description}
-        </p>
-    </div>
-
-
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Website URL</label>
-                        <input
-                            className={`${styles.FormTextField} FormTextField`}
-                            type="website_url"
-                            name="website_url"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.website_url}
-                        />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.website_url && touched.website_url && errors.website_url}
-                        </p>
-                    </div>
-    
-
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Username</label>
-                        <input
-                            className={`${styles.FormTextField} FormTextField`}
-                            type="username"
-                            name="username"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.username}
-                        />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.username && touched.username && errors.username}
-                        </p>
-                    </div>
-    
-
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Banned</label>
-                        <IMToggleSwitchComponent isChecked={modifiedNonFormData.banned} onSwitchChange={() => handleSwitchChange(modifiedNonFormData["banned"], "banned")} />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.banned && touched.banned && errors.banned}
-                        </p>
-                    </div>
-    
-
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Created At</label>
-                        <IMDatePicker
-                            selected={modifiedNonFormData.created_at}
-                            onChange={(toDate) => onDateChange(toDate, "created_at")}
-                        />
-                    </div>
-    
-
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Updated At</label>
-                        <IMDatePicker
-                            selected={modifiedNonFormData.updated_at}
-                            onChange={(toDate) => onDateChange(toDate, "updated_at")}
-                        />
-                    </div>
-    
-
-
-              <div
-                className={`${styles.FormActionContainer} FormActionContainer`}>
+              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: theme.spacing[6] }}>
                 <button
-                  className={`${styles.PrimaryButton} PrimaryButton`}
+                  type="button"
+                  style={{ ...sc.secondaryButton, marginRight: theme.spacing[3] }}
+                  onClick={() => window.history.back()}
+                >
+                  Cancel
+                </button>
+                <button
                   type="submit"
-                  disabled={isSubmitting}>
-                  Save user
+                  disabled={isSubmitting}
+                  style={{
+                    ...sc.primaryButton,
+                    opacity: isSubmitting ? 0.7 : 1,
+                    cursor: isSubmitting ? "not-allowed" : "pointer",
+                  }}
+                >
+                  {isSubmitting && (
+                    <Loader2 size={16} className="animate-spin" style={{ marginRight: theme.spacing[2] }} />
+                  )}
+                  Save User
                 </button>
               </div>
             </form>
