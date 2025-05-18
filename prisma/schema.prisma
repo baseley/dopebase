@@ -696,7 +696,7 @@ model Transaction {
 model Comment {
   id          String   @id @default(uuid())
   authorId    String   @map("author_id")
-  commentText String   @map("comment_text")
+  commentText String   @map("commenttext")
   postId      String   @map("post_id")
   createdAt   String   @map("created_at")
   updatedAt String   @map("updated_at")
