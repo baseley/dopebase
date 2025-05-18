@@ -1,536 +1,560 @@
 // @ts-nocheck
 'use client'
 import React, { useEffect, useState } from 'react'
-import { Formik } from 'formik'
+import { Formik, type FormikHelpers } from 'formik'
 import { ClipLoader } from 'react-spinners'
-import ReactMarkdown from 'react-markdown'
-import dynamic from 'next/dynamic'
-import CodeMirror from '@uiw/react-codemirror'
-import { javascript } from '@codemirror/lang-javascript'
-import { css } from '@codemirror/lang-css'
-import { html } from '@codemirror/lang-html'
-import { markdown } from '@codemirror/lang-markdown'
-import IMDatePicker from '../../../../../admin/components/forms/IMDatePicker'
-import { LocationPicker } from '../../../../../admin/components/forms/locationPicker'
-import {
-  TypeaheadComponent,
-  IMObjectInputComponent,
-  IMMultimediaComponent,
-  IMArrayInputComponent,
-  IMColorPicker,
-  IMColorsContainer,
-  IMColorBoxComponent,
-  IMStaticMultiSelectComponent,
-  IMStaticSelectComponent,
-  IMPhoto,
-  IMModal,
-  IMToggleSwitchComponent,
-} from '../../../../../admin/components/forms/fields'
-import styles from '../../../../../admin/themes/admin.module.css'
+import { toast } from 'react-toastify'
+import { User, Mail, Phone, Car, Calendar, FileText, Ban } from 'lucide-react'
 
-/* Insert extra imports here */
+import { theme, styledComponents as sc } from '@/lib/theme'
+import IMDatePicker from '@/admin/components/forms/IMDatePicker'
+import { IMPhoto, IMToggleSwitchComponent, IMStaticSelectComponent } from '@/admin/components/forms/fields'
 
-import { pluginsAPIURL } from '../../../../../config/config'
-import { authPost } from '../../../../../modules/auth/utils/authFetch'
+import { pluginsAPIURL } from '@/config/config'
+import { authPost } from '@/modules/auth/utils/authFetch'
 
-const beautify_html = require('js-beautify').html
 const baseAPIURL = `${pluginsAPIURL}`
 
-const AddNewUserView = () => {
-  const [isLoading, setIsLoading] = useState(false)
-  const [modifiedNonFormData, setModifiedNonFormData] = useState({})
-  const [originalData, setOriginalData] = useState(null)
+// Define TypeScript interfaces
+interface NonFormData {
+  carPictureURL?: string
+  banned?: boolean
+  createdAt?: string
+  updatedAt?: string
+  [key: string]: any
+}
+
+interface FormValues {
+  email?: string
+  firstName?: string
+  lastName?: string
+  phone?: string
+  role?: string
+  carName?: string
+  carNumber?: string
+  [key: string]: any
+}
+
+interface StripeUserData extends FormValues, NonFormData {}
+
+const AddNewUserView: React.FC = () => {
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [modifiedNonFormData, setModifiedNonFormData] = useState<NonFormData>({})
+  const [originalData, setOriginalData] = useState<StripeUserData | null>(null)
 
   useEffect(() => {
     setModifiedNonFormData({
-      created_at: Math.floor(new Date().getTime() / 1000).toString(),
+      banned: false,
+      createdAt: Math.floor(new Date().getTime() / 1000).toString(),
+      updatedAt: Math.floor(new Date().getTime() / 1000).toString(),
     })
   }, [])
 
-  const createUser = async (data, setSubmitting) => {
+  const createUser = async (data: StripeUserData, setSubmitting: (isSubmitting: boolean) => void) => {
     setIsLoading(true)
+    console.log("🔍 Starting user creation...")
+
     const url = `${baseAPIURL}admin/stripe/users/add`
-    const response = await authPost(
-      url,
-      JSON.stringify({ ...data, ...modifiedNonFormData }),
-    )
-    const resData = response.data
-    if (resData?.error) {
-      alert(resData?.error)
+    console.log("🌐 API URL:", url)
+
+    try {
+      const response = await authPost(url, JSON.stringify(data))
+      const resData = response.data
+
+      if (resData?.error) {
+        console.error("❌ Server returned error:", resData.error)
+        toast.error(resData.error)
+      } else {
+        console.log("✅ User created successfully!")
+        toast.success("User created successfully")
+      }
+    } catch (error: any) {
+      console.error("❌ Error during API call:", error)
+      toast.error(`Error creating user: ${error.message || "Unknown error"}`)
+    } finally {
+      setSubmitting(false)
+      setIsLoading(false)
     }
-    setSubmitting(false)
-    setIsLoading(false)
   }
 
-  const onTypeaheadSelect = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value
-    setModifiedNonFormData(newData)
-  }
-
-  const onMultipleTypeaheadSelect = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (newData[fieldName] != undefined) {
-      newData[fieldName].push(value)
-    } else {
-      newData[fieldName] = [value]
-    }
-    setModifiedNonFormData(newData)
-  }
-
-  const onMultipleTypeaheadDelete = (index, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName].splice(index, 1)
-    setModifiedNonFormData(newData)
-  }
-
-  const handleSwitchChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const handleSwitchChange = (value: boolean, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
     newData[fieldName] = value ^ true
     setModifiedNonFormData(newData)
   }
 
-  const handleSelectChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const handleSelectChange = (value: any, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
     newData[fieldName] = value
     setModifiedNonFormData(newData)
   }
 
-  const handleColorChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value
-    setModifiedNonFormData(newData)
-  }
-
-  const handleColorDelete = fieldName => {
-    var newData = { ...modifiedNonFormData }
-    delete newData[fieldName]
-    setModifiedNonFormData(newData)
-  }
-
-  const handleColorsChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (newData[fieldName] != undefined) {
-      newData[fieldName].push(value)
-    } else {
-      newData[fieldName] = [value]
-    }
-    setModifiedNonFormData(newData)
-  }
-
-  const handleColorsDelete = (index, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName].splice(index, 1)
-    setModifiedNonFormData(newData)
-  }
-
-  const handleArrayInput = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (newData[fieldName] != undefined) {
-      newData[fieldName].push(value)
-    } else {
-      newData[fieldName] = [value]
-    }
-    setModifiedNonFormData(newData)
-  }
-
-  const handleArrayDelete = (index, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName].splice(index, 1)
-    setModifiedNonFormData(newData)
-  }
-
-  const handleObjectInput = (key, value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (newData[fieldName] != undefined) {
-      newData[fieldName][key] = value
-    } else {
-      newData[fieldName] = { [key]: value }
-    }
-    setModifiedNonFormData(newData)
-  }
-
-  const handleObjectDelete = (key, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = Object.keys(newData[fieldName]).reduce(
-      (object, keys) => {
-        if (keys !== key) {
-          object[keys] = newData[fieldName][keys]
-        }
-        return object
-      },
-      {},
-    )
-    setModifiedNonFormData(newData)
-  }
-
-  const onDateChange = (toDate, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const onDateChange = (toDate: string, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
     newData[fieldName] = toDate
     setModifiedNonFormData(newData)
   }
 
-  const onLocationChange = (addressObject, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (!addressObject || !addressObject.location || !addressObject.gmaps) {
-      return
-    }
-    const location = {
-      longitude: addressObject.location.lng,
-      latitude: addressObject.location.lat,
-      address: addressObject.label,
-      placeID: addressObject.placeId,
-      detailedAddress: addressObject.gmaps.address_components,
-    }
-    newData[fieldName] = location
-    setModifiedNonFormData(newData)
-  }
-
-  const onSimpleLocationChange = (addressObject, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (!addressObject || !addressObject.location) {
-      return
-    }
-    const location = {
-      lng: addressObject.location.lng,
-      lat: addressObject.location.lat,
-      // address: addressObject.label,
-    }
-    newData[fieldName] = location
-    setModifiedNonFormData(newData)
-  }
-
-  const onCodeChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value
-    setModifiedNonFormData(newData)
-  }
-
-  const onMarkdownEditorChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value
-    setModifiedNonFormData(newData)
-  }
-
-  const handleImageUpload = (event, fieldName, isMultiple) => {
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>, fieldName: string, isMultiple: boolean) => {
     const files = event.target.files
+    if (!files || files.length === 0) return
+
     const formData = new FormData()
-    for (var i = 0; i < files.length; ++i) {
-      formData.append('photos', files[i])
+    for (let i = 0; i < files.length; ++i) {
+      formData.append("photos", files[i])
     }
 
-    fetch(pluginsAPIURL + '../media/upload', {
-      method: 'POST',
+    fetch(pluginsAPIURL + "../media/upload", {
+      method: "POST",
       body: formData,
     })
-      .then(response => response.json())
-      .then(response => {
-        var newData = { ...modifiedNonFormData }
+      .then((response) => response.json())
+      .then((response) => {
+        const newData = { ...modifiedNonFormData }
         if (!isMultiple) {
           const url = response.data && response.data[0] && response.data[0].url
           newData[fieldName] = url
         } else {
-          // multiple photos
-          const urls = response.data && response.data.map(item => item.url)
-          if (
-            !modifiedNonFormData[fieldName] ||
-            modifiedNonFormData[fieldName].length <= 0
-          ) {
+          const urls = response.data && response.data.map((item: any) => item.url)
+          if (!modifiedNonFormData[fieldName] || modifiedNonFormData[fieldName].length <= 0) {
             newData[fieldName] = urls
           } else {
             newData[fieldName] = [...modifiedNonFormData[fieldName], ...urls]
           }
         }
         setModifiedNonFormData(newData)
-        console.log(response)
       })
-      .catch(error => {
+      .catch((error) => {
         console.error(error)
+        toast.error("Failed to upload image")
       })
   }
 
-  const handleDeletePhoto = (srcToBeRemoved, fieldName, isMultiple) => {
+  const handleDeletePhoto = (srcToBeRemoved: string, fieldName: string, isMultiple: boolean) => {
+    const newData = { ...modifiedNonFormData }
     if (isMultiple) {
-      var newData = { ...modifiedNonFormData }
-      var currentURLs = newData[fieldName]
+      const currentURLs = newData[fieldName]
       if (currentURLs) {
-        const newURLs = currentURLs.filter(src => src != srcToBeRemoved)
+        const newURLs = currentURLs.filter((src: string) => src != srcToBeRemoved)
         newData[fieldName] = newURLs
-        setModifiedNonFormData(newData)
       }
     } else {
-      var newData = { ...modifiedNonFormData }
       newData[fieldName] = null
-      setModifiedNonFormData(newData)
     }
-  }
-
-  const handleMultimediaUpload = (event, fieldName, isMultiple) => {
-    const files = event.target.files
-    const formData = new FormData()
-    for (var i = 0; i < files.length; ++i) {
-      formData.append('multimedias', files[i])
-    }
-    fetch(pluginsAPIURL + '../media/uploadMultimedias', {
-      method: 'POST',
-      body: formData,
-    })
-      .then(response => response.json())
-      .then(response => {
-        var newData = { ...modifiedNonFormData }
-        if (!isMultiple) {
-          const url = response.data && response.data[0] && response.data[0].url
-          newData[fieldName] = url
-        } else {
-          // multiple media
-          const data =
-            response.data &&
-            response.data.map(item => {
-              return { url: item.url, mime: item.mimetype }
-            })
-          if (
-            !modifiedNonFormData[fieldName] ||
-            modifiedNonFormData[fieldName].length <= 0
-          ) {
-            newData[fieldName] = data
-          } else {
-            newData[fieldName] = [...modifiedNonFormData[fieldName], ...data]
-          }
-        }
-        setModifiedNonFormData(newData)
-        console.log(response)
-      })
-      .catch(error => {
-        console.error(error)
-      })
-  }
-
-  const handleMultimediaDelete = (srcToBeRemoved, fieldName, isMultiple) => {
-    if (isMultiple) {
-      var newData = { ...modifiedNonFormData }
-      var currentData = newData[fieldName]
-      if (currentData) {
-        const finalData = currentData.reduce((arrayAcumulator, curVal) => {
-          if (srcToBeRemoved !== curVal.url) {
-            arrayAcumulator.push(curVal)
-          }
-          return arrayAcumulator
-        })
-        newData[fieldName] = finalData
-        setModifiedNonFormData(newData)
-      }
-    } else {
-      var newData = { ...modifiedNonFormData }
-      newData[fieldName] = null
-      setModifiedNonFormData(newData)
-    }
+    setModifiedNonFormData(newData)
   }
 
   if (isLoading) {
     return (
-      <div className="sweet-loading card">
-        <div className="spinner-container">
-          <ClipLoader
-            className="spinner"
-            sizeUnit={'px'}
-            size={50}
-            color={'#123abc'}
-            loading={isLoading}
-          />
-        </div>
+      <div style={sc.loadingContainer}>
+        <div style={sc.spinner}></div>
+        <p style={sc.loadingText}>Creating user...</p>
       </div>
     )
   }
 
-  return (
-    <div className={`${styles.FormCard} FormCard`}>
-      <div className={`${styles.CardBody} CardBody`}>
-        <h1>Create New User</h1>
-        <Formik
-          initialValues={{}}
-          validate={values => {
-            values = { ...values, ...modifiedNonFormData }
-            const errors = {}
-            {
-              /* Insert all form errors here */
-        if (!values.email) {
-            errors.email = 'Field Required!'
-        }
+  // Define form field styles
+  const formField = {
+    container: {
+      marginBottom: theme.spacing[6],
+    } as React.CSSProperties,
+    label: {
+      ...sc.formLabel,
+      display: "flex",
+      alignItems: "center",
+      gap: theme.spacing[2],
+    } as React.CSSProperties,
+    input: {
+      ...sc.formInput,
+    } as React.CSSProperties,
+    error: {
+      ...sc.formError,
+    } as React.CSSProperties,
+    hint: {
+      fontSize: theme.typography.fontSizes.xs,
+      color: theme.colors.text.tertiary,
+      marginTop: theme.spacing[1],
+    } as React.CSSProperties,
+    fileInput: {
+      marginTop: theme.spacing[2],
+      display: "inline-flex",
+      alignItems: "center",
+      gap: theme.spacing[2],
+      padding: `${theme.spacing[2]} ${theme.spacing[3]}`,
+      backgroundColor: theme.colors.surface.secondary,
+      color: theme.colors.text.primary,
+      border: `1px solid ${theme.colors.border.light}`,
+      borderRadius: theme.borderRadius.md,
+      fontSize: theme.typography.fontSizes.sm,
+      fontWeight: theme.typography.fontWeights.medium,
+      cursor: "pointer",
+      transition: theme.transitions.normal,
+      position: "relative",
+      overflow: "hidden",
+    } as React.CSSProperties,
+    hiddenFileInput: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      opacity: 0,
+      width: "100%",
+      height: "100%",
+      cursor: "pointer",
+    } as React.CSSProperties,
+    photoContainer: {
+      display: "flex",
+      flexWrap: "wrap",
+      gap: theme.spacing[2],
+      marginBottom: theme.spacing[2],
+    } as React.CSSProperties,
+    toggleContainer: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+    } as React.CSSProperties,
+    datePickerContainer: {
+      border: `1px solid ${theme.colors.border.light}`,
+      borderRadius: theme.borderRadius.md,
+      padding: theme.spacing[2],
+      backgroundColor: theme.colors.surface.primary,
+    } as React.CSSProperties,
+  }
 
+  return (
+    <div style={sc.formCard}>
+      <div style={sc.formHeader}>
+        <h1 style={sc.formTitle}>
+          <User size={24} color={theme.colors.accent.primary} />
+          Create New Stripe User
+        </h1>
+      </div>
+      <div style={sc.formContent}>
+        <Formik
+          initialValues={{} as FormValues}
+          validate={(values) => {
+            const combinedValues = { ...values, ...modifiedNonFormData }
+            const errors: Record<string, string> = {}
+
+            if (!combinedValues.email) {
+              errors.email = "Email is required"
+            }
+
+            if (!combinedValues.role) {
+              errors.role = "Role is required"
             }
 
             return errors
           }}
-          onSubmit={(values, { setSubmitting }) => {
-            createUser(values, setSubmitting)
-          }}>
-          {({
-            values,
-            errors,
-            touched,
-            handleChange,
-            handleBlur,
-            handleSubmit,
-            isSubmitting,
-            /* and other goodies */
-          }) => (
+          onSubmit={(values: FormValues, { setSubmitting }: FormikHelpers<FormValues>) => {
+            const combinedData = { ...values, ...modifiedNonFormData } as StripeUserData
+            createUser(combinedData, setSubmitting)
+          }}
+        >
+          {({ values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
             <form onSubmit={handleSubmit}>
-              {/* Insert all add form fields here */}
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Email</label>
-                        <input
-                            className={`${styles.FormTextField} FormTextField`}
-                            type="email"
-                            name="email"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.email}
-                        />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.email && touched.email && errors.email}
-                        </p>
-                    </div>
-    
+              {/* Basic Information section */}
+              <div style={{ marginBottom: theme.spacing[8] }}>
+                <h2
+                  style={{
+                    fontSize: theme.typography.fontSizes.xl,
+                    fontWeight: theme.typography.fontWeights.semibold,
+                    marginBottom: theme.spacing[4],
+                    color: theme.colors.text.primary,
+                  }}
+                >
+                  Basic Information
+                </h2>
 
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>First Name</label>
-                        <input
-                            className={`${styles.FormTextField} FormTextField`}
-                            type="firstName"
-                            name="firstName"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.firstName}
-                        />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.firstName && touched.firstName && errors.firstName}
-                        </p>
-                    </div>
-    
-
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Last Name</label>
-                        <input
-                            className={`${styles.FormTextField} FormTextField`}
-                            type="lastName"
-                            name="lastName"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.lastName}
-                        />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.lastName && touched.lastName && errors.lastName}
-                        </p>
-                    </div>
-    
-
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Phone</label>
-                        <input
-                            className={`${styles.FormTextField} FormTextField`}
-                            type="phone"
-                            name="phone"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.phone}
-                        />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.phone && touched.phone && errors.phone}
-                        </p>
-                    </div>
-    
-
-              <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                  <label className={`${styles.FormLabel} FormLabel`}>Role</label>
-                  <IMStaticSelectComponent
-                      options={["passenger","driver","admin","other"]}
-                      name="role"
-                      onChange={handleSelectChange}
+                {/* Email field */}
+                <div style={formField.container}>
+                  <label htmlFor="email" style={formField.label}>
+                    <Mail size={16} color={theme.colors.accent.primary} />
+                    Email <span style={{ color: theme.colors.feedback.error }}>*</span>
+                  </label>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="user@example.com"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.email || ""}
+                    style={{
+                      ...formField.input,
+                      borderColor:
+                        errors.email && touched.email ? theme.colors.feedback.error : theme.forms.input.borderColor,
+                    }}
                   />
-                  <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                      {errors.role && touched.role && errors.role}
-                  </p>
+                  {errors.email && touched.email && <p style={formField.error}>{errors.email}</p>}
+                </div>
+
+                {/* First Name field */}
+                <div style={formField.container}>
+                  <label htmlFor="firstName" style={formField.label}>
+                    <User size={16} color={theme.colors.accent.primary} />
+                    First Name
+                  </label>
+                  <input
+                    id="firstName"
+                    name="firstName"
+                    type="text"
+                    placeholder="John"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.firstName || ""}
+                    style={formField.input}
+                  />
+                </div>
+
+                {/* Last Name field */}
+                <div style={formField.container}>
+                  <label htmlFor="lastName" style={formField.label}>
+                    <User size={16} color={theme.colors.accent.primary} />
+                    Last Name
+                  </label>
+                  <input
+                    id="lastName"
+                    name="lastName"
+                    type="text"
+                    placeholder="Doe"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.lastName || ""}
+                    style={formField.input}
+                  />
+                </div>
+
+                {/* Phone field */}
+                <div style={formField.container}>
+                  <label htmlFor="phone" style={formField.label}>
+                    <Phone size={16} color={theme.colors.accent.primary} />
+                    Phone Number
+                  </label>
+                  <input
+                    id="phone"
+                    name="phone"
+                    type="text"
+                    placeholder="+1234567890"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.phone || ""}
+                    style={formField.input}
+                  />
+                </div>
+
+                {/* Role field */}
+                <div style={formField.container}>
+                  <label htmlFor="role" style={formField.label}>
+                    <User size={16} color={theme.colors.accent.primary} />
+                    Role <span style={{ color: theme.colors.feedback.error }}>*</span>
+                  </label>
+                  <IMStaticSelectComponent
+                    options={["passenger", "driver", "admin", "other"]}
+                    name="role"
+                    onChange={(value) => handleSelectChange(value, "role")}
+                  />
+                  {errors.role && touched.role && <p style={formField.error}>{errors.role}</p>}
+                </div>
               </div>
-          
 
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Car Photo</label>
-                        {modifiedNonFormData.carPictureURL && (
-                            <IMPhoto openable dismissable className="photo" src={modifiedNonFormData.carPictureURL} onDelete={(src) => handleDeletePhoto(src, "carPictureURL", false) } />
-                        )}
-                        <input className="FormFileField" id="carPictureURL" name="carPictureURL" type="file" onChange={(event) => {
-                            handleImageUpload(event, "carPictureURL", false);
-                        }} />
-                    </div>
-    
-
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Car Model</label>
-                        <input
-                            className={`${styles.FormTextField} FormTextField`}
-                            type="carName"
-                            name="carName"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.carName}
-                        />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.carName && touched.carName && errors.carName}
-                        </p>
-                    </div>
-    
-
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>License Plate</label>
-                        <input
-                            className={`${styles.FormTextField} FormTextField`}
-                            type="carNumber"
-                            name="carNumber"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.carNumber}
-                        />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.carNumber && touched.carNumber && errors.carNumber}
-                        </p>
-                    </div>
-    
-
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Banned</label>
-                        <IMToggleSwitchComponent isChecked={modifiedNonFormData.banned} onSwitchChange={() => handleSwitchChange(modifiedNonFormData["banned"], "banned")} />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.banned && touched.banned && errors.banned}
-                        </p>
-                    </div>
-    
-
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Created At</label>
-                        <IMDatePicker
-                            selected={modifiedNonFormData.createdAt}
-                            onChange={(toDate) => onDateChange(toDate, "createdAt")}
-                        />
-                    </div>
-    
-
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Updated At</label>
-                        <IMDatePicker
-                            selected={modifiedNonFormData.updatedAt}
-                            onChange={(toDate) => onDateChange(toDate, "updatedAt")}
-                        />
-                    </div>
-    
-
-
+              {/* Driver Information section */}
               <div
-                className={`${styles.FormActionContainer} FormActionContainer`}>
+                style={{
+                  height: "1px",
+                  backgroundColor: theme.colors.border.light,
+                  margin: `${theme.spacing[6]} 0`,
+                }}
+              ></div>
+
+              <div style={{ marginBottom: theme.spacing[8] }}>
+                <h2
+                  style={{
+                    fontSize: theme.typography.fontSizes.xl,
+                    fontWeight: theme.typography.fontWeights.semibold,
+                    marginBottom: theme.spacing[4],
+                    color: theme.colors.text.primary,
+                  }}
+                >
+                  Driver Information
+                </h2>
+
+                {/* Car Photo field */}
+                <div style={formField.container}>
+                  <label style={formField.label}>
+                    <Car size={16} color={theme.colors.accent.primary} />
+                    Car Photo
+                  </label>
+                  <div style={formField.photoContainer}>
+                    {modifiedNonFormData.carPictureURL && (
+                      <div
+                        style={{
+                          position: "relative",
+                          width: "200px",
+                          height: "150px",
+                          borderRadius: theme.borderRadius.md,
+                          overflow: "hidden",
+                          border: `1px solid ${theme.colors.border.light}`,
+                        }}
+                      >
+                        <IMPhoto
+                          openable
+                          dismissable
+                          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                          src={modifiedNonFormData.carPictureURL}
+                          onDelete={(src) => handleDeletePhoto(src, "carPictureURL", false)}
+                        />
+                      </div>
+                    )}
+                  </div>
+                  <label htmlFor="carPictureURL" style={formField.fileInput}>
+                    <Car size={16} />
+                    <span>Upload Car Photo</span>
+                    <input
+                      id="carPictureURL"
+                      name="carPictureURL"
+                      type="file"
+                      style={formField.hiddenFileInput}
+                      onChange={(event) => {
+                        handleImageUpload(event, "carPictureURL", false)
+                      }}
+                    />
+                  </label>
+                </div>
+
+                {/* Car Model field */}
+                <div style={formField.container}>
+                  <label htmlFor="carName" style={formField.label}>
+                    <Car size={16} color={theme.colors.accent.primary} />
+                    Car Model
+                  </label>
+                  <input
+                    id="carName"
+                    name="carName"
+                    type="text"
+                    placeholder="Toyota Camry"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.carName || ""}
+                    style={formField.input}
+                  />
+                </div>
+
+                {/* License Plate field */}
+                <div style={formField.container}>
+                  <label htmlFor="carNumber" style={formField.label}>
+                    <Car size={16} color={theme.colors.accent.primary} />
+                    License Plate
+                  </label>
+                  <input
+                    id="carNumber"
+                    name="carNumber"
+                    type="text"
+                    placeholder="ABC123"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.carNumber || ""}
+                    style={formField.input}
+                  />
+                </div>
+              </div>
+
+              {/* Status & Dates section */}
+              <div
+                style={{
+                  height: "1px",
+                  backgroundColor: theme.colors.border.light,
+                  margin: `${theme.spacing[6]} 0`,
+                }}
+              ></div>
+
+              <div style={{ marginBottom: theme.spacing[8] }}>
+                <h2
+                  style={{
+                    fontSize: theme.typography.fontSizes.xl,
+                    fontWeight: theme.typography.fontWeights.semibold,
+                    marginBottom: theme.spacing[4],
+                    color: theme.colors.text.primary,
+                  }}
+                >
+                  Status & Dates
+                </h2>
+
+                {/* Banned toggle */}
+                <div style={formField.container}>
+                  <div style={formField.toggleContainer}>
+                    <label style={formField.label}>
+                      <Ban size={16} color={theme.colors.accent.primary} />
+                      Banned
+                    </label>
+                    <IMToggleSwitchComponent
+                      isChecked={modifiedNonFormData.banned}
+                      onSwitchChange={() => handleSwitchChange(modifiedNonFormData["banned"], "banned")}
+                    />
+                  </div>
+                </div>
+
+                {/* Created Date field */}
+                <div style={formField.container}>
+                  <label style={formField.label}>
+                    <Calendar size={16} color={theme.colors.accent.primary} />
+                    Created At
+                  </label>
+                  <div style={formField.datePickerContainer}>
+                    <IMDatePicker
+                      selected={modifiedNonFormData.createdAt}
+                      onChange={(toDate) => onDateChange(toDate, "createdAt")}
+                    />
+                  </div>
+                </div>
+
+                {/* Updated Date field */}
+                <div style={formField.container}>
+                  <label style={formField.label}>
+                    <Calendar size={16} color={theme.colors.accent.primary} />
+                    Updated At
+                  </label>
+                  <div style={formField.datePickerContainer}>
+                    <IMDatePicker
+                      selected={modifiedNonFormData.updatedAt}
+                      onChange={(toDate) => onDateChange(toDate, "updatedAt")}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Form actions */}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  marginTop: theme.spacing[6],
+                  paddingTop: theme.spacing[4],
+                  borderTop: `1px solid ${theme.colors.border.light}`,
+                }}
+              >
                 <button
-                  className={`${styles.PrimaryButton} PrimaryButton`}
+                  type="button"
+                  style={{
+                    ...sc.secondaryButton,
+                    marginRight: theme.spacing[3],
+                  }}
+                  onClick={() => window.history.back()}
+                >
+                  Cancel
+                </button>
+                <button
                   type="submit"
-                  disabled={isSubmitting}>
-                  Create user
+                  disabled={isSubmitting}
+                  style={{
+                    ...sc.primaryButton,
+                    opacity: isSubmitting ? 0.7 : 1,
+                    cursor: isSubmitting ? "not-allowed" : "pointer",
+                  }}
+                >
+                  {isSubmitting && (
+                    <ClipLoader size={16} color="#ffffff" style={{ marginRight: theme.spacing[2] }} />
+                  )}
+                  Create User
                 </button>
               </div>
             </form>
