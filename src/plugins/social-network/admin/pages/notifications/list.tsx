@@ -1,7 +1,6 @@
-// @ts-nocheck
-'use client'
-import React, { useMemo, useEffect, useState } from 'react'
-import { GetStaticProps } from 'next'
+"use client"
+
+import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   useReactTable,
@@ -11,327 +10,390 @@ import {
   flexRender,
 } from '@tanstack/react-table'
 import {
-  IMLocationTableCell,
-  IMSimpleLocationTableCell,
-  IMColorsTableCell,
-  IMMultimediaTableCell,
-  IMObjectTableCell,
-  IMImagesTableCell,
-  IMDateTableCell,
-  IMForeignKeyTableCell,
-  IMAddressTableCell,
-} from '../../../../../admin/components/forms/table'
-import {
-  IMColorBoxComponent,
-  IMPhoto,
-  IMModal,
-  IMToggleSwitchComponent,
-} from '../../../../../admin/components/forms/fields'
+  Search,
+  Loader2,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Bell,
+  Eye,
+  Edit,
+  Trash2,
+} from 'lucide-react'
+import { IMDateTableCell, IMForeignKeyTableCell } from '../../../../../admin/components/forms/table'
+import { IMToggleSwitchComponent } from '../../../../../admin/components/forms/fields'
 import { pluginsAPIURL } from '../../../../../config/config'
 import useCurrentUser from '../../../../../modules/auth/hooks/useCurrentUser'
 import { authPost } from '../../../../../modules/auth/utils/authFetch'
-import styles from '../../../../../admin/themes/admin.module.css'
-/* Insert extra imports for table cells here */
+import { theme } from '../../../../../lib/theme'
 
 const baseAPIURL = `${pluginsAPIURL}admin/social-network/`
 
-export const getStaticProps: GetStaticProps = async () => {
-  return { props: { isAdminRoute: true } }
+interface Notification {
+  id: string
+  title: string
+  body: string
+  type: string
+  seen: boolean
+  createdAt: string
+  toUserID: string
 }
 
 const NotificationsColumns = [
   {
-      id: "title",
-      header: "title",
-      accessorKey: "title",
+    header: "Title",
+    accessorKey: "title",
+    cell: ({ getValue }) => <div style={theme.listView.nameCell}>{getValue()}</div>,
   },
   {
-      id: "body",
-      header: "body",
-      accessorKey: "body",
+    header: "Body",
+    accessorKey: "body",
+    cell: ({ getValue }) => <div style={theme.listView.nameCell}>{getValue()}</div>,
   },
   {
-      id: "type",
-      header: "type",
-      accessorKey: "type",
+    header: "Type",
+    accessorKey: "type",
+    cell: ({ getValue }) => <div style={theme.listView.nameCell}>{getValue()}</div>,
   },
   {
-      id: "seen",
-      header: "marked as seen?",
-      accessorKey: "seen",
-      cell: data => (
-          <IMToggleSwitchComponent isChecked={data.value} disabled />
-      ),
+    header: "Seen",
+    accessorKey: "seen",
+    cell: ({ getValue }) => <IMToggleSwitchComponent isChecked={getValue()} disabled />,
   },
   {
-      id: "createdAt",
-      header: "date",
-      accessorKey: "createdAt",
-      cell: data => <IMDateTableCell timestamp={data.value} />,
+    header: "Date",
+    accessorKey: "createdAt",
+    cell: ({ getValue }) => <IMDateTableCell timestamp={getValue()} />,
   },
   {
-      id: "toUserID",
-      header: "recipient user",
-      accessorKey: "toUserID",
-      cell: data => (
-          <IMForeignKeyTableCell 
-              id={data.value} 
-              apiRouteName="admin/social-network/users" 
-              viewRoute="users"
-              titleKey="email" 
-          />
-      ),
+    header: "Recipient",
+    accessorKey: "toUserID",
+    cell: ({ getValue }) => (
+      <IMForeignKeyTableCell 
+        id={getValue()} 
+        apiRouteName="admin/social-network/users" 
+        viewRoute="users"
+        titleKey="email"
+        style={theme.listView.nameCell}
+      />
+    ),
   },
   {
-      id: "actions",
-      header: "actions",
-      accessorKey: "actions",
-      cell: data => <ActionsItemView data={data} />,
+    accessorKey: "actions",
+    header: "Actions",
+    cell: ({ row }) => <ActionsItemView data={row.original} />,
   },
-];
+]
 
-
-function ActionsItemView(props) {
-  const { data } = props
+function ActionsItemView({ data }: { data: Notification }) {
+  const [isProcessing, setIsProcessing] = useState(false)
   const router = useRouter()
 
-  const handleView = item => {
-    const viewPath = './view?id=' + item.id
+  const handleView = () => {
+    const viewPath = `./view?id=${data.id}`
     router.push(viewPath)
   }
 
-  const handleEdit = item => {
-    const editPath = './update?id=' + item.id
+  const handleEdit = () => {
+    const editPath = `./update?id=${data.id}`
     router.push(editPath)
   }
 
-  const handleDelete = async item => {
-    if (window.confirm('Are you sure you want to delete this item?')) {
-      const path = baseAPIURL + 'notifications/delete'
-      const response = await authPost(path, { id: item.id })
-      window.location.reload(false)
+  const handleDelete = async () => {
+    if (window.confirm("Are you sure you want to delete this notification?")) {
+      setIsProcessing(true)
+      try {
+        const path = baseAPIURL + "notifications/delete"
+        await authPost(path, { id: data.id })
+        window.location.reload()
+      } catch (error) {
+        console.error("Error deleting notification:", error)
+        alert("Failed to delete notification. Please try again.")
+        setIsProcessing(false)
+      }
     }
   }
 
   return (
-    <div className={`${styles.inlineActionsContainer} inlineActionsContainer`}>
+    <div style={{ display: "flex", gap: "8px" }}>
       <button
-        onClick={() => handleView(data.row.original)}
-        type="button"
-        id="tooltip264453216"
-        className={`${styles.btnSm} btn-icon btn btn-info btn-sm`}>
-        <i className="fa fa-eye"></i>
+        onClick={handleView}
+        disabled={isProcessing}
+        style={{
+          ...theme.listView.actionButton,
+          backgroundColor: "rgba(13, 148, 255, 0.15)",
+          color: theme.colors.accent.primary,
+          opacity: isProcessing ? 0.7 : 1,
+          cursor: isProcessing ? "not-allowed" : "pointer",
+        }}
+        title="View notification"
+      >
+        <Eye size={14} />
       </button>
       <button
-        onClick={() => handleEdit(data.row.original)}
-        type="button"
-        id="tooltip366246651"
-        className={`${styles.btnSm} btn-icon btn btn-success btn-sm`}>
-        <i className="fa fa-edit"></i>
+        onClick={handleEdit}
+        disabled={isProcessing}
+        style={{
+          ...theme.listView.actionButton,
+          backgroundColor: "rgba(34, 197, 94, 0.15)",
+          color: theme.colors.feedback.success,
+          opacity: isProcessing ? 0.7 : 1,
+          cursor: isProcessing ? "not-allowed" : "pointer",
+        }}
+        title="Edit notification"
+      >
+        <Edit size={14} />
       </button>
       <button
-        onClick={() => handleDelete(data.row.original)}
-        type="button"
-        id="tooltip476609793"
-        className={`${styles.btnSm} btn-icon btn btn-danger btn-sm`}>
-        <i className="fa fa-times"></i>
+        onClick={handleDelete}
+        disabled={isProcessing}
+        style={{
+          ...theme.listView.actionButton,
+          backgroundColor: "rgba(239, 68, 68, 0.15)",
+          color: theme.colors.feedback.error,
+          opacity: isProcessing ? 0.7 : 1,
+          cursor: isProcessing ? "not-allowed" : "pointer",
+        }}
+        title="Delete notification"
+      >
+        {isProcessing ? <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /> : <Trash2 size={14} />}
       </button>
     </div>
   )
 }
 
-function NotificationsListView(props) {
+export default function NotificationsListView() {
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [globalFilter, setGlobalFilter] = useState("")
   const [isLoading, setIsLoading] = useState(true)
-  const [globalFilter, setGlobalFilter] = useState('')
-  const [Notifications, setNotifications] = useState([])
-  const [data, setData] = useState([])
-
+  const [error, setError] = useState<string | null>(null)
   const [user, token, loading] = useCurrentUser()
+  const router = useRouter()
 
-  const columns = useMemo(() => NotificationsColumns, [])
+  useEffect(() => {
+    if (!user || loading) return
 
-  const table = useReactTable({
-    data: Notifications,
-    columns,
-    state: {
-      globalFilter,
-    },
+    const fetchData = async () => {
+      setIsLoading(true)
+      try {
+        const config = {
+          headers: { Authorization: token },
+        }
+        const response = await fetch(`${baseAPIURL}notifications/list`, config)
+        const data = await response.json()
+
+        if (data) {
+          setNotifications(data)
+        } else {
+          setError("Access denied or no data available")
+        }
+      } catch (error) {
+        console.error("Error fetching notifications:", error)
+        setError("Failed to load notifications. Please try again later.")
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [user, token, loading])
+
+  const table = useReactTable<Notification>({
+    data: notifications,
+    columns: NotificationsColumns,
+    getCoreRowModel: getCoreRowModel<Notification>(),
+    getPaginationRowModel: getPaginationRowModel<Notification>(),
+    getFilteredRowModel: getFilteredRowModel<Notification>(),
+    state: { globalFilter },
     onGlobalFilterChange: setGlobalFilter,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
+    initialState: {
+      pagination: {
+        pageSize: 10,
+      },
+    },
   })
 
-  useEffect(() => {
-    if (loading) {
-      return
-    }
-    const config = {
-      headers: { Authorization: token },
-    }
+  const handleAddNew = () => {
+    router.push("./add")
+  }
 
-    const extraQueryParams = null
-    setIsLoading(true)
-
-    fetch(
-      baseAPIURL +
-        'notifications/list' +
-        (extraQueryParams ? extraQueryParams : ''),
-      config,
-    )
-      .then(response => response.json())
-      .then(data => {
-        console.log(data)
-        const notifications = data
-        setData(notifications)
-
-        setIsLoading(false)
-      })
-      .catch(err => {
-        console.log(err)
-      })
-  }, [loading])
-
-  useEffect(() => {
-    setNotifications(data)
-  }, [table.getState().pagination.pageIndex, table.getState().pagination.pageSize, data])
-
-  return (
-    <>
-      <div className={`${styles.adminContent} adminContent`}>
-        <div className="row">
-          <div className="col col-md-12">
-            <div className="Card">
-              <div className="CardHeader">
-                <a
-                  className={`${styles.Link} ${styles.AddLink} Link AddLink`}
-                  href="./add">
-                  Add New
-                </a>
-                <h1>Notifications</h1>
-              </div>
-              <div className={`${styles.CardBody} CardBody`}>
-                <div className={`${styles.TableContainer} TableContainer`}>
-                  <input
-                    className={`${styles.SearchInput} SearchInput`}
-                    type="text"
-                    placeholder="Search..."
-                    value={globalFilter || ''}
-                    onChange={e => setGlobalFilter(e.target.value)}
-                  />
-                  <table className={`${styles.Table} Table`}>
-                    <thead>
-                      {table.getHeaderGroups().map(headerGroup => (
-                        <tr key={headerGroup.id}>
-                          {headerGroup.headers.map(header => (
-                            <th key={header.id}>
-                              {flexRender(
-                                header.column.columnDef.header,
-                                header.getContext()
-                              )}
-                            </th>
-                          ))}
-                        </tr>
-                      ))}
-                    </thead>
-                    <tbody>
-                      {table.getRowModel().rows.map(row => (
-                        <tr key={row.id}>
-                          {row.getVisibleCells().map(cell => (
-                            <td key={cell.id}>
-                              {flexRender(
-                                cell.column.columnDef.cell,
-                                cell.getContext()
-                              )}
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
-                      <tr>
-                        {isLoading ? (
-                          <td colSpan={NotificationsColumns.length - 1}>
-                            <p>Loading...</p>
-                          </td>
-                        ) : (
-                          <td colSpan={NotificationsColumns.length - 1}>
-                            <p className={`${styles.PaginationDetails} PaginationDetails`}>
-                              Showing {table.getRowModel().rows.length} of {data.length} results
-                            </p>
-                          </td>
-                        )}
-                      </tr>
-                    </tbody>
-                  </table>
-                  <div className={`${styles.Pagination} Pagination`}>
-                    <div className={`${styles.LeftPaginationButtons} LeftPaginationButtons`}>
-                      <button
-                        onClick={() => table.setPageIndex(0)}
-                        className={`${styles.PaginationButton}`}
-                        disabled={!table.getCanPreviousPage()}>
-                        <i className="fa fa-angle-double-left"></i>
-                      </button>{' '}
-                      <button
-                        onClick={() => table.previousPage()}
-                        className={`${styles.PaginationButton}`}
-                        disabled={!table.getCanPreviousPage()}>
-                        <i className="fa fa-angle-left"></i>
-                      </button>
-                    </div>
-                    <div className={`${styles.CenterPaginationButtons}`}>
-                      <span>
-                        Page{' '}
-                        <strong>
-                          {table.getState().pagination.pageIndex + 1} of{' '}
-                          {table.getPageCount()}
-                        </strong>{' '}
-                      </span>
-                      <span>
-                        | Go to page:{' '}
-                        <input
-                          type="number"
-                          defaultValue={table.getState().pagination.pageIndex + 1}
-                          onChange={e => {
-                            const page = e.target.value ? Number(e.target.value) - 1 : 0
-                            table.setPageIndex(page)
-                          }}
-                          style={{ width: '100px' }}
-                        />
-                      </span>{' '}
-                      <select
-                        value={table.getState().pagination.pageSize}
-                        onChange={e => {
-                          table.setPageSize(Number(e.target.value))
-                        }}>
-                        {[10, 20, 30, 40, 50].map(pageSize => (
-                          <option key={pageSize} value={pageSize}>
-                            Show {pageSize}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className={`${styles.RightPaginationButtons}`}>
-                      <button
-                        onClick={() => table.nextPage()}
-                        className={`${styles.PaginationButton}`}
-                        disabled={!table.getCanNextPage()}>
-                        <i className="fa fa-angle-right"></i>
-                      </button>{' '}
-                      <button
-                        onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                        className={`${styles.PaginationButton}`}
-                        disabled={!table.getCanNextPage()}>
-                        <i className="fa fa-angle-double-right"></i>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+  if (error) {
+    return (
+      <div style={theme.listView.card}>
+        <div style={theme.listView.cardHeader}>
+          <h1 style={theme.listView.title}>
+            <Bell size={24} style={{ color: theme.colors.accent.primary }} />
+            Notifications
+          </h1>
+        </div>
+        <div style={theme.listView.cardBody}>
+          <div
+            style={{
+              padding: "24px",
+              textAlign: "center",
+              color: theme.colors.feedback.error,
+              fontSize: theme.typography.fontSizes.lg,
+            }}
+          >
+            {error}
           </div>
         </div>
       </div>
-    </>
+    )
+  }
+
+  return (
+    <div style={theme.listView.card}>
+      <div style={theme.listView.cardHeader}>
+        <h1 style={theme.listView.title}>
+          <Bell size={24} style={{ color: theme.colors.accent.primary }} />
+          Notifications
+        </h1>
+        <button
+          onClick={handleAddNew}
+          style={{
+            ...theme.listView.actionButton,
+            backgroundColor: theme.colors.accent.primary,
+            color: "white",
+            padding: "8px 16px",
+          }}
+        >
+          Add New
+        </button>
+      </div>
+      <div style={theme.listView.cardBody}>
+        <div style={theme.listView.searchContainer}>
+          <input
+            type="text"
+            placeholder="Search notifications..."
+            value={globalFilter}
+            onChange={(e) => setGlobalFilter(e.target.value)}
+            style={theme.listView.searchInput}
+          />
+          <Search size={18} style={theme.listView.searchIcon} />
+        </div>
+
+        <div style={{ overflowX: "auto" }}>
+          <table style={theme.listView.table}>
+            <thead>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <th key={header.id} style={theme.listView.tableHeader}>
+                      {flexRender(header.column.columnDef.header, header.getContext())}
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody>
+              {isLoading ? (
+                <tr>
+                  <td
+                    colSpan={NotificationsColumns.length}
+                    style={{ ...theme.listView.tableCell, textAlign: "center", padding: "24px" }}
+                  >
+                    <div style={theme.listView.loadingContainer}>
+                      <Loader2 size={24} style={{ animation: "spin 1s linear infinite", marginRight: "12px" }} />
+                      Loading notifications...
+                    </div>
+                  </td>
+                </tr>
+              ) : table.getRowModel().rows.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={NotificationsColumns.length}
+                    style={{ ...theme.listView.tableCell, textAlign: "center", padding: "24px" }}
+                  >
+                    <div style={theme.listView.emptyContainer}>
+                      <div style={theme.listView.emptyIconContainer}>
+                        <Bell size={32} style={{ color: theme.colors.text.secondary }} />
+                      </div>
+                      <div style={theme.listView.emptyTitle}>No notifications found</div>
+                      <div style={theme.listView.emptyMessage}>
+                        Try adjusting your search or add new notifications.
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                table.getRowModel().rows.map((row) => (
+                  <tr
+                    key={row.id}
+                    style={{
+                      transition: theme.transitions.normal,
+                      backgroundColor: theme.colors.surface.secondary,
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = theme.colors.state.hover)}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = theme.colors.surface.secondary)}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <td key={cell.id} style={theme.listView.tableCell}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <div style={theme.listView.pagination}>
+          <button
+            onClick={() => table.setPageIndex(0)}
+            disabled={!table.getCanPreviousPage()}
+            style={{
+              ...theme.listView.paginationButton,
+              opacity: !table.getCanPreviousPage() ? 0.5 : 1,
+              cursor: !table.getCanPreviousPage() ? "not-allowed" : "pointer",
+            }}
+            title="First page"
+          >
+            <ChevronsLeft size={16} />
+          </button>
+          <button
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+            style={{
+              ...theme.listView.paginationButton,
+              opacity: !table.getCanPreviousPage() ? 0.5 : 1,
+              cursor: !table.getCanPreviousPage() ? "not-allowed" : "pointer",
+            }}
+            title="Previous page"
+          >
+            <ChevronLeft size={16} />
+          </button>
+          <span style={theme.listView.paginationText}>
+            Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+          </span>
+          <button
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+            style={{
+              ...theme.listView.paginationButton,
+              opacity: !table.getCanNextPage() ? 0.5 : 1,
+              cursor: !table.getCanNextPage() ? "not-allowed" : "pointer",
+            }}
+            title="Next page"
+          >
+            <ChevronRight size={16} />
+          </button>
+          <button
+            onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+            disabled={!table.getCanNextPage()}
+            style={{
+              ...theme.listView.paginationButton,
+              opacity: !table.getCanNextPage() ? 0.5 : 1,
+              cursor: !table.getCanNextPage() ? "not-allowed" : "pointer",
+            }}
+            title="Last page"
+          >
+            <ChevronsRight size={16} />
+          </button>
+        </div>
+      </div>
+    </div>
   )
 }
-
-export default NotificationsListView

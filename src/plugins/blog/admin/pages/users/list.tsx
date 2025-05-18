@@ -550,7 +550,17 @@ export const UsersListView = () => {
 
   return (
     <div style={theme.listView.card}>
-      <div style={theme.listView.cardHeader}>
+      {/* Fixed header section */}
+      <div
+        style={{
+          ...theme.listView.cardHeader,
+          position: "sticky",
+          top: 0,
+          backgroundColor: theme.colors.surface.primary,
+          zIndex: 10,
+          borderBottom: `1px solid ${theme.colors.border.light}`,
+        }}
+      >
         <h1 style={theme.listView.title}>
           <Users size={24} style={{ color: theme.colors.accent.primary }} />
           Users
@@ -725,8 +735,19 @@ export const UsersListView = () => {
           </button>
         </div>
       </div>
+
       <div style={theme.listView.cardBody}>
-        <div style={theme.listView.searchContainer}>
+        {/* Fixed search container */}
+        <div
+          style={{
+            ...theme.listView.searchContainer,
+            position: "sticky",
+            top: "73px", // Height of the header + 1px for border
+            zIndex: 5,
+            backgroundColor: theme.colors.surface.secondary,
+            padding: "12px 0",
+          }}
+        >
           <input
             type="text"
             placeholder="Search users..."
@@ -737,14 +758,33 @@ export const UsersListView = () => {
           <Search size={18} style={theme.listView.searchIcon} />
         </div>
 
-        {/* Simple table with horizontal scroll */}
-        <div style={{ overflowX: "auto", width: "100%" }}>
-          <table style={{ ...theme.listView.table, minWidth: "100%" }}>
+        {/* Scrollable table container */}
+        <div
+          style={{
+            overflowX: "auto",
+            width: "100%",
+            // Add a subtle shadow to indicate scrollability
+            boxShadow: "inset -10px 0 10px -10px rgba(0,0,0,0.05), inset 10px 0 10px -10px rgba(0,0,0,0.05)",
+          }}
+        >
+          <table
+            style={{
+              ...theme.listView.table,
+              minWidth: "100%",
+              tableLayout: "auto", // Allow the table to expand based on content
+            }}
+          >
             <thead>
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
-                    <th key={header.id} style={theme.listView.tableHeader}>
+                    <th
+                      key={header.id}
+                      style={{
+                        ...theme.listView.tableHeader,
+                        whiteSpace: "nowrap", // Prevent header text from wrapping
+                      }}
+                    >
                       {flexRender(header.column.columnDef.header, header.getContext())}
                     </th>
                   ))}
@@ -793,7 +833,13 @@ export const UsersListView = () => {
                     onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = theme.colors.surface.secondary)}
                   >
                     {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} style={theme.listView.tableCell}>
+                      <td
+                        key={cell.id}
+                        style={{
+                          ...theme.listView.tableCell,
+                          whiteSpace: "nowrap", // Prevent cell content from wrapping
+                        }}
+                      >
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </td>
                     ))}
@@ -804,7 +850,20 @@ export const UsersListView = () => {
           </table>
         </div>
 
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "16px" }}>
+        {/* Fixed pagination footer */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginTop: "16px",
+            position: "sticky",
+            bottom: 0,
+            backgroundColor: theme.colors.surface.secondary,
+            padding: "12px 0",
+            borderTop: `1px solid ${theme.colors.border.light}`,
+          }}
+        >
           <div style={{ fontSize: "14px", color: theme.colors.text.secondary }}>
             Showing {table.getRowModel().rows.length} of {users.length} results
           </div>

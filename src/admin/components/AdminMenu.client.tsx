@@ -92,7 +92,7 @@ export default function AdminMenuClient({ menuItems, urlPath = "admin", slug }: 
   const onSelect = (index: number, subindex: number) => {
     setSelectedIndex(index)
     if (subindex === -1 && mainMenuItems[index]?.subItems?.length) {
-      setExpandedMenus(prev => ({ ...prev, [index]: !prev[index] }))
+      setExpandedMenus((prev) => ({ ...prev, [index]: !prev[index] }))
     }
   }
 
@@ -107,10 +107,12 @@ export default function AdminMenuClient({ menuItems, urlPath = "admin", slug }: 
         color: colors.text.primary,
         borderColor: colors.border.light,
         width: sidebar.width,
+        minWidth: sidebar.width, // Add minWidth to prevent shrinking
+        flexShrink: 0, // Prevent sidebar from shrinking
       }}
     >
       {/* Fixed Header */}
-      <SidebarHeader 
+      <SidebarHeader
         className="border-b shrink-0"
         style={{
           borderColor: colors.border.light,
@@ -126,7 +128,7 @@ export default function AdminMenuClient({ menuItems, urlPath = "admin", slug }: 
       </SidebarHeader>
 
       {/* Scrollable Content */}
-      <SidebarContent 
+      <SidebarContent
         className="flex-1 overflow-y-auto"
         style={{
           padding: "24px 16px",

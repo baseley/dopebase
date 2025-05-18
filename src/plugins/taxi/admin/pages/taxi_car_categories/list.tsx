@@ -655,16 +655,16 @@ function TaxiCarCategoriesListView() {
                               <input
                                 type="checkbox"
                                 id={`column-${column.id}`}
-                                checked={table.getColumn(column.id)?.getIsVisible() ?? false}
+                                checked={table.getColumn(column.id ?? "")?.getIsVisible() ?? false}
                                 onChange={(e) => {
-                                  table.getColumn(column.id)?.toggleVisibility(e.target.checked)
+                                  table.getColumn(column.id ?? "")?.toggleVisibility(e.target.checked)
                                 }}
                                 style={{ marginRight: "0.5rem" }}
                               />
                               <label htmlFor={`column-${column.id}`}>
                                 {typeof column.header === "string"
                                   ? column.header
-                                  : column.id.charAt(0).toUpperCase() + column.id.slice(1)}
+                                  : (column.id ?? "").charAt(0).toUpperCase() + (column.id ?? "").slice(1)}
                               </label>
                             </div>
                           )
@@ -684,7 +684,9 @@ function TaxiCarCategoriesListView() {
                               const allVisible = allColumns.reduce(
                                 (acc, column) => {
                                   if (column.id !== "actions") {
-                                    acc[column.id] = true
+                                    if (column.id) {
+                                      acc[column.id] = true
+                                    }
                                   }
                                   return acc
                                 },

@@ -692,3 +692,28 @@ model Transaction {
   @@map("transactions")
 }
 
+
+model Comment {
+  id          String   @id @default(uuid())
+  authorId    String   @map("author_id")
+  commentText String   @map("comment_text")
+  postId      String   @map("post_id")
+  createdAt   String   @map("created_at")
+  updatedAt String   @map("updated_at")
+
+  @@map("comments")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  title     String   @map("title")
+  body      String   @map("body")
+  type      String   @map("type")
+  seen      Boolean  @map("seen")
+  createdAt String   @map("created_at")
+  updatedAt String   @map("updated_at")
+  toUserId  String   @map("to_user_id")
+
+  @@map("notifications")
+}
+
