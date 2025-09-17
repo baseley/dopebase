@@ -6,6 +6,10 @@ import { escapeObject, unescapeObject } from '../../../../utils'
 const Validator = require('validator')
 
 async function getOne(tableName, id) {
+  // Reset connection to clear cached plans
+  await prisma.$disconnect();
+  await prisma.$connect();
+  
   const result = await prisma.$queryRawUnsafe(
     `SELECT * FROM ${tableName} where id='${Validator.escape(id)}'`,
   )
@@ -14,8 +18,13 @@ async function getOne(tableName, id) {
 }
 
 async function list(tableName, queryParams) {
+  // Reset connection to clear cached plans
+  await prisma.$disconnect();
+  await prisma.$connect();
+
   var queryLimit = ''
-  var queryOrderBy = 'order by updated_at desc'
+  var queryOrderBy = 'order by updated_at desc' 
+  // var queryOrderBy = 'order by "updatedAt" desc'
   // if (queryParams.search) {
   //   const keys = Object.keys(queryParams.search)
   //   const values = Object.values(queryParams.search)
@@ -41,6 +50,7 @@ async function list(tableName, queryParams) {
   const dbResult = await prisma.$queryRawUnsafe(
     `SELECT * FROM ${tableName} ${queryOrderBy} ${queryLimit}`,
   )
+  
   const unescapedRes = dbResult.map(res => unescapeObject(res))
   if (queryParams.search?.length > 0) {
     var result = []
@@ -63,85 +73,111 @@ async function list(tableName, queryParams) {
 }
 
 async function insertOne(tableName, unescapedData) {
+  // Reset connection to clear cached plans
+  await prisma.$disconnect();
+  await prisma.$connect();
+
   const data = escapeObject(unescapedData)
   const dataKeys = Object.keys(data)
   const idValue = data?.id ? `'${data.id}'` : 'gen_random_uuid()'
   let query = `insert into ${tableName} (id`
 
-  for (var i = 0; i < dataKeys.length; ++i) {
-    if (dataKeys[i] === 'id') {
-      continue
-    }
-    query = `${query}, ${dataKeys[i]}`
+  for (let i = 0; i < dataKeys.length; ++i) {
+    if (dataKeys[i] === 'id') continue
+    query += `, ${dataKeys[i]}`
   }
+
   query += `) values(${idValue}`
-  for (var i = 0; i < dataKeys.length; ++i) {
+
+  for (let i = 0; i < dataKeys.length; ++i) {
     const key = dataKeys[i]
-    if (key === 'id') {
-      continue
-    }
+    if (key === 'id') continue
     const value = data[key]
     if (value === null) {
       query += ', null'
     } else if (Array.isArray(value)) {
-      query = `${query}, '{${value.toString()}}'`
-    } else {
-      query = `${query}, '${value}'`
+      if (value.length === 0) {
+        query += `, ARRAY[]::text[]` // or integer[], depending on your table
+      } else {
+        const escapedValues = value.map(v => `'${v.replace(/'/g, "''")}'`).join(', ')
+        query += `, ARRAY[${escapedValues}]`
+      }
     }
+     else {
+      const escapedValue = String(value).replace(/'/g, "''")
+      query += `, '${escapedValue}'`
+    }    
   }
+
   query += ')'
   console.log(query)
-
   const result = await prisma.$executeRawUnsafe(query)
   return result
 }
 
 async function deleteOne(tableName, id) {
+  // Reset connection to clear cached plans
+  await prisma.$disconnect();
+  await prisma.$connect();
+
   const query = `delete from ${tableName} where id='${id}'`
   const result = await prisma.$queryRawUnsafe(`${query}`)
   console.log(query)
   return result[0]
 }
 
-async function updateOne(tableName, id, unescapedData) {
-  const data = escapeObject(unescapedData)
-  const dataKeys = Object.keys(data)
-  let query = `update ${tableName} set `
+export async function updateOne(table: string, id: string, data: Record<string, any>) {
+  let query = `update ${table} set`
+  const setClauses = []
 
-  for (let i = 0; i < dataKeys.length - 1; ++i) {
-    const key = dataKeys[i]
-    const value = data[dataKeys[i]]
-    var modifiedValue = value
+  const arrayFieldTypes: Record<string, string> = {
+    photo_urls: 'text',
+    // Add other array fields and their types here if needed
+  }
+
+  for (const [key, value] of Object.entries(data)) {
+    let modifiedValue: string
+
     if (value === null) {
       modifiedValue = 'null'
+    } else if (typeof value === 'string') {
+      modifiedValue = `'${value.replace(/'/g, "''")}'`
+    } else if (typeof value === 'boolean') {
+      modifiedValue = value ? 'true' : 'false'
+    } else if (typeof value === 'number') {
+      modifiedValue = value.toString()
     } else if (Array.isArray(value)) {
-      modifiedValue = `'{${modifiedValue.toString()}}'`
+      if (value.length === 0) {
+        const arrayType = arrayFieldTypes[key] || 'text'
+        modifiedValue = `ARRAY[]::${arrayType}[]`
+      } else {
+        const escapedValues = value.map(v => `'${v.replace(/'/g, "''")}'`).join(', ')
+        modifiedValue = `ARRAY[${escapedValues}]`
+      }
     } else {
-      modifiedValue = `'${modifiedValue}'`
+      // fallback for unknown types
+      modifiedValue = `'${JSON.stringify(value).replace(/'/g, "''")}'`
     }
-    query = `${query + key} = ${modifiedValue}, `
+
+    setClauses.push(`${key} = ${modifiedValue}`)
   }
-  const lastIndex = dataKeys.length - 1
-  if (lastIndex >= 0) {
-    const value = data[dataKeys[lastIndex]]
-    const key = dataKeys[lastIndex]
-    var modifiedValue = value
-    if (value === null) {
-      modifiedValue = 'null'
-    } else if (Array.isArray(value)) {
-      modifiedValue = `'{${modifiedValue.toString()}}'`
-    } else {
-      modifiedValue = `'${modifiedValue}'`
-    }
-    query = `${query + key} = ${modifiedValue}`
-  }
-  query = `${query} where id = '${id}' `
-  console.log(query)
+
+  query += ' ' + setClauses.join(', ')
+  query += ` where id = '${id}'`
+
+  console.log(query) // useful for debugging
+
   const result = await prisma.$executeRawUnsafe(query)
   return result
 }
 
+
+
 async function findOne(tableName, whereClauseDict) {
+  // Reset connection to clear cached plans
+  await prisma.$disconnect();
+  await prisma.$connect();
+
   const key = Object.keys(whereClauseDict)[0]
   const value = whereClauseDict[key]
   const result = await prisma.$queryRawUnsafe(

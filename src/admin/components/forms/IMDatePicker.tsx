@@ -3,7 +3,12 @@ import DatePicker from 'react-datepicker'
 import styles from '../../themes/admin.module.css'
 import 'react-datepicker/dist/react-datepicker.css'
 
-const IMDatePicker = memo(props => {
+interface IMDatePickerProps {
+  selected: number | string;
+  onChange?: (timestamp: string) => void;
+}
+
+const IMDatePicker = memo((props: IMDatePickerProps) => {
   const { selected, onChange } = props
 
   const onSelect = date => {

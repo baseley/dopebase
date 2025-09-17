@@ -1,57 +1,67 @@
-// @ts-nocheck
-'use client'
-import React, { useEffect, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
-import { Formik } from 'formik'
-import { ClipLoader } from 'react-spinners'
-import IMDatePicker from '../../../../../admin/components/forms/IMDatePicker'
-import { LocationPicker } from '../../../../../admin/components/forms/locationPicker'
+"use client"
+import { useEffect, useState } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
+import { Formik } from "formik"
+import * as Yup from "yup"
 import {
-  TypeaheadComponent,
-  IMColorPicker,
-  IMMultimediaComponent,
-  IMObjectInputComponent,
-  IMArrayInputComponent,
-  IMColorsContainer,
-  IMColorBoxComponent,
-  IMStaticMultiSelectComponent,
-  IMStaticSelectComponent,
-  IMPhoto,
-  IMModal,
-  IMToggleSwitchComponent,
-} from '../../../../../admin/components/forms/fields'
-import ReactMarkdown from 'react-markdown'
-import CodeMirror from '@uiw/react-codemirror'
-import { javascript } from '@codemirror/lang-javascript'
-import { css } from '@codemirror/lang-css'
-import { html } from '@codemirror/lang-html'
-import { markdown } from '@codemirror/lang-markdown'
-import styles from '../../../../../admin/themes/admin.module.css'
+  UserIcon,
+  MailIcon,
+  PhoneIcon,
+  CarIcon,
+  ShieldIcon,
+  CalendarIcon,
+  ArrowLeftIcon,
+  SaveIcon,
+  BanIcon,
+} from "lucide-react"
+import IMDatePicker from "@/admin/components/forms/IMDatePicker"
+import { IMStaticSelectComponent, IMToggleSwitchComponent, IMPhoto } from "@/admin/components/forms/fields"
+import { theme, styledComponents } from "@/lib/theme"
 
-/* Insert extra imports here */
-
-const beautify_html = require('js-beautify').html
-import { pluginsAPIURL } from '../../../../../config/config'
-import {
-  authFetch,
-  authPost,
-} from '../../../../../modules/auth/utils/authFetch'
+import { pluginsAPIURL } from "@/config/config"
+import { authFetch, authPost } from "@/modules/auth/utils/authFetch"
 const baseAPIURL = `${pluginsAPIURL}admin/stripe/`
 
-const UpdateUserView = props => {
+interface UserData {
+  id?: string
+  email: string
+  firstName?: string
+  lastName?: string
+  phone?: string
+  carName?: string
+  carNumber?: string
+  role?: string
+  carPictureURL?: string
+  banned?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+interface NonFormData {
+  role?: string
+  carPictureURL?: string
+  banned?: boolean | undefined
+  createdAt?: string | undefined
+  updatedAt?: string | undefined
+}
+
+const UpdateUserView = () => {
   const [isLoading, setIsLoading] = useState(true)
-  const [originalData, setOriginalData] = useState(null)
-  const [modifiedNonFormData, setModifiedNonFormData] = useState({})
+  const [originalData, setOriginalData] = useState<UserData>({
+    email: "",
+  })
+  const [modifiedNonFormData, setModifiedNonFormData] = useState<NonFormData>({})
+  const [error, setError] = useState("")
+  const [success, setSuccess] = useState(false)
 
   const searchParams = useSearchParams()
-  const id = searchParams.get('id')
+  const router = useRouter()
+  const id = searchParams.get("id")
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await authFetch(
-          baseAPIURL + 'users/view?id=' + id,
-        )
+        const response = await authFetch(baseAPIURL + "users/view?id=" + id)
         if (response?.data) {
           setOriginalData(response.data)
           initializeModifieableNonFormData(response.data)
@@ -59,211 +69,89 @@ const UpdateUserView = props => {
         }
       } catch (err) {
         console.log(err)
+        setError("Failed to load user data")
         setIsLoading(false)
       }
     }
     fetchData()
   }, [id])
 
-  const initializeModifieableNonFormData = originalData => {
-    var nonFormData = {}
+  const initializeModifieableNonFormData = (originalData: any) => {
+    const nonFormData: NonFormData = {}
 
-    /* Insert non modifiable initialization data here */
-          if (originalData.role) {
-              nonFormData['role'] = originalData.role
-          }
-          
-          if (originalData.carPictureURL) {
-              nonFormData['carPictureURL'] = originalData.carPictureURL
-          }
-          
-          if (originalData.banned) {
-              nonFormData['banned'] = originalData.banned
-          }
-          
-          if (originalData.createdAt) {
-              nonFormData['createdAt'] = originalData.createdAt
-          }
-          
-          if (originalData.updatedAt) {
-              nonFormData['updatedAt'] = originalData.updatedAt
-          }
-          
+    if (originalData.role) {
+      nonFormData.role = originalData.role
+    }
 
-    console.log(nonFormData)
+    if (originalData.carPictureURL) {
+      nonFormData.carPictureURL = originalData.carPictureURL
+    }
+
+    if (originalData.banned) {
+      nonFormData.banned = originalData.banned
+    }
+
+    if (originalData.createdAt) {
+      nonFormData.createdAt = originalData.createdAt
+    }
+
+    if (originalData.updatedAt) {
+      nonFormData.updatedAt = originalData.updatedAt
+    }
+
     setModifiedNonFormData(nonFormData)
   }
 
-  const saveChanges = async (modifiedData, setSubmitting) => {
-    const response = await authPost(
-      baseAPIURL + 'users/update?id=' + id,
-      JSON.stringify({
-        ...modifiedData,
-        ...modifiedNonFormData,
-      }),
-    )
-    const { data } = response
-    if (data.success == true) {
-      window.location.reload()
-    } else {
-      alert(data.error)
+  const saveChanges = async (modifiedData: any, setSubmitting: (isSubmitting: boolean) => void) => {
+    try {
+      setError("")
+      const response = await authPost(
+        baseAPIURL + "users/update?id=" + id,
+        JSON.stringify({
+          ...modifiedData,
+          ...modifiedNonFormData,
+        }),
+      )
+      const { data } = response
+      if (data.success === true) {
+        setSuccess(true)
+        setTimeout(() => {
+          window.location.reload()
+        }, 1000)
+      } else {
+        setError(data.error || "Failed to update user")
+      }
+    } catch (err) {
+      setError("An error occurred while saving changes")
+      console.error(err)
     }
     setSubmitting(false)
   }
 
-  const onTypeaheadSelect = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value
+  const handleSelectChange = (value: string, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
+    newData[fieldName as keyof NonFormData] = value as NonFormData[keyof NonFormData]
     setModifiedNonFormData(newData)
   }
 
-  const onMultipleTypeaheadSelect = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (newData[fieldName] != undefined) {
-      newData[fieldName].push(value)
-    } else {
-      newData[fieldName] = [value]
-    }
+  const handleSwitchChange = (value: boolean, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
+    newData[fieldName as keyof NonFormData] = value
     setModifiedNonFormData(newData)
   }
 
-  const onMultipleTypeaheadDelete = (index, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName].splice(index, 1)
+  const onDateChange = (toDate: Date, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
+    newData[fieldName as keyof NonFormData] = toDate.toISOString()
     setModifiedNonFormData(newData)
   }
 
-  const handleSwitchChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value ^ true
-    setModifiedNonFormData(newData)
-  }
-
-  const handleSelectChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value
-    setModifiedNonFormData(newData)
-  }
-
-  const handleColorChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value
-    setModifiedNonFormData(newData)
-  }
-
-  const handleColorDelete = fieldName => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = null
-    setModifiedNonFormData(newData)
-  }
-
-  const handleColorsChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (newData[fieldName] != undefined) {
-      newData[fieldName].push(value)
-    } else {
-      newData[fieldName] = [value]
-    }
-    setModifiedNonFormData(newData)
-  }
-
-  const handleColorsDelete = (index, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName].splice(index, 1)
-    setModifiedNonFormData(newData)
-  }
-
-  const handleArrayInput = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (newData[fieldName] != undefined) {
-      newData[fieldName].push(value)
-    } else {
-      newData[fieldName] = [value]
-    }
-    setModifiedNonFormData(newData)
-  }
-
-  const handleArrayDelete = (index, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName].splice(index, 1)
-    setModifiedNonFormData(newData)
-  }
-
-  const handleObjectInput = (key, value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (newData[fieldName] != undefined) {
-      newData[fieldName][key] = value
-    } else {
-      newData[fieldName] = { [key]: value }
-    }
-    setModifiedNonFormData(newData)
-  }
-
-  const handleObjectDelete = (key, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = Object.keys(newData[fieldName]).reduce(
-      (object, keys) => {
-        if (keys !== key) {
-          object[keys] = newData[fieldName][keys]
-        }
-        return object
-      },
-      {},
-    )
-    setModifiedNonFormData(newData)
-  }
-
-  const onDateChange = (toDate, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = toDate
-    setModifiedNonFormData(newData)
-  }
-
-  const onLocationChange = (addressObject, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    const location = {
-      longitude: addressObject.location.lng,
-      latitude: addressObject.location.lat,
-      address: addressObject.label,
-      placeID: addressObject.placeId,
-      detailedAddress: addressObject.gmaps.address_components,
-    }
-    newData[fieldName] = location
-    setModifiedNonFormData(newData)
-  }
-
-  const onSimpleLocationChange = (addressObject, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (!addressObject || !addressObject.location) {
-      return
-    }
-    const location = {
-      lng: addressObject.location.lng,
-      lat: addressObject.location.lat,
-      // address: addressObject.label,
-    }
-    newData[fieldName] = location
-    setModifiedNonFormData(newData)
-  }
-
-  const onCodeChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value
-    setModifiedNonFormData(newData)
-  }
-
-  const onMarkdownEditorChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value
-    setModifiedNonFormData(newData)
-  }
-
-  const handleImageUpload = (event, fieldName, isMultiple) => {
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
     const files = event.target.files
+    if (!files || files.length === 0) return
+
     const formData = new FormData()
-    for (var i = 0; i < files.length; ++i) {
-      formData.append('photos', files[i])
-    }
+    formData.append('photos', files[0])
 
     fetch(pluginsAPIURL + '../media/upload', {
       method: 'POST',
@@ -271,314 +159,619 @@ const UpdateUserView = props => {
     })
       .then(response => response.json())
       .then(response => {
-        var newData = { ...modifiedNonFormData }
-        if (!isMultiple) {
-          const url = response.data && response.data[0] && response.data[0].url
-          newData[fieldName] = url
-        } else {
-          // multiple photos
-          const urls = response.data && response.data.map(item => item.url)
-          if (
-            !modifiedNonFormData[fieldName] ||
-            modifiedNonFormData[fieldName].length <= 0
-          ) {
-            newData[fieldName] = urls
-          } else {
-            newData[fieldName] = [...modifiedNonFormData[fieldName], ...urls]
-          }
+        const newData = { ...modifiedNonFormData }
+        const url = response.data?.[0]?.url
+        if (url) {
+          newData[fieldName as keyof NonFormData] = url
+          setModifiedNonFormData(newData)
         }
-        setModifiedNonFormData(newData)
-        console.log(response)
       })
       .catch(error => {
         console.error(error)
+        setError("Failed to upload image")
       })
   }
 
-  const handleDeletePhoto = (srcToBeRemoved, fieldName, isMultiple) => {
-    if (isMultiple) {
-      var newData = { ...modifiedNonFormData }
-      var currentURLs = newData[fieldName]
-      if (currentURLs) {
-        const newURLs = currentURLs.filter(src => src != srcToBeRemoved)
-        newData[fieldName] = newURLs
-        setModifiedNonFormData(newData)
-      }
-    } else {
-      var newData = { ...modifiedNonFormData }
-      newData[fieldName] = null
-      setModifiedNonFormData(newData)
-    }
+  const handleDeletePhoto = (srcToBeRemoved: string, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
+    newData[fieldName as keyof NonFormData] = undefined
+    setModifiedNonFormData(newData)
   }
 
-  const handleMultimediaUpload = (event, fieldName, isMultiple) => {
-    const files = event.target.files
-    const formData = new FormData()
-    for (var i = 0; i < files.length; ++i) {
-      formData.append('multimedias', files[i])
-    }
-
-    fetch(pluginsAPIURL + '../media/uploadMultimedias', {
-      method: 'POST',
-      body: formData,
-    })
-      .then(response => response.json())
-      .then(response => {
-        var newData = { ...modifiedNonFormData }
-        if (!isMultiple) {
-          const url = response.data && response.data[0] && response.data[0].url
-          newData[fieldName] = url
-        } else {
-          // multiple media
-          const data =
-            response.data &&
-            response.data.map(item => {
-              return { url: item.url, mime: item.mimetype }
-            })
-          if (
-            !modifiedNonFormData[fieldName] ||
-            modifiedNonFormData[fieldName].length <= 0
-          ) {
-            newData[fieldName] = data
-          } else {
-            newData[fieldName] = [...modifiedNonFormData[fieldName], ...data]
-          }
-        }
-        setModifiedNonFormData(newData)
-        console.log(response)
-      })
-      .catch(error => {
-        console.error(error)
-      })
-  }
-
-  const handleMultimediaDelete = (srcToBeRemoved, fieldName, isMultiple) => {
-    if (isMultiple) {
-      var newData = { ...modifiedNonFormData }
-      var currentData = newData[fieldName]
-      if (currentData) {
-        const finalData = currentData.reduce((arrayAcumulator, curVal) => {
-          if (srcToBeRemoved !== curVal.url) {
-            arrayAcumulator.push(curVal)
-          }
-          return arrayAcumulator
-        })
-        newData[fieldName] = finalData
-        setModifiedNonFormData(newData)
-      }
-    } else {
-      var newData = { ...modifiedNonFormData }
-      newData[fieldName] = null
-      setModifiedNonFormData(newData)
-    }
-  }
+  const validationSchema = Yup.object().shape({
+    email: Yup.string().email("Invalid email").required("Email is required"),
+    firstName: Yup.string(),
+    lastName: Yup.string(),
+    phone: Yup.string(),
+    carName: Yup.string(),
+    carNumber: Yup.string(),
+  })
 
   if (isLoading) {
     return (
-      <div className="sweet-loading card">
-        <div className="spinner-container">
-          <ClipLoader
-            className="spinner"
-            sizeUnit={'px'}
-            size={50}
-            color={'#123abc'}
-            loading={isLoading}
-          />
-        </div>
+      <div style={styledComponents.loadingContainer}>
+        <div style={styledComponents.spinner}></div>
+        <p style={styledComponents.loadingText}>Loading user data...</p>
       </div>
     )
   }
 
   return (
-    <div className={`${styles.Card} ${styles.FormCard} Card FormCard`}>
-      <div className={`${styles.CardBody} CardBody`}>
-        <h1>{originalData && originalData.name}</h1>
+    <div style={styledComponents.formCard}>
+      <div style={{ padding: theme.content.cardPadding }}>
+        <div style={styledComponents.formHeader}>
+          <div style={{ display: "flex", alignItems: "center", gap: theme.spacing[4] }}>
+            <button
+              onClick={() => router.back()}
+              style={{
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: theme.spacing[2],
+                borderRadius: theme.borderRadius.full,
+                color: theme.colors.text.secondary,
+              }}
+              aria-label="Go back"
+            >
+              <ArrowLeftIcon size={20} />
+            </button>
+            <h1 style={styledComponents.formTitle}>
+              <UserIcon size={24} style={{ marginRight: theme.spacing[2] }} />
+              {originalData?.email ? `Update ${originalData.email}` : "Update User"}
+            </h1>
+          </div>
+        </div>
+
+        {error && (
+          <div
+            style={{
+              padding: theme.spacing[4],
+              marginBottom: theme.spacing[6],
+              borderRadius: theme.borderRadius.md,
+              backgroundColor: "rgba(239, 68, 68, 0.1)",
+              borderLeft: `4px solid ${theme.colors.feedback.error}`,
+              color: theme.colors.feedback.error,
+            }}
+          >
+            <p style={{ fontWeight: theme.typography.fontWeights.medium }}>Error</p>
+            <p>{error}</p>
+          </div>
+        )}
+
+        {success && (
+          <div
+            style={{
+              padding: theme.spacing[4],
+              marginBottom: theme.spacing[6],
+              borderRadius: theme.borderRadius.md,
+              backgroundColor: "rgba(16, 185, 129, 0.1)",
+              borderLeft: `4px solid ${theme.colors.feedback.success}`,
+              color: theme.colors.feedback.success,
+            }}
+          >
+            <p style={{ fontWeight: theme.typography.fontWeights.medium }}>Success</p>
+            <p>User updated successfully!</p>
+          </div>
+        )}
+
         <Formik
           initialValues={originalData}
-          validate={values => {
-            values = { ...values, ...modifiedNonFormData }
-            const errors = {}
-            {
-              /* Insert all form errors here */
-        if (!values.email) {
-            errors.email = 'Field Required!'
-        }
-
-            }
-
-            return errors
-          }}
+          validationSchema={validationSchema}
           onSubmit={(values, { setSubmitting }) => {
             saveChanges(values, setSubmitting)
-          }}>
-          {({
-            values,
-            errors,
-            touched,
-            handleChange,
-            handleBlur,
-            handleSubmit,
-            isSubmitting,
-            /* and other goodies */
-          }) => (
+          }}
+        >
+          {({ values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
             <form onSubmit={handleSubmit}>
-              {/* Insert all edit form fields here */}
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Email</label>
-                        <input
-                            className={`${styles.FormTextField} FormTextField`}
-                            type="email"
-                            name="email"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.email}
-                        />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.email && touched.email && errors.email}
-                        </p>
-                    </div>
-    
+              <div
+                style={{
+                  marginBottom: theme.spacing[8],
+                  padding: theme.spacing[6],
+                  backgroundColor: theme.colors.surface.primary,
+                  borderRadius: theme.borderRadius.lg,
+                  boxShadow: theme.shadows.sm,
+                  border: `1px solid ${theme.colors.border.light}`,
+                }}
+              >
+                <div
+                  style={{
+                    marginBottom: theme.spacing[4],
+                    paddingBottom: theme.spacing[4],
+                    borderBottom: `1px solid ${theme.colors.border.light}`,
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
+                  <UserIcon size={20} style={{ marginRight: theme.spacing[2], color: theme.colors.accent.primary }} />
+                  <h2
+                    style={{
+                      fontSize: theme.typography.fontSizes.xl,
+                      fontWeight: theme.typography.fontWeights.semibold,
+                      color: theme.colors.text.primary,
+                    }}
+                  >
+                    User Information
+                  </h2>
+                </div>
 
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>First Name</label>
-                        <input
-                            className={`${styles.FormTextField} FormTextField`}
-                            type="firstName"
-                            name="firstName"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.firstName}
-                        />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.firstName && touched.firstName && errors.firstName}
-                        </p>
-                    </div>
-    
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: theme.spacing[6] }}>
+                  {/* Email Field */}
+                  <div style={styledComponents.formGroup}>
+                    <label style={styledComponents.formLabel} className="flex items-center">
+                      <MailIcon
+                        size={16}
+                        style={{ marginRight: theme.spacing[2], color: theme.colors.accent.primary }}
+                      />
+                      Email
+                      <span style={{ color: theme.colors.feedback.error, marginLeft: theme.spacing[1] }}>*</span>
+                    </label>
+                    <input
+                      style={{
+                        ...styledComponents.formInput,
+                        width: "100%",
+                      }}
+                      type="email"
+                      name="email"
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      value={values.email}
+                      placeholder="user@example.com"
+                    />
+                    <p
+                      style={{
+                        fontSize: theme.typography.fontSizes.xs,
+                        color: theme.colors.text.tertiary,
+                        marginTop: theme.spacing[1],
+                      }}
+                    >
+                      The user's email address
+                    </p>
+                    {errors.email && touched.email && <p style={styledComponents.formError}>{errors.email}</p>}
+                  </div>
 
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Last Name</label>
-                        <input
-                            className={`${styles.FormTextField} FormTextField`}
-                            type="lastName"
-                            name="lastName"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.lastName}
-                        />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.lastName && touched.lastName && errors.lastName}
-                        </p>
-                    </div>
-    
+                  {/* Phone Field */}
+                  <div style={styledComponents.formGroup}>
+                    <label style={styledComponents.formLabel} className="flex items-center">
+                      <PhoneIcon
+                        size={16}
+                        style={{ marginRight: theme.spacing[2], color: theme.colors.accent.primary }}
+                      />
+                      Phone
+                    </label>
+                    <input
+                      style={{
+                        ...styledComponents.formInput,
+                        width: "100%",
+                      }}
+                      type="text"
+                      name="phone"
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      value={values.phone || ""}
+                      placeholder="+1234567890"
+                    />
+                    <p
+                      style={{
+                        fontSize: theme.typography.fontSizes.xs,
+                        color: theme.colors.text.tertiary,
+                        marginTop: theme.spacing[1],
+                      }}
+                    >
+                      The user's phone number
+                    </p>
+                  </div>
+                </div>
 
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Phone</label>
-                        <input
-                            className={`${styles.FormTextField} FormTextField`}
-                            type="phone"
-                            name="phone"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.phone}
-                        />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.phone && touched.phone && errors.phone}
-                        </p>
-                    </div>
-    
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: theme.spacing[6], marginTop: theme.spacing[6] }}>
+                  {/* First Name Field */}
+                  <div style={styledComponents.formGroup}>
+                    <label style={styledComponents.formLabel} className="flex items-center">
+                      <UserIcon
+                        size={16}
+                        style={{ marginRight: theme.spacing[2], color: theme.colors.accent.primary }}
+                      />
+                      First Name
+                    </label>
+                    <input
+                      style={{
+                        ...styledComponents.formInput,
+                        width: "100%",
+                      }}
+                      type="text"
+                      name="firstName"
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      value={values.firstName || ""}
+                      placeholder="John"
+                    />
+                    <p
+                      style={{
+                        fontSize: theme.typography.fontSizes.xs,
+                        color: theme.colors.text.tertiary,
+                        marginTop: theme.spacing[1],
+                      }}
+                    >
+                      The user's first name
+                    </p>
+                  </div>
 
-              <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                  <label className={`${styles.FormLabel} FormLabel`}>Role</label>
+                  {/* Last Name Field */}
+                  <div style={styledComponents.formGroup}>
+                    <label style={styledComponents.formLabel} className="flex items-center">
+                      <UserIcon
+                        size={16}
+                        style={{ marginRight: theme.spacing[2], color: theme.colors.accent.primary }}
+                      />
+                      Last Name
+                    </label>
+                    <input
+                      style={{
+                        ...styledComponents.formInput,
+                        width: "100%",
+                      }}
+                      type="text"
+                      name="lastName"
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      value={values.lastName || ""}
+                      placeholder="Doe"
+                    />
+                    <p
+                      style={{
+                        fontSize: theme.typography.fontSizes.xs,
+                        color: theme.colors.text.tertiary,
+                        marginTop: theme.spacing[1],
+                      }}
+                    >
+                      The user's last name
+                    </p>
+                  </div>
+                </div>
+
+                {/* Role Field */}
+                <div style={{ ...styledComponents.formGroup, marginTop: theme.spacing[6] }}>
+                  <label style={styledComponents.formLabel} className="flex items-center">
+                    <ShieldIcon
+                      size={16}
+                      style={{ marginRight: theme.spacing[2], color: theme.colors.accent.primary }}
+                    />
+                    Role
+                  </label>
                   <IMStaticSelectComponent
-                      options={["passenger","driver","admin","other"]}
-                      name="role"
-                      onChange={handleSelectChange}
-                      selectedOption={modifiedNonFormData.role}
+                    options={["passenger", "driver", "admin", "other"]}
+                    name="role"
+                    onChange={handleSelectChange}
+                    selectedOption={modifiedNonFormData.role}
                   />
-                  <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                      {errors.role && touched.role && errors.role}
+                  <p
+                    style={{
+                      fontSize: theme.typography.fontSizes.xs,
+                      color: theme.colors.text.tertiary,
+                      marginTop: theme.spacing[1],
+                    }}
+                  >
+                    The user's role in the system
                   </p>
+                </div>
+
+                {/* Banned Field */}
+                <div style={{ ...styledComponents.formGroup, marginTop: theme.spacing[6] }}>
+                  <label style={styledComponents.formLabel} className="flex items-center">
+                    <BanIcon
+                      size={16}
+                      style={{ marginRight: theme.spacing[2], color: theme.colors.accent.primary }}
+                    />
+                    Banned
+                  </label>
+                  <IMToggleSwitchComponent
+                    isChecked={modifiedNonFormData.banned || false}
+                    onSwitchChange={() => handleSwitchChange(!modifiedNonFormData.banned, "banned")}
+                  />
+                  <p
+                    style={{
+                      fontSize: theme.typography.fontSizes.xs,
+                      color: theme.colors.text.tertiary,
+                      marginTop: theme.spacing[1],
+                    }}
+                  >
+                    Whether the user is banned from the platform
+                  </p>
+                </div>
               </div>
-              
-
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Car Photo</label>
-                        {modifiedNonFormData.carPictureURL && (
-                            <IMPhoto openable dismissable className="photo" src={modifiedNonFormData.carPictureURL} onDelete={(src) => handleDeletePhoto(src, "carPictureURL", false) } />
-                        )}
-                        <input className="FormFileField" id="carPictureURL" name="carPictureURL" type="file" onChange={(event) => {
-                            handleImageUpload(event, "carPictureURL", false);
-                        }} />
-                    </div>
-    
-
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Car Model</label>
-                        <input
-                            className={`${styles.FormTextField} FormTextField`}
-                            type="carName"
-                            name="carName"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.carName}
-                        />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.carName && touched.carName && errors.carName}
-                        </p>
-                    </div>
-    
-
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>License Plate</label>
-                        <input
-                            className={`${styles.FormTextField} FormTextField`}
-                            type="carNumber"
-                            name="carNumber"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.carNumber}
-                        />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.carNumber && touched.carNumber && errors.carNumber}
-                        </p>
-                    </div>
-    
-
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Banned</label>
-                        <IMToggleSwitchComponent isChecked={modifiedNonFormData.banned} onSwitchChange={() => handleSwitchChange(modifiedNonFormData["banned"], "banned")} />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.banned && touched.banned && errors.banned}
-                        </p>
-                    </div>
-    
-
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Created At</label>
-                        <IMDatePicker
-                            selected={modifiedNonFormData.createdAt}
-                            onChange={(toDate) => onDateChange(toDate, "createdAt")}
-                        />
-                    </div>
-    
-
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Updated At</label>
-                        <IMDatePicker
-                            selected={modifiedNonFormData.updatedAt}
-                            onChange={(toDate) => onDateChange(toDate, "updatedAt")}
-                        />
-                    </div>
-    
-
 
               <div
-                className={`${styles.FormActionContainer} FormActionContainer`}>
+                style={{
+                  marginBottom: theme.spacing[8],
+                  padding: theme.spacing[6],
+                  backgroundColor: theme.colors.surface.primary,
+                  borderRadius: theme.borderRadius.lg,
+                  boxShadow: theme.shadows.sm,
+                  border: `1px solid ${theme.colors.border.light}`,
+                }}
+              >
+                <div
+                  style={{
+                    marginBottom: theme.spacing[4],
+                    paddingBottom: theme.spacing[4],
+                    borderBottom: `1px solid ${theme.colors.border.light}`,
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
+                  <CarIcon size={20} style={{ marginRight: theme.spacing[2], color: theme.colors.accent.primary }} />
+                  <h2
+                    style={{
+                      fontSize: theme.typography.fontSizes.xl,
+                      fontWeight: theme.typography.fontWeights.semibold,
+                      color: theme.colors.text.primary,
+                    }}
+                  >
+                    Driver Information
+                  </h2>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: theme.spacing[6] }}>
+                  {/* Car Model Field */}
+                  <div style={styledComponents.formGroup}>
+                    <label style={styledComponents.formLabel} className="flex items-center">
+                      <CarIcon
+                        size={16}
+                        style={{ marginRight: theme.spacing[2], color: theme.colors.accent.primary }}
+                      />
+                      Car Model
+                    </label>
+                    <input
+                      style={{
+                        ...styledComponents.formInput,
+                        width: "100%",
+                      }}
+                      type="text"
+                      name="carName"
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      value={values.carName || ""}
+                      placeholder="Tesla Model 3"
+                    />
+                    <p
+                      style={{
+                        fontSize: theme.typography.fontSizes.xs,
+                        color: theme.colors.text.tertiary,
+                        marginTop: theme.spacing[1],
+                      }}
+                    >
+                      The user's car model (if driver)
+                    </p>
+                  </div>
+
+                  {/* License Plate Field */}
+                  <div style={styledComponents.formGroup}>
+                    <label style={styledComponents.formLabel} className="flex items-center">
+                      <CarIcon
+                        size={16}
+                        style={{ marginRight: theme.spacing[2], color: theme.colors.accent.primary }}
+                      />
+                      License Plate
+                    </label>
+                    <input
+                      style={{
+                        ...styledComponents.formInput,
+                        width: "100%",
+                      }}
+                      type="text"
+                      name="carNumber"
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      value={values.carNumber || ""}
+                      placeholder="ABC123"
+                    />
+                    <p
+                      style={{
+                        fontSize: theme.typography.fontSizes.xs,
+                        color: theme.colors.text.tertiary,
+                        marginTop: theme.spacing[1],
+                      }}
+                    >
+                      The user's license plate number (if driver)
+                    </p>
+                  </div>
+                </div>
+
+                {/* Car Photo Field */}
+                <div style={{ ...styledComponents.formGroup, marginTop: theme.spacing[6] }}>
+                  <label style={styledComponents.formLabel} className="flex items-center">
+                    <CarIcon
+                      size={16}
+                      style={{ marginRight: theme.spacing[2], color: theme.colors.accent.primary }}
+                    />
+                    Car Photo
+                  </label>
+                  {modifiedNonFormData.carPictureURL && (
+                    <div style={{ marginBottom: theme.spacing[2] }}>
+                      <IMPhoto
+                        openable
+                        dismissable
+                        className="photo"
+                        src={modifiedNonFormData.carPictureURL}
+                        onDelete={(src) => handleDeletePhoto(src, "carPictureURL")}
+                      />
+                    </div>
+                  )}
+                  <input
+                    id="carPictureURL"
+                    name="carPictureURL"
+                    type="file"
+                    accept="image/*"
+                    onChange={(event) => handleImageUpload(event, "carPictureURL")}
+                    style={{
+                      width: "100%",
+                      padding: theme.spacing[2],
+                      border: `1px solid ${theme.colors.border.light}`,
+                      borderRadius: theme.borderRadius.md,
+                      fontSize: theme.typography.fontSizes.sm,
+                    }}
+                  />
+                  <p
+                    style={{
+                      fontSize: theme.typography.fontSizes.xs,
+                      color: theme.colors.text.tertiary,
+                      marginTop: theme.spacing[1],
+                    }}
+                  >
+                    Upload a photo of the user's car (if driver)
+                  </p>
+                </div>
+              </div>
+
+              <div
+                style={{
+                  marginBottom: theme.spacing[8],
+                  padding: theme.spacing[6],
+                  backgroundColor: theme.colors.surface.primary,
+                  borderRadius: theme.borderRadius.lg,
+                  boxShadow: theme.shadows.sm,
+                  border: `1px solid ${theme.colors.border.light}`,
+                }}
+              >
+                <div
+                  style={{
+                    marginBottom: theme.spacing[4],
+                    paddingBottom: theme.spacing[4],
+                    borderBottom: `1px solid ${theme.colors.border.light}`,
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
+                  <CalendarIcon size={20} style={{ marginRight: theme.spacing[2], color: theme.colors.accent.primary }} />
+                  <h2
+                    style={{
+                      fontSize: theme.typography.fontSizes.xl,
+                      fontWeight: theme.typography.fontWeights.semibold,
+                      color: theme.colors.text.primary,
+                    }}
+                  >
+                    System Information
+                  </h2>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: theme.spacing[6] }}>
+                  {/* Created At Field */}
+                  <div style={styledComponents.formGroup}>
+                    <label style={styledComponents.formLabel} className="flex items-center">
+                      <CalendarIcon
+                        size={16}
+                        style={{ marginRight: theme.spacing[2], color: theme.colors.accent.primary }}
+                      />
+                      Created At
+                    </label>
+                    <div style={{ position: "relative" }}>
+                      <IMDatePicker
+                        selected={modifiedNonFormData.createdAt ? new Date(modifiedNonFormData.createdAt).getTime() : ""}
+                        onChange={(toDate) => onDateChange(new Date(toDate), "createdAt")}
+                      />
+                    </div>
+                    <p
+                      style={{
+                        fontSize: theme.typography.fontSizes.xs,
+                        color: theme.colors.text.tertiary,
+                        marginTop: theme.spacing[1],
+                      }}
+                    >
+                      When this user account was created
+                    </p>
+                  </div>
+
+                  {/* Updated At Field */}
+                  <div style={styledComponents.formGroup}>
+                    <label style={styledComponents.formLabel} className="flex items-center">
+                      <CalendarIcon
+                        size={16}
+                        style={{ marginRight: theme.spacing[2], color: theme.colors.accent.primary }}
+                      />
+                      Updated At
+                    </label>
+                    <div style={{ position: "relative" }}>
+                      <IMDatePicker
+                        selected={modifiedNonFormData.updatedAt ? new Date(modifiedNonFormData.updatedAt).getTime() : ""}
+                        onChange={(toDate) => onDateChange(new Date(toDate), "updatedAt")}
+                      />
+                    </div>
+                    <p
+                      style={{
+                        fontSize: theme.typography.fontSizes.xs,
+                        color: theme.colors.text.tertiary,
+                        marginTop: theme.spacing[1],
+                      }}
+                    >
+                      When this user account was last updated
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: theme.spacing[8] }}>
                 <button
-                  className={`${styles.PrimaryButton} PrimaryButton`}
+                  type="button"
+                  onClick={() => router.back()}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    padding: `${theme.spacing[2]} ${theme.spacing[4]}`,
+                    backgroundColor: "transparent",
+                    color: theme.colors.text.primary,
+                    border: `1px solid ${theme.colors.border.medium}`,
+                    borderRadius: theme.borderRadius.md,
+                    fontSize: theme.typography.fontSizes.sm,
+                    fontWeight: theme.typography.fontWeights.medium,
+                    cursor: "pointer",
+                    transition: theme.transitions.normal,
+                  }}
+                >
+                  <ArrowLeftIcon size={16} style={{ marginRight: theme.spacing[2] }} />
+                  Cancel
+                </button>
+
+                <button
                   type="submit"
-                  disabled={isSubmitting}>
-                  Save user
+                  disabled={isSubmitting}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    padding: `${theme.spacing[2]} ${theme.spacing[4]}`,
+                    backgroundColor: theme.colors.accent.primary,
+                    color: "white",
+                    border: "none",
+                    borderRadius: theme.borderRadius.md,
+                    fontSize: theme.typography.fontSizes.sm,
+                    fontWeight: theme.typography.fontWeights.medium,
+                    cursor: isSubmitting ? "not-allowed" : "pointer",
+                    opacity: isSubmitting ? 0.7 : 1,
+                    transition: theme.transitions.normal,
+                  }}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div
+                        style={{
+                          width: "16px",
+                          height: "16px",
+                          borderRadius: "50%",
+                          border: "2px solid rgba(255, 255, 255, 0.3)",
+                          borderTopColor: "white",
+                          animation: "spin 1s linear infinite",
+                          marginRight: theme.spacing[2],
+                        }}
+                      ></div>
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <SaveIcon size={16} style={{ marginRight: theme.spacing[2] }} />
+                      Save User
+                    </>
+                  )}
                 </button>
               </div>
             </form>

@@ -1,172 +1,311 @@
-// @ts-nocheck
-'use client'
-import React, { useMemo, useEffect, useState } from 'react'
-import { GetStaticProps } from 'next'
-import { useRouter } from 'next/navigation'
+"use client"
+
+import { useMemo, useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import {
   useReactTable,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   flexRender,
-} from '@tanstack/react-table'
+} from "@tanstack/react-table"
 import {
-  IMLocationTableCell,
-  IMSimpleLocationTableCell,
-  IMColorsTableCell,
-  IMMultimediaTableCell,
-  IMObjectTableCell,
-  IMImagesTableCell,
-  IMDateTableCell,
-  IMForeignKeyTableCell,
-  IMAddressTableCell,
-} from '../../../../../admin/components/forms/table'
-import {
-  IMColorBoxComponent,
-  IMPhoto,
-  IMModal,
-  IMToggleSwitchComponent,
-} from '../../../../../admin/components/forms/fields'
-import { pluginsAPIURL } from '../../../../../config/config'
-import useCurrentUser from '../../../../../modules/auth/hooks/useCurrentUser'
-import { authPost } from '../../../../../modules/auth/utils/authFetch'
-import styles from '../../../../../admin/themes/admin.module.css'
-/* Insert extra imports for table cells here */
+  Search,
+  Plus,
+  Eye,
+  Edit,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Calendar,
+  Clock,
+  Filter,
+  SlidersHorizontal,
+  Loader2,
+  CreditCard,
+  DollarSign,
+  Receipt,
+  CalendarDays,
+} from "lucide-react"
+import { IMDateTableCell } from "@/admin/components/forms/table"
+import { pluginsAPIURL } from "@/config/config"
+import useCurrentUser from "@/modules/auth/hooks/useCurrentUser"
+import { authPost } from "@/modules/auth/utils/authFetch"
+import { theme } from "@/lib/theme"
+import type React from "react"
 
 const baseAPIURL = `${pluginsAPIURL}admin/subscriptions/`
 
-export const getStaticProps: GetStaticProps = async () => {
-  return { props: { isAdminRoute: true } }
+interface SubscriptionPlan {
+  id: string
+  name: string
+  basic_description: string
+  detailed_description: string
+  price: string | number
+  stripe_price_id: string
+  billing_cycle: string
+  created_at: string
+  updated_at: string
 }
 
-const SubscriptionPlansColumns = [
-  {
-      id: "name",
-      header: "Name",
-      accessorKey: "name",
-  },
-  {
-      id: "basic_description",
-      header: "Basic Description",
-      accessorKey: "basic_description",
-      cell: data => (
-          <div className="markdownReadOnly">
-              {data?.value && data.value.substring(0, 100)}...
-          </div>
-      ),
-  },
-  {
-      id: "detailed_description",
-      header: "Detailed Description",
-      accessorKey: "detailed_description",
-      cell: data => (
-          <div className="codeEditor">
-              {data?.value && data.value.substring(0, 100)}...
-          </div>
-      ),
-  },
-  {
-      id: "price",
-      header: "Price",
-      accessorKey: "price",
-  },
-  {
-      id: "stripe_price_id",
-      header: "Stripe Price ID",
-      accessorKey: "stripe_price_id",
-  },
-  {
-      id: "billing_cycle",
-      header: "Billing Cycle",
-      accessorKey: "billing_cycle",
-  },
-  {
-      id: "created_at",
-      header: "Created At",
-      accessorKey: "created_at",
-      cell: data => <IMDateTableCell timestamp={data.value} />,
-  },
-  {
-      id: "updated_at",
-      header: "Updated At",
-      accessorKey: "updated_at",
-      cell: data => <IMDateTableCell timestamp={data.value} />,
-  },
-  {
-      id: "actions",
-      header: "Actions",
-      accessorKey: "actions",
-      cell: data => <ActionsItemView data={data} />,
-  },
-];
-
-
-function ActionsItemView(props) {
-  const { data } = props
+function ActionsItemView({ data }: { data: any }) {
   const router = useRouter()
+  const [isDeleting, setIsDeleting] = useState(false)
 
-  const handleView = item => {
-    const viewPath = './view?id=' + item.id
-    router.push(viewPath)
+  const handleView = (item: SubscriptionPlan) => {
+    router.push(`./view?id=${item.id}`)
   }
 
-  const handleEdit = item => {
-    const editPath = './update?id=' + item.id
-    router.push(editPath)
+  const handleEdit = (item: SubscriptionPlan) => {
+    router.push(`./update?id=${item.id}`)
   }
 
-  const handleDelete = async item => {
-    if (window.confirm('Are you sure you want to delete this item?')) {
-      const path = baseAPIURL + 'subscription_plans/delete'
-      const response = await authPost(path, { id: item.id })
-      window.location.reload(false)
+  const handleDelete = async (item: SubscriptionPlan) => {
+    if (window.confirm("Are you sure you want to delete this subscription plan?")) {
+      setIsDeleting(true)
+      try {
+        const path = baseAPIURL + "subscription_plans/delete"
+        await authPost(path, { id: item.id })
+        window.location.reload()
+      } catch (error) {
+        console.error("Error deleting subscription plan:", error)
+        alert("Failed to delete subscription plan. Please try again.")
+      } finally {
+        setIsDeleting(false)
+      }
     }
   }
 
   return (
-    <div className={`${styles.inlineActionsContainer} inlineActionsContainer`}>
+    <div className="flex items-center justify-end">
       <button
         onClick={() => handleView(data.row.original)}
-        type="button"
-        id="tooltip264453216"
-        className={`${styles.btnSm} btn-icon btn btn-info btn-sm`}>
-        <i className="fa fa-eye"></i>
+        style={{
+          ...theme.listView.iconButton,
+          backgroundColor: theme.colors.state.hover,
+          color: theme.colors.text.primary,
+        }}
+        title="View"
+        disabled={isDeleting}
+      >
+        <Eye size={16} />
       </button>
       <button
         onClick={() => handleEdit(data.row.original)}
-        type="button"
-        id="tooltip366246651"
-        className={`${styles.btnSm} btn-icon btn btn-success btn-sm`}>
-        <i className="fa fa-edit"></i>
+        style={{
+          ...theme.listView.iconButton,
+          backgroundColor: theme.colors.accent.muted,
+          color: theme.colors.accent.primary,
+        }}
+        title="Edit"
+        disabled={isDeleting}
+      >
+        <Edit size={16} />
       </button>
       <button
         onClick={() => handleDelete(data.row.original)}
-        type="button"
-        id="tooltip476609793"
-        className={`${styles.btnSm} btn-icon btn btn-danger btn-sm`}>
-        <i className="fa fa-times"></i>
+        style={{
+          ...theme.listView.iconButton,
+          backgroundColor: "rgba(239, 68, 68, 0.15)",
+          color: theme.colors.feedback.error,
+        }}
+        title="Delete"
+        disabled={isDeleting}
+      >
+        {isDeleting ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
       </button>
     </div>
   )
 }
 
-function SubscriptionPlansListView(props) {
+function SubscriptionPlansListView() {
   const [isLoading, setIsLoading] = useState(true)
-  const [SubscriptionPlans, setSubscriptionPlans] = useState([])
-  const [data, setData] = useState([])
-  const [globalFilter, setGlobalFilter] = useState('')
-
+  const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>([])
+  const [data, setData] = useState<SubscriptionPlan[]>([])
+  const [globalFilter, setGlobalFilter] = useState("")
   const [user, token, loading] = useCurrentUser()
+  const [pageIndex, setPageIndex] = useState(0)
+  const [pageSize, setPageSize] = useState(10)
+  const router = useRouter()
 
-  const columns = useMemo(() => SubscriptionPlansColumns, [])
+  const columns = useMemo(
+    () => [
+      {
+        id: "name",
+        header: "Name",
+        accessorKey: "name",
+        cell: ({ getValue }) => {
+          const name = getValue() as string
+          return <div style={theme.listView.nameCell}>{name}</div>
+        },
+      },
+      {
+        id: "basic_description",
+        header: "Basic Description",
+        accessorKey: "basic_description",
+        cell: ({ getValue }) => {
+          const description = getValue() as string
+          return (
+            <div style={theme.listView.descriptionCell}>
+              {description ? `${description.substring(0, 100)}...` : "-"}
+            </div>
+          )
+        },
+      },
+      {
+        id: "detailed_description",
+        header: "Detailed Description",
+        accessorKey: "detailed_description",
+        cell: ({ getValue }) => {
+          const description = getValue() as string
+          return (
+            <div
+              style={{
+                ...theme.listView.descriptionCell,
+                fontFamily: "monospace",
+                fontSize: "0.75rem",
+                backgroundColor: theme.colors.surface.tertiary,
+                padding: "0.25rem 0.5rem",
+                borderRadius: theme.borderRadius.sm,
+              }}
+            >
+              {description ? `${description.substring(0, 100)}...` : "-"}
+            </div>
+          )
+        },
+      },
+      {
+        id: "price",
+        header: "Price",
+        accessorKey: "price",
+        cell: ({ getValue }) => {
+          const price = getValue() as string | number
+          return (
+            <div className="flex items-center justify-center">
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  padding: "0.25rem 0.75rem",
+                  borderRadius: "9999px",
+                  fontSize: "0.875rem",
+                  fontWeight: 600,
+                  backgroundColor: "rgba(16, 185, 129, 0.15)",
+                  color: theme.colors.feedback.success,
+                }}
+              >
+                <DollarSign size={14} className="mr-1" />
+                {typeof price === "number" ? price.toFixed(2) : price}
+              </span>
+            </div>
+          )
+        },
+      },
+      {
+        id: "stripe_price_id",
+        header: "Stripe Price ID",
+        accessorKey: "stripe_price_id",
+        cell: ({ getValue }) => {
+          const stripePriceId = getValue() as string
+          return (
+            <div className="flex items-center">
+              <Receipt size={14} className="mr-2" style={{ color: theme.colors.text.tertiary }} />
+              <span
+                style={{
+                  fontFamily: "monospace",
+                  fontSize: "0.75rem",
+                  color: theme.colors.text.secondary,
+                }}
+              >
+                {stripePriceId || "-"}
+              </span>
+            </div>
+          )
+        },
+      },
+      {
+        id: "billing_cycle",
+        header: "Billing Cycle",
+        accessorKey: "billing_cycle",
+        cell: ({ getValue }) => {
+          const billingCycle = getValue() as string
+          return (
+            <div className="flex items-center justify-center">
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  padding: "0.25rem 0.75rem",
+                  borderRadius: "9999px",
+                  fontSize: "0.75rem",
+                  fontWeight: 500,
+                  backgroundColor: theme.colors.accent.muted,
+                  color: theme.colors.accent.primary,
+                }}
+              >
+                <CalendarDays size={14} className="mr-1" />
+                {billingCycle || "Unknown"}
+              </span>
+            </div>
+          )
+        },
+      },
+      {
+        id: "created_at",
+        header: "Created At",
+        accessorKey: "created_at",
+        cell: ({ getValue }) => {
+          const createdAt = getValue() as string
+          return (
+            <div className="flex items-center justify-center">
+              <Calendar size={16} className="mr-2" style={{ color: theme.colors.text.tertiary }} />
+              <IMDateTableCell timestamp={createdAt} />
+            </div>
+          )
+        },
+      },
+      {
+        id: "updated_at",
+        header: "Updated At",
+        accessorKey: "updated_at",
+        cell: ({ getValue }) => {
+          const updatedAt = getValue() as string
+          return (
+            <div className="flex items-center justify-center">
+              <Clock size={16} className="mr-2" style={{ color: theme.colors.text.tertiary }} />
+              <IMDateTableCell timestamp={updatedAt} />
+            </div>
+          )
+        },
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        accessorKey: "actions",
+        cell: (data) => <ActionsItemView data={data} />,
+      },
+    ],
+    [],
+  )
 
   const table = useReactTable({
-    data: SubscriptionPlans,
+    data: subscriptionPlans,
     columns,
     state: {
       globalFilter,
+      pagination: {
+        pageIndex,
+        pageSize,
+      },
     },
     onGlobalFilterChange: setGlobalFilter,
+    onPaginationChange: (updater) => {
+      const newState = typeof updater === "function" ? updater({ pageIndex, pageSize }) : updater
+      setPageIndex(newState.pageIndex)
+      setPageSize(newState.pageSize)
+    },
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -176,170 +315,337 @@ function SubscriptionPlansListView(props) {
     if (loading) {
       return
     }
-    const config = {
-      headers: { Authorization: token },
+
+    const fetchData = async () => {
+      setIsLoading(true)
+      try {
+        const config = {
+          headers: { Authorization: token },
+        }
+
+        const response = await fetch(baseAPIURL + "subscription_plans/list", config)
+
+        if (!response.ok) {
+          throw new Error("Network response was not ok")
+        }
+
+        const data = await response.json()
+        setData(data)
+      } catch (error) {
+        console.error("Error fetching subscription plans:", error)
+      } finally {
+        setIsLoading(false)
+      }
     }
 
-    const extraQueryParams = null
-    setIsLoading(true)
-
-    fetch(
-      baseAPIURL +
-        'subscription_plans/list' +
-        (extraQueryParams ? extraQueryParams : ''),
-      config,
-    )
-      .then(response => response.json())
-      .then(data => {
-        console.log(data)
-        const subscription_plans = data
-        setData(subscription_plans)
-
-        setIsLoading(false)
-      })
-      .catch(err => {
-        console.log(err)
-      })
-  }, [loading])
+    fetchData()
+  }, [loading, token])
 
   useEffect(() => {
     setSubscriptionPlans(data)
-  }, [table.getState().pagination.pageIndex, table.getState().pagination.pageSize, data])
+  }, [globalFilter, data])
 
   return (
-    <>
-      <div className={`${styles.adminContent} adminContent`}>
-        <div className="row">
-          <div className="col col-md-12">
-            <div className="Card">
-              <div className="CardHeader">
-                <a
-                  className={`${styles.Link} ${styles.AddLink} Link AddLink`}
-                  href="./add">
-                  Add New
-                </a>
-                <h1>Subscription Plans</h1>
-              </div>
-              <div className={`${styles.CardBody} CardBody`}>
-                <div className={`${styles.TableContainer} TableContainer`}>
-                  <input
-                    className={`${styles.SearchInput} SearchInput`}
-                    type="text"
-                    placeholder="Search..."
-                    value={globalFilter || ''}
-                    onChange={e => setGlobalFilter(e.target.value)}
-                  />
-                  <table className={`${styles.Table} Table`}>
-                    <thead>
-                      {table.getHeaderGroups().map(headerGroup => (
-                        <tr key={headerGroup.id}>
-                          {headerGroup.headers.map(header => (
-                            <th key={header.id}>
-                              {flexRender(
-                                header.column.columnDef.header,
-                                header.getContext(),
-                              )}
-                            </th>
-                          ))}
-                        </tr>
-                      ))}
-                    </thead>
-                    <tbody>
-                      {table.getRowModel().rows.map(row => (
-                        <tr key={row.id}>
-                          {row.getVisibleCells().map(cell => (
-                            <td key={cell.id}>
-                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
-                      <tr>
-                        {isLoading ? (
-                          <td colSpan={SubscriptionPlansColumns.length - 1}>
-                            <p>Loading...</p>
-                          </td>
-                        ) : (
-                          <td colSpan={SubscriptionPlansColumns.length - 1}>
-                            <p className={`${styles.PaginationDetails} PaginationDetails`}>
-                              Showing {table.getRowModel().rows.length} of {data.length}{' '}
-                              results
-                            </p>
-                          </td>
-                        )}
-                      </tr>
-                    </tbody>
-                  </table>
-                  <div className={`${styles.Pagination} Pagination`}>
-                    <div className={`${styles.LeftPaginationButtons} LeftPaginationButtons`}>
-                      <button
-                        onClick={() => table.setPageIndex(0)}
-                        className={`${styles.PaginationButton}`}
-                        disabled={!table.getCanPreviousPage()}>
-                        <i className="fa fa-angle-double-left"></i>
-                      </button>{' '}
-                      <button
-                        onClick={() => table.previousPage()}
-                        className={`${styles.PaginationButton}`}
-                        disabled={!table.getCanPreviousPage()}>
-                        <i className="fa fa-angle-left"></i>
-                      </button>
-                    </div>
-                    <div className={`${styles.CenterPaginationButtons}`}>
-                      <span>
-                        Page{' '}
-                        <strong>
-                          {table.getState().pagination.pageIndex + 1} of{' '}
-                          {table.getPageCount()}
-                        </strong>{' '}
-                      </span>
-                      <span>
-                        | Go to page:{' '}
-                        <input
-                          type="number"
-                          defaultValue={table.getState().pagination.pageIndex + 1}
-                          onChange={e => {
-                            const page = e.target.value ? Number(e.target.value) - 1 : 0
-                            table.setPageIndex(page)
+    <div style={{ maxWidth: theme.content.maxWidth, margin: "0 auto" }}>
+      <div style={theme.listView.card}>
+        <div style={theme.listView.cardHeader}>
+          <h1 style={theme.listView.title}>
+            <CreditCard size={24} style={{ color: theme.colors.accent.primary, marginRight: "0.5rem" }} />
+            Subscription Plans
+          </h1>
+          <button
+            onClick={() => router.push("./add")}
+            style={{
+              ...theme.listView.actionButton,
+              backgroundColor: theme.colors.accent.primary,
+              color: "#ffffff",
+            }}
+          >
+            <Plus size={18} className="mr-2" />
+            Add New Plan
+          </button>
+        </div>
+
+        <div style={theme.listView.cardBody}>
+          <div
+            style={
+              {
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: "1.5rem",
+              } as React.CSSProperties
+            }
+          >
+            <div style={theme.listView.searchContainer}>
+              <input
+                type="text"
+                placeholder="Search plans..."
+                value={globalFilter || ""}
+                onChange={(e) => setGlobalFilter(e.target.value)}
+                style={theme.listView.searchInput}
+              />
+              <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+            </div>
+            <div style={{ display: "flex", gap: "0.5rem" } as React.CSSProperties}>
+              <button
+                style={{
+                  ...theme.listView.actionButton,
+                  backgroundColor: theme.colors.surface.tertiary,
+                  color: theme.colors.text.secondary,
+                  border: `1px solid ${theme.colors.border.light}`,
+                }}
+              >
+                <Filter size={16} className="mr-2" />
+                Filters
+              </button>
+              <button
+                style={{
+                  ...theme.listView.actionButton,
+                  backgroundColor: theme.colors.surface.tertiary,
+                  color: theme.colors.text.secondary,
+                  border: `1px solid ${theme.colors.border.light}`,
+                }}
+              >
+                <SlidersHorizontal size={16} className="mr-2" />
+                Columns
+              </button>
+            </div>
+          </div>
+
+          <div
+            style={
+              {
+                overflow: "hidden",
+                borderRadius: theme.borderRadius.lg,
+                border: `1px solid ${theme.colors.border.light}`,
+              } as React.CSSProperties
+            }
+          >
+            <div style={{ overflowX: "auto" } as React.CSSProperties}>
+              <table style={theme.listView.table}>
+                <thead>
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <tr
+                      key={headerGroup.id}
+                      style={{
+                        backgroundColor: theme.colors.surface.tertiary,
+                      }}
+                    >
+                      {headerGroup.headers.map((header) => (
+                        <th
+                          key={header.id}
+                          style={{
+                            ...theme.listView.tableHeader,
+                            color: theme.colors.text.secondary,
+                            borderBottom: `1px solid ${theme.colors.border.light}`,
                           }}
-                          style={{ width: '100px' }}
-                        />
-                      </span>{' '}
-                      <select
-                        value={table.getState().pagination.pageSize}
-                        onChange={e => {
-                          table.setPageSize(Number(e.target.value))
-                        }}>
-                        {[10, 20, 30, 40, 50].map(pageSize => (
-                          <option key={pageSize} value={pageSize}>
-                            Show {pageSize}
-                          </option>
+                        >
+                          {flexRender(header.column.columnDef.header, header.getContext())}
+                        </th>
+                      ))}
+                    </tr>
+                  ))}
+                </thead>
+                <tbody>
+                  {isLoading ? (
+                    <tr>
+                      <td
+                        colSpan={columns.length}
+                        style={{
+                          ...theme.listView.tableCell,
+                          textAlign: "center",
+                          padding: "3rem 1.5rem",
+                        }}
+                      >
+                        <div style={theme.listView.loadingContainer}>
+                          <div className="animate-spin" style={theme.listView.loadingSpinner}></div>
+                          <span>Loading subscription plans...</span>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : table.getRowModel().rows.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={columns.length}
+                        style={{
+                          ...theme.listView.tableCell,
+                          textAlign: "center",
+                          padding: "3rem 1.5rem",
+                        }}
+                      >
+                        <div style={theme.listView.emptyContainer}>
+                          <div style={theme.listView.emptyIconContainer}>
+                            <CreditCard size={32} style={{ color: theme.colors.text.tertiary }} />
+                          </div>
+                          <div style={theme.listView.emptyTitle}>No subscription plans found</div>
+                          <div style={theme.listView.emptyMessage}>
+                            Try adjusting your search or create a new subscription plan
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    table.getRowModel().rows.map((row) => (
+                      <tr
+                        key={row.id}
+                        style={{
+                          transition: theme.transitions.normal,
+                          backgroundColor: theme.colors.surface.secondary,
+                          borderBottom: `1px solid ${theme.colors.border.light}`,
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = theme.colors.state.hover)}
+                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = theme.colors.surface.secondary)}
+                      >
+                        {row.getVisibleCells().map((cell) => (
+                          <td key={cell.id} style={theme.listView.tableCell}>
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </td>
                         ))}
-                      </select>
-                    </div>
-                    <div className={`${styles.RightPaginationButtons}`}>
-                      <button
-                        onClick={() => table.nextPage()}
-                        className={`${styles.PaginationButton}`}
-                        disabled={!table.getCanNextPage()}>
-                        <i className="fa fa-angle-right"></i>
-                      </button>{' '}
-                      <button
-                        onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                        className={`${styles.PaginationButton}`}
-                        disabled={!table.getCanNextPage()}>
-                        <i className="fa fa-angle-double-right"></i>
-                      </button>
-                    </div>
-                  </div>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <div
+              style={
+                {
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "1rem 1.5rem",
+                  borderTop: `1px solid ${theme.colors.border.light}`,
+                } as React.CSSProperties
+              }
+            >
+              <div
+                style={
+                  {
+                    fontSize: "0.875rem",
+                    color: theme.colors.text.secondary,
+                  } as React.CSSProperties
+                }
+              >
+                Showing {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} to{" "}
+                {Math.min(
+                  (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
+                  table.getFilteredRowModel().rows.length,
+                )}{" "}
+                of {table.getFilteredRowModel().rows.length} results
+              </div>
+
+              <div
+                style={
+                  {
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "1rem",
+                  } as React.CSSProperties
+                }
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <span style={{ fontSize: "0.875rem", color: theme.colors.text.secondary }}>Go to page:</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={table.getPageCount()}
+                    defaultValue={table.getState().pagination.pageIndex + 1}
+                    onChange={(e) => {
+                      const page = e.target.value ? Number(e.target.value) - 1 : 0
+                      table.setPageIndex(page)
+                    }}
+                    style={{
+                      width: "60px",
+                      padding: "0.25rem 0.5rem",
+                      borderRadius: theme.borderRadius.md,
+                      border: `1px solid ${theme.colors.border.light}`,
+                      fontSize: "0.875rem",
+                    }}
+                  />
+                </div>
+
+                <select
+                  value={table.getState().pagination.pageSize}
+                  onChange={(e) => table.setPageSize(Number(e.target.value))}
+                  style={{
+                    padding: "0.25rem 0.75rem",
+                    borderRadius: theme.borderRadius.md,
+                    backgroundColor: theme.colors.surface.tertiary,
+                    border: `1px solid ${theme.colors.border.light}`,
+                    color: theme.colors.text.primary,
+                    fontSize: "0.875rem",
+                  }}
+                >
+                  {[10, 20, 30, 50, 100].map((pageSize) => (
+                    <option key={pageSize} value={pageSize}>
+                      {pageSize} rows
+                    </option>
+                  ))}
+                </select>
+
+                <div style={theme.listView.pagination}>
+                  <button
+                    onClick={() => table.setPageIndex(0)}
+                    disabled={!table.getCanPreviousPage()}
+                    style={{
+                      ...theme.listView.paginationButton,
+                      opacity: !table.getCanPreviousPage() ? 0.5 : 1,
+                      cursor: !table.getCanPreviousPage() ? "not-allowed" : "pointer",
+                    }}
+                    title="First page"
+                  >
+                    <ChevronsLeft size={16} />
+                  </button>
+                  <button
+                    onClick={() => table.previousPage()}
+                    disabled={!table.getCanPreviousPage()}
+                    style={{
+                      ...theme.listView.paginationButton,
+                      opacity: !table.getCanPreviousPage() ? 0.5 : 1,
+                      cursor: !table.getCanPreviousPage() ? "not-allowed" : "pointer",
+                    }}
+                    title="Previous page"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+                  <span style={theme.listView.paginationText}>
+                    Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+                  </span>
+                  <button
+                    onClick={() => table.nextPage()}
+                    disabled={!table.getCanNextPage()}
+                    style={{
+                      ...theme.listView.paginationButton,
+                      opacity: !table.getCanNextPage() ? 0.5 : 1,
+                      cursor: !table.getCanNextPage() ? "not-allowed" : "pointer",
+                    }}
+                    title="Next page"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                  <button
+                    onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+                    disabled={!table.getCanNextPage()}
+                    style={{
+                      ...theme.listView.paginationButton,
+                      opacity: !table.getCanNextPage() ? 0.5 : 1,
+                      cursor: !table.getCanNextPage() ? "not-allowed" : "pointer",
+                    }}
+                    title="Last page"
+                  >
+                    <ChevronsRight size={16} />
+                  </button>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </>
+    </div>
   )
 }
 
 export default SubscriptionPlansListView
+

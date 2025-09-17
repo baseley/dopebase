@@ -1,442 +1,314 @@
 // @ts-nocheck
 'use client'
 import React, { useEffect, useState } from 'react'
-import { Formik } from 'formik'
+import { Formik, type FormikHelpers } from 'formik'
 import { ClipLoader } from 'react-spinners'
-import ReactMarkdown from 'react-markdown'
+import { toast } from 'react-toastify'
+import { MessageSquare, User, Calendar, FileText } from 'lucide-react'
 import dynamic from 'next/dynamic'
-import CodeMirror from '@uiw/react-codemirror'
-import { javascript } from '@codemirror/lang-javascript'
-import { css } from '@codemirror/lang-css'
-import { html } from '@codemirror/lang-html'
-import { markdown } from '@codemirror/lang-markdown'
-import IMDatePicker from '../../../../../admin/components/forms/IMDatePicker'
-import { LocationPicker } from '../../../../../admin/components/forms/locationPicker'
-import {
-  TypeaheadComponent,
-  IMObjectInputComponent,
-  IMMultimediaComponent,
-  IMArrayInputComponent,
-  IMColorPicker,
-  IMColorsContainer,
-  IMColorBoxComponent,
-  IMStaticMultiSelectComponent,
-  IMStaticSelectComponent,
-  IMPhoto,
-  IMModal,
-  IMToggleSwitchComponent,
-} from '../../../../../admin/components/forms/fields'
-import styles from '../../../../../admin/themes/admin.module.css'
 
-/* Insert extra imports here */
+import { theme, styledComponents as sc } from '@/lib/theme'
+import IMDatePicker from '@/admin/components/forms/IMDatePicker'
 import CommentPostTypeaheadComponent from '../../components/CommentPostTypeaheadComponent.js'
-
 import CommentAuthorTypeaheadComponent from '../../components/CommentAuthorTypeaheadComponent.js'
 
+import { pluginsAPIURL } from '@/config/config'
+import { authPost } from '@/modules/auth/utils/authFetch'
 
-import { pluginsAPIURL } from '../../../../../config/config'
-import { authPost } from '../../../../../modules/auth/utils/authFetch'
-
-const beautify_html = require('js-beautify').html
 const baseAPIURL = `${pluginsAPIURL}`
 
-const AddNewCommentView = () => {
-  const [isLoading, setIsLoading] = useState(false)
-  const [modifiedNonFormData, setModifiedNonFormData] = useState({})
-  const [originalData, setOriginalData] = useState(null)
+// Define TypeScript interfaces
+interface NonFormData {
+  createdAt?: string
+  [key: string]: any
+}
+
+interface FormValues {
+  authorID?: string
+  commentText?: string
+  postID?: string
+  [key: string]: any
+}
+
+interface CommentData extends FormValues, NonFormData {}
+
+const AddNewCommentView: React.FC = () => {
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [modifiedNonFormData, setModifiedNonFormData] = useState<NonFormData>({})
+  const [originalData, setOriginalData] = useState<CommentData | null>(null)
 
   useEffect(() => {
     setModifiedNonFormData({
-      created_at: Math.floor(new Date().getTime() / 1000).toString(),
+      createdAt: Math.floor(new Date().getTime() / 1000).toString(),
     })
   }, [])
 
-  const createComment = async (data, setSubmitting) => {
+  const createComment = async (data: CommentData, setSubmitting: (isSubmitting: boolean) => void) => {
     setIsLoading(true)
+    console.log("🔍 Starting comment creation...")
+
     const url = `${baseAPIURL}admin/social-network/comments/add`
-    const response = await authPost(
-      url,
-      JSON.stringify({ ...data, ...modifiedNonFormData }),
-    )
-    const resData = response.data
-    if (resData?.error) {
-      alert(resData?.error)
+    console.log("🌐 API URL:", url)
+
+    try {
+      const response = await authPost(url, JSON.stringify(data))
+      const resData = response.data
+
+      if (resData?.error) {
+        console.error("❌ Server returned error:", resData.error)
+        toast.error(resData.error)
+      } else {
+        console.log("✅ Comment created successfully!")
+        toast.success("Comment created successfully")
+      }
+    } catch (error: any) {
+      console.error("❌ Error during API call:", error)
+      toast.error(`Error creating comment: ${error.message || "Unknown error"}`)
+    } finally {
+      setSubmitting(false)
+      setIsLoading(false)
     }
-    setSubmitting(false)
-    setIsLoading(false)
   }
 
-  const onTypeaheadSelect = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const onTypeaheadSelect = (value: any, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
     newData[fieldName] = value
     setModifiedNonFormData(newData)
   }
 
-  const onMultipleTypeaheadSelect = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (newData[fieldName] != undefined) {
-      newData[fieldName].push(value)
-    } else {
-      newData[fieldName] = [value]
-    }
-    setModifiedNonFormData(newData)
-  }
-
-  const onMultipleTypeaheadDelete = (index, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName].splice(index, 1)
-    setModifiedNonFormData(newData)
-  }
-
-  const handleSwitchChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value ^ true
-    setModifiedNonFormData(newData)
-  }
-
-  const handleSelectChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value
-    setModifiedNonFormData(newData)
-  }
-
-  const handleColorChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value
-    setModifiedNonFormData(newData)
-  }
-
-  const handleColorDelete = fieldName => {
-    var newData = { ...modifiedNonFormData }
-    delete newData[fieldName]
-    setModifiedNonFormData(newData)
-  }
-
-  const handleColorsChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (newData[fieldName] != undefined) {
-      newData[fieldName].push(value)
-    } else {
-      newData[fieldName] = [value]
-    }
-    setModifiedNonFormData(newData)
-  }
-
-  const handleColorsDelete = (index, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName].splice(index, 1)
-    setModifiedNonFormData(newData)
-  }
-
-  const handleArrayInput = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (newData[fieldName] != undefined) {
-      newData[fieldName].push(value)
-    } else {
-      newData[fieldName] = [value]
-    }
-    setModifiedNonFormData(newData)
-  }
-
-  const handleArrayDelete = (index, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName].splice(index, 1)
-    setModifiedNonFormData(newData)
-  }
-
-  const handleObjectInput = (key, value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (newData[fieldName] != undefined) {
-      newData[fieldName][key] = value
-    } else {
-      newData[fieldName] = { [key]: value }
-    }
-    setModifiedNonFormData(newData)
-  }
-
-  const handleObjectDelete = (key, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = Object.keys(newData[fieldName]).reduce(
-      (object, keys) => {
-        if (keys !== key) {
-          object[keys] = newData[fieldName][keys]
-        }
-        return object
-      },
-      {},
-    )
-    setModifiedNonFormData(newData)
-  }
-
-  const onDateChange = (toDate, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const onDateChange = (toDate: string, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
     newData[fieldName] = toDate
     setModifiedNonFormData(newData)
   }
 
-  const onLocationChange = (addressObject, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (!addressObject || !addressObject.location || !addressObject.gmaps) {
-      return
-    }
-    const location = {
-      longitude: addressObject.location.lng,
-      latitude: addressObject.location.lat,
-      address: addressObject.label,
-      placeID: addressObject.placeId,
-      detailedAddress: addressObject.gmaps.address_components,
-    }
-    newData[fieldName] = location
-    setModifiedNonFormData(newData)
-  }
-
-  const onSimpleLocationChange = (addressObject, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (!addressObject || !addressObject.location) {
-      return
-    }
-    const location = {
-      lng: addressObject.location.lng,
-      lat: addressObject.location.lat,
-      // address: addressObject.label,
-    }
-    newData[fieldName] = location
-    setModifiedNonFormData(newData)
-  }
-
-  const onCodeChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value
-    setModifiedNonFormData(newData)
-  }
-
-  const onMarkdownEditorChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value
-    setModifiedNonFormData(newData)
-  }
-
-  const handleImageUpload = (event, fieldName, isMultiple) => {
-    const files = event.target.files
-    const formData = new FormData()
-    for (var i = 0; i < files.length; ++i) {
-      formData.append('photos', files[i])
-    }
-
-    fetch(pluginsAPIURL + '../media/upload', {
-      method: 'POST',
-      body: formData,
-    })
-      .then(response => response.json())
-      .then(response => {
-        var newData = { ...modifiedNonFormData }
-        if (!isMultiple) {
-          const url = response.data && response.data[0] && response.data[0].url
-          newData[fieldName] = url
-        } else {
-          // multiple photos
-          const urls = response.data && response.data.map(item => item.url)
-          if (
-            !modifiedNonFormData[fieldName] ||
-            modifiedNonFormData[fieldName].length <= 0
-          ) {
-            newData[fieldName] = urls
-          } else {
-            newData[fieldName] = [...modifiedNonFormData[fieldName], ...urls]
-          }
-        }
-        setModifiedNonFormData(newData)
-        console.log(response)
-      })
-      .catch(error => {
-        console.error(error)
-      })
-  }
-
-  const handleDeletePhoto = (srcToBeRemoved, fieldName, isMultiple) => {
-    if (isMultiple) {
-      var newData = { ...modifiedNonFormData }
-      var currentURLs = newData[fieldName]
-      if (currentURLs) {
-        const newURLs = currentURLs.filter(src => src != srcToBeRemoved)
-        newData[fieldName] = newURLs
-        setModifiedNonFormData(newData)
-      }
-    } else {
-      var newData = { ...modifiedNonFormData }
-      newData[fieldName] = null
-      setModifiedNonFormData(newData)
-    }
-  }
-
-  const handleMultimediaUpload = (event, fieldName, isMultiple) => {
-    const files = event.target.files
-    const formData = new FormData()
-    for (var i = 0; i < files.length; ++i) {
-      formData.append('multimedias', files[i])
-    }
-    fetch(pluginsAPIURL + '../media/uploadMultimedias', {
-      method: 'POST',
-      body: formData,
-    })
-      .then(response => response.json())
-      .then(response => {
-        var newData = { ...modifiedNonFormData }
-        if (!isMultiple) {
-          const url = response.data && response.data[0] && response.data[0].url
-          newData[fieldName] = url
-        } else {
-          // multiple media
-          const data =
-            response.data &&
-            response.data.map(item => {
-              return { url: item.url, mime: item.mimetype }
-            })
-          if (
-            !modifiedNonFormData[fieldName] ||
-            modifiedNonFormData[fieldName].length <= 0
-          ) {
-            newData[fieldName] = data
-          } else {
-            newData[fieldName] = [...modifiedNonFormData[fieldName], ...data]
-          }
-        }
-        setModifiedNonFormData(newData)
-        console.log(response)
-      })
-      .catch(error => {
-        console.error(error)
-      })
-  }
-
-  const handleMultimediaDelete = (srcToBeRemoved, fieldName, isMultiple) => {
-    if (isMultiple) {
-      var newData = { ...modifiedNonFormData }
-      var currentData = newData[fieldName]
-      if (currentData) {
-        const finalData = currentData.reduce((arrayAcumulator, curVal) => {
-          if (srcToBeRemoved !== curVal.url) {
-            arrayAcumulator.push(curVal)
-          }
-          return arrayAcumulator
-        })
-        newData[fieldName] = finalData
-        setModifiedNonFormData(newData)
-      }
-    } else {
-      var newData = { ...modifiedNonFormData }
-      newData[fieldName] = null
-      setModifiedNonFormData(newData)
-    }
-  }
-
   if (isLoading) {
     return (
-      <div className="sweet-loading card">
-        <div className="spinner-container">
-          <ClipLoader
-            className="spinner"
-            sizeUnit={'px'}
-            size={50}
-            color={'#123abc'}
-            loading={isLoading}
-          />
-        </div>
+      <div style={sc.loadingContainer}>
+        <div style={sc.spinner}></div>
+        <p style={sc.loadingText}>Creating comment...</p>
       </div>
     )
   }
 
+  // Define form field styles
+  const formField = {
+    container: {
+      marginBottom: theme.spacing[6],
+    } as React.CSSProperties,
+    label: {
+      ...sc.formLabel,
+      display: "flex",
+      alignItems: "center",
+      gap: theme.spacing[2],
+    } as React.CSSProperties,
+    input: {
+      ...sc.formInput,
+    } as React.CSSProperties,
+    textarea: {
+      ...sc.formTextarea,
+      minHeight: "120px",
+    } as React.CSSProperties,
+    error: {
+      ...sc.formError,
+    } as React.CSSProperties,
+    hint: {
+      fontSize: theme.typography.fontSizes.xs,
+      color: theme.colors.text.tertiary,
+      marginTop: theme.spacing[1],
+    } as React.CSSProperties,
+    datePickerContainer: {
+      border: `1px solid ${theme.colors.border.light}`,
+      borderRadius: theme.borderRadius.md,
+      padding: theme.spacing[2],
+      backgroundColor: theme.colors.surface.primary,
+    } as React.CSSProperties,
+    typeaheadContainer: {
+      border: `1px solid ${theme.colors.border.light}`,
+      borderRadius: theme.borderRadius.md,
+      padding: theme.spacing[2],
+      backgroundColor: theme.colors.surface.primary,
+    } as React.CSSProperties,
+  }
+
   return (
-    <div className={`${styles.FormCard} FormCard`}>
-      <div className={`${styles.CardBody} CardBody`}>
-        <h1>Create New Comment</h1>
+    <div style={sc.formCard}>
+      <div style={sc.formHeader}>
+        <h1 style={sc.formTitle}>
+          <MessageSquare size={24} color={theme.colors.accent.primary} />
+          Create New Comment
+        </h1>
+      </div>
+      <div style={sc.formContent}>
         <Formik
-          initialValues={{}}
-          validate={values => {
-            values = { ...values, ...modifiedNonFormData }
-            const errors = {}
-            {
-              /* Insert all form errors here */
-        if (!values.authorID) {
-            errors.authorID = 'Field Required!'
-        }
+          initialValues={{} as FormValues}
+          validate={(values) => {
+            const combinedValues = { ...values, ...modifiedNonFormData }
+            const errors: Record<string, string> = {}
 
-        if (!values.commentText) {
-            errors.commentText = 'Field Required!'
-        }
+            if (!combinedValues.authorID) {
+              errors.authorID = "Author is required"
+            }
 
-        if (!values.createdAt) {
-            errors.createdAt = 'Field Required!'
-        }
+            if (!combinedValues.commentText) {
+              errors.commentText = "Comment text is required"
+            }
 
-        if (!values.postID) {
-            errors.postID = 'Field Required!'
-        }
+            if (!combinedValues.postID) {
+              errors.postID = "Post is required"
+            }
 
+            if (!combinedValues.createdAt) {
+              errors.createdAt = "Date is required"
             }
 
             return errors
           }}
-          onSubmit={(values, { setSubmitting }) => {
-            createComment(values, setSubmitting)
-          }}>
-          {({
-            values,
-            errors,
-            touched,
-            handleChange,
-            handleBlur,
-            handleSubmit,
-            isSubmitting,
-            /* and other goodies */
-          }) => (
+          onSubmit={(values: FormValues, { setSubmitting }: FormikHelpers<FormValues>) => {
+            const combinedData = { ...values, ...modifiedNonFormData } as CommentData
+            createComment(combinedData, setSubmitting)
+          }}
+        >
+          {({ values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
             <form onSubmit={handleSubmit}>
-              {/* Insert all add form fields here */}
-          <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-              <label className={`${styles.FormLabel} FormLabel`}>Author</label>
-              <CommentAuthorTypeaheadComponent onSelect={(value) => onTypeaheadSelect(value, "authorID")} id={originalData && originalData.authorID} name={originalData && originalData.authorID} />
-          </div>
-      
+              {/* Comment Information section */}
+              <div style={{ marginBottom: theme.spacing[8] }}>
+                <h2
+                  style={{
+                    fontSize: theme.typography.fontSizes.xl,
+                    fontWeight: theme.typography.fontWeights.semibold,
+                    marginBottom: theme.spacing[4],
+                    color: theme.colors.text.primary,
+                  }}
+                >
+                  Comment Information
+                </h2>
 
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Content</label>
-                        <input
-                            className={`${styles.FormTextField} FormTextField`}
-                            type="commentText"
-                            name="commentText"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.commentText}
-                        />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.commentText && touched.commentText && errors.commentText}
-                        </p>
-                    </div>
-    
+                {/* Author field */}
+                <div style={formField.container}>
+                  <label style={formField.label}>
+                    <User size={16} color={theme.colors.accent.primary} />
+                    Author <span style={{ color: theme.colors.feedback.error }}>*</span>
+                  </label>
+                  <div style={formField.typeaheadContainer}>
+                    <CommentAuthorTypeaheadComponent 
+                      onSelect={(value) => onTypeaheadSelect(value, "authorID")} 
+                      id={modifiedNonFormData.authorID} 
+                      name="authorID"
+                    />
+                  </div>
+                  {errors.authorID && <p style={formField.error}>{errors.authorID}</p>}
+                </div>
 
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Date</label>
-                        <IMDatePicker
-                            selected={modifiedNonFormData.createdAt}
-                            onChange={(toDate) => onDateChange(toDate, "createdAt")}
-                        />
-                    </div>
-    
+                {/* Post field */}
+                <div style={formField.container}>
+                  <label style={formField.label}>
+                    <FileText size={16} color={theme.colors.accent.primary} />
+                    Post <span style={{ color: theme.colors.feedback.error }}>*</span>
+                  </label>
+                  <div style={formField.typeaheadContainer}>
+                    <CommentPostTypeaheadComponent 
+                      onSelect={(value) => onTypeaheadSelect(value, "postID")} 
+                      id={modifiedNonFormData.postID} 
+                      name="postID"
+                    />
+                  </div>
+                  {errors.postID && <p style={formField.error}>{errors.postID}</p>}
+                </div>
 
-          <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-              <label className={`${styles.FormLabel} FormLabel`}>Post</label>
-              <CommentPostTypeaheadComponent onSelect={(value) => onTypeaheadSelect(value, "postID")} id={originalData && originalData.postID} name={originalData && originalData.postID} />
-          </div>
-      
+                {/* Comment Text field */}
+                <div style={formField.container}>
+                  <label htmlFor="commentText" style={formField.label}>
+                    <MessageSquare size={16} color={theme.colors.accent.primary} />
+                    Comment Text <span style={{ color: theme.colors.feedback.error }}>*</span>
+                  </label>
+                  <textarea
+                    id="commentText"
+                    name="commentText"
+                    placeholder="Enter your comment here..."
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.commentText || ""}
+                    style={{
+                      ...formField.textarea,
+                      borderColor:
+                        errors.commentText && touched.commentText ? theme.colors.feedback.error : theme.forms.input.borderColor,
+                    }}
+                  />
+                  {errors.commentText && touched.commentText && <p style={formField.error}>{errors.commentText}</p>}
+                </div>
+              </div>
 
-
+              {/* Date section */}
               <div
-                className={`${styles.FormActionContainer} FormActionContainer`}>
+                style={{
+                  height: "1px",
+                  backgroundColor: theme.colors.border.light,
+                  margin: `${theme.spacing[6]} 0`,
+                }}
+              ></div>
+
+              <div style={{ marginBottom: theme.spacing[8] }}>
+                <h2
+                  style={{
+                    fontSize: theme.typography.fontSizes.xl,
+                    fontWeight: theme.typography.fontWeights.semibold,
+                    marginBottom: theme.spacing[4],
+                    color: theme.colors.text.primary,
+                  }}
+                >
+                  Date Information
+                </h2>
+
+                {/* Created Date field */}
+                <div style={formField.container}>
+                  <label style={formField.label}>
+                    <Calendar size={16} color={theme.colors.accent.primary} />
+                    Date <span style={{ color: theme.colors.feedback.error }}>*</span>
+                  </label>
+                  <div style={formField.datePickerContainer}>
+                    <IMDatePicker
+                      selected={modifiedNonFormData.createdAt}
+                      onChange={(toDate) => onDateChange(toDate, "createdAt")}
+                    />
+                  </div>
+                  {errors.createdAt && <p style={formField.error}>{errors.createdAt}</p>}
+                </div>
+              </div>
+
+              {/* Form actions */}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  marginTop: theme.spacing[6],
+                  paddingTop: theme.spacing[4],
+                  borderTop: `1px solid ${theme.colors.border.light}`,
+                }}
+              >
                 <button
-                  className={`${styles.PrimaryButton} PrimaryButton`}
+                  type="button"
+                  style={{
+                    ...sc.secondaryButton,
+                    marginRight: theme.spacing[3],
+                  }}
+                  onClick={() => window.history.back()}
+                >
+                  Cancel
+                </button>
+                <button
                   type="submit"
-                  disabled={isSubmitting}>
-                  Create comment
+                  disabled={isSubmitting}
+                  style={{
+                    ...sc.primaryButton,
+                    opacity: isSubmitting ? 0.7 : 1,
+                    cursor: isSubmitting ? "not-allowed" : "pointer",
+                  }}
+                >
+                  {isSubmitting && (
+                    <ClipLoader size={16} color="#ffffff" style={{ marginRight: theme.spacing[2] }} />
+                  )}
+                  Create Comment
                 </button>
               </div>
             </form>

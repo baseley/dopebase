@@ -9,92 +9,115 @@ import styles from '../../../../admin/themes/admin.module.css'
 const baseAPIURL = `${pluginsAPIURL}admin/stripe/`
 
 function PaymentMethodUserTypeaheadComponent(props) {
-  const [isLoading, setIsLoading] = useState(true)
-  const [users, setUsers] = useState(null)
-  const [typeaheadValue, setTypeaheadValue] = useState('')
-  const [inputValue, setInputValue] = useState(null)
-  const [isTypeaheadVisible, setIsTypeaheadVisible] = useState(false)
+  const { id, name, onSelect } = props;
+  const [isLoading, setIsLoading] = useState(true);
+  const [users, setUsers] = useState([]);
+  const [typeaheadValue, setTypeaheadValue] = useState('');
+  const [inputValue, setInputValue] = useState('');
+  const [isTypeaheadVisible, setIsTypeaheadVisible] = useState(false);
+  const [user, token, loading] = useCurrentUser();
 
-  const [user, token, loading] = useCurrentUser()
-
-  const { id, name, onSelect } = props
-
+  // Fetch initial user data when id changes
   useEffect(() => {
-    const fetchData = async () => {
-      if (!id) {
-        setIsLoading(false)
-        return
-      }
+    if (!id) {
+      setIsLoading(false);
+      return;
+    }
+
+    const fetchInitialUser = async () => {
       try {
-        const response = await authFetch(
-          baseAPIURL + 'users/view?id=' + id,
-        )
+        const response = await authFetch(`${baseAPIURL}users/view?id=${id}`);
         if (response?.data) {
-          const data = response.data
-          setInputValue(data.firstName + " " + data.lastName)
-          setIsLoading(false)
+          const { firstName, lastName } = response.data;
+          setInputValue(`${firstName} ${lastName}`);
         }
       } catch (err) {
-        console.log(err)
-        setIsLoading(false)
+        console.error('Failed to fetch user:', err);
+      } finally {
+        setIsLoading(false);
       }
-    }
-    fetchData()
-  }, [id])
+    };
 
+    fetchInitialUser();
+  }, [id]);
+
+  // Fetch users when typeahead value changes
   useEffect(() => {
-    const fetchData = async () => {
-      if (typeaheadValue == null || loading == true) {
-        return
-      }
+    if (!typeaheadValue || loading) return;
+
+    const fetchUsers = async () => {
       try {
         const response = await authFetch(
-          baseAPIURL +
-            'users/list?limit=10&search=' +
-            typeaheadValue,
-        )
-        if (response?.data) {
-          console.log(response.data)
-          if (response?.data) {
-            setUsers(response.data)
-          }
-        }
+          `${baseAPIURL}users/list?limit=10&search=${typeaheadValue}`
+        );
+        setUsers(response?.data || []);
       } catch (err) {
-        console.log(err)
+        console.error('Failed to fetch users:', err);
+        setUsers([]);
       }
+    };
+
+    const debounceTimer = setTimeout(fetchUsers, 300);
+    return () => clearTimeout(debounceTimer);
+  }, [typeaheadValue, loading]);
+
+  const handleChange = (event) => {
+    const text = event.target.value;
+    setTypeaheadValue(text);
+    setInputValue(text);
+    setIsTypeaheadVisible(text.length > 0);
+  };
+
+  const handleFocus = () => {
+    if (inputValue) {
+      setIsTypeaheadVisible(true);
     }
-    fetchData()
-  }, [typeaheadValue, loading])
+  };
 
-  const handleChange = event => {
-    const text = event.target.value
-    setTypeaheadValue(text)
-    setInputValue(text)
-  }
+  const handleBlur = () => {
+    setTimeout(() => setIsTypeaheadVisible(false), 200);
+  };
 
-  const onFocus = () => {
-    setIsTypeaheadVisible(true)
-  }
+  const handleUserSelect = (user) => {
+    setInputValue(`${user.firstName} ${user.lastName}`);
+    onSelect?.(user.id);
+    setIsTypeaheadVisible(false);
+  };
 
-  const onBlur = () => {
-    //setIsTypeaheadVisible(false)
-  }
-
-  const onClick = data => {
-    setInputValue(data.firstName + " " + data.lastName)
-    onSelect && onSelect(data.id)
-    setIsTypeaheadVisible(false)
-  }
-
-  const listItems =
-    users && users.length
-      ? users.map(
-          data => <li onClick={() => onClick(data)}><table key={data.id}><tr><td><img src={data.profilePictureURL} /></td><td><span>{data.firstName} {data.lastName} ({data.email})</span></td></tr></table></li>, // <li>{element.firstName} {element.lastName}</li>
-        )
-      : null
+  const renderUserItem = (user) => (
+    <li 
+      key={user.id}
+      className={styles.TypeaheadResultItem}
+      onClick={() => handleUserSelect(user)}
+    >
+      <div className={styles.UserResultContainer}>
+        {user.profilePictureURL && (
+          <img 
+            src={user.profilePictureURL} 
+            alt={`${user.firstName} ${user.lastName}`}
+            className={styles.UserAvatar}
+          />
+        )}
+        <div className={styles.UserInfo}>
+          <span className={styles.UserName}>
+            {user.firstName} {user.lastName}
+          </span>
+          <span className={styles.UserEmail}>{user.email}</span>
+        </div>
+      </div>
+    </li>
+  );
 
   if (isLoading) {
-    console.log('Error loading data for: ' + id)
+    return (
+      <div className={`${styles.TypeaheadComponent} ${styles.Loading}`}>
+        <input 
+          className={`${styles.FormTextField} FormTextField`}
+          disabled
+          value="Loading..."
+        />
+      </div>
+    );
   }
 
   return (
@@ -102,25 +125,33 @@ function PaymentMethodUserTypeaheadComponent(props) {
       <input
         className={`${styles.FormTextField} FormTextField`}
         autoComplete="off"
-        onFocus={onFocus}
-        onBlur={onBlur}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
         type="text"
         name={name}
         value={inputValue}
         onChange={handleChange}
+        placeholder="Search users..."
       />
-      {isTypeaheadVisible && (
-        <div
-          className={`${styles.TypeaheadResultsContainer} TypeaheadResultsContainer`}>
-          <ul
+      
+      {isTypeaheadVisible && users.length > 0 && (
+        <div className={`${styles.TypeaheadResultsContainer} TypeaheadResultsContainer`}>
+          <ul 
             className={`${styles.TypeaheadResultsList} TypeaheadResultsList`}
-            id={name}>
-            {listItems}
+            id={name}
+          >
+            {users.map(renderUserItem)}
           </ul>
         </div>
       )}
+
+      {isTypeaheadVisible && users.length === 0 && typeaheadValue && (
+        <div className={`${styles.TypeaheadResultsContainer} TypeaheadResultsContainer`}>
+          <div className={styles.NoResults}>No users found</div>
+        </div>
+      )}
     </div>
-  )
+  );
 }
 
-export default PaymentMethodUserTypeaheadComponent
+export default PaymentMethodUserTypeaheadComponent;

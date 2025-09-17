@@ -2,454 +2,317 @@
 'use client'
 import React, { useEffect, useState } from 'react'
 import { Formik } from 'formik'
-import { ClipLoader } from 'react-spinners'
-import ReactMarkdown from 'react-markdown'
+import { Loader, Tag, Check, Calendar, ToggleLeft, ToggleRight } from 'lucide-react'
 import dynamic from 'next/dynamic'
-import CodeMirror from '@uiw/react-codemirror'
-import { javascript } from '@codemirror/lang-javascript'
-import { css } from '@codemirror/lang-css'
-import { html } from '@codemirror/lang-html'
-import { markdown } from '@codemirror/lang-markdown'
-import IMDatePicker from '../../../../../admin/components/forms/IMDatePicker'
-import { LocationPicker } from '../../../../../admin/components/forms/locationPicker'
-import {
-  TypeaheadComponent,
-  IMObjectInputComponent,
-  IMMultimediaComponent,
-  IMArrayInputComponent,
-  IMColorPicker,
-  IMColorsContainer,
-  IMColorBoxComponent,
-  IMStaticMultiSelectComponent,
-  IMStaticSelectComponent,
-  IMPhoto,
-  IMModal,
-  IMToggleSwitchComponent,
-} from '../../../../../admin/components/forms/fields'
-import styles from '../../../../../admin/themes/admin.module.css'
+import { toast } from 'react-toastify'
+import { theme, styledComponents as sc } from '@/lib/theme'
 
-/* Insert extra imports here */
+// Dynamic imports for components
+const IMDatePicker = dynamic(() => import('@/admin/components/forms/IMDatePicker'), {
+  ssr: false,
+  loading: () => <div style={{ height: '44px', display: 'flex', alignItems: 'center' }}>Loading date picker...</div>
+})
+
+const IMToggleSwitchComponent = dynamic(() => import('@/admin/components/forms/fields/IMToggleSwitchComponent/IMToggleSwitchComponent'))
 
 import { pluginsAPIURL } from '../../../../../config/config'
 import { authPost } from '../../../../../modules/auth/utils/authFetch'
 
-const beautify_html = require('js-beautify').html
 const baseAPIURL = `${pluginsAPIURL}`
+
+interface NonFormData {
+  created_at?: string
+  published?: boolean
+  [key: string]: any
+}
+
+interface FormValues {
+  id?: string
+  name?: string
+  slug?: string
+  [key: string]: any
+}
+
+interface TicketTagData extends FormValues, NonFormData {}
 
 const AddNewTicketTagView = () => {
   const [isLoading, setIsLoading] = useState(false)
-  const [modifiedNonFormData, setModifiedNonFormData] = useState({})
-  const [originalData, setOriginalData] = useState(null)
+  const [modifiedNonFormData, setModifiedNonFormData] = useState<NonFormData>({})
+  const [originalData, setOriginalData] = useState<TicketTagData | null>(null)
 
   useEffect(() => {
+    const now = Math.floor(new Date().getTime() / 1000).toString()
     setModifiedNonFormData({
-      created_at: Math.floor(new Date().getTime() / 1000).toString(),
+      created_at: now,
+      published: false,
     })
   }, [])
 
-  const createTicketTag = async (data, setSubmitting) => {
+  const createTicketTag = async (data: TicketTagData, setSubmitting: (isSubmitting: boolean) => void) => {
     setIsLoading(true)
     const url = `${baseAPIURL}admin/customer-support/ticket_tags/add`
-    const response = await authPost(
-      url,
-      JSON.stringify({ ...data, ...modifiedNonFormData }),
-    )
-    const resData = response.data
-    if (resData?.error) {
-      alert(resData?.error)
+    
+    try {
+      const response = await authPost(url, JSON.stringify({ ...data, ...modifiedNonFormData }))
+      const resData = response.data
+
+      if (resData?.error) {
+        toast.error(resData.error)
+      } else {
+        toast.success("Ticket tag created successfully")
+      }
+    } catch (error: any) {
+      toast.error(`Error creating ticket tag: ${error.message || "Unknown error"}`)
+      console.error(error)
+    } finally {
+      setSubmitting(false)
+      setIsLoading(false)
     }
-    setSubmitting(false)
-    setIsLoading(false)
   }
 
-  const onTypeaheadSelect = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value
-    setModifiedNonFormData(newData)
-  }
-
-  const onMultipleTypeaheadSelect = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (newData[fieldName] != undefined) {
-      newData[fieldName].push(value)
-    } else {
-      newData[fieldName] = [value]
-    }
-    setModifiedNonFormData(newData)
-  }
-
-  const onMultipleTypeaheadDelete = (index, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName].splice(index, 1)
-    setModifiedNonFormData(newData)
-  }
-
-  const handleSwitchChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const handleSwitchChange = (value: boolean, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
     newData[fieldName] = value ^ true
     setModifiedNonFormData(newData)
   }
 
-  const handleSelectChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value
-    setModifiedNonFormData(newData)
-  }
-
-  const handleColorChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value
-    setModifiedNonFormData(newData)
-  }
-
-  const handleColorDelete = fieldName => {
-    var newData = { ...modifiedNonFormData }
-    delete newData[fieldName]
-    setModifiedNonFormData(newData)
-  }
-
-  const handleColorsChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (newData[fieldName] != undefined) {
-      newData[fieldName].push(value)
-    } else {
-      newData[fieldName] = [value]
-    }
-    setModifiedNonFormData(newData)
-  }
-
-  const handleColorsDelete = (index, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName].splice(index, 1)
-    setModifiedNonFormData(newData)
-  }
-
-  const handleArrayInput = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (newData[fieldName] != undefined) {
-      newData[fieldName].push(value)
-    } else {
-      newData[fieldName] = [value]
-    }
-    setModifiedNonFormData(newData)
-  }
-
-  const handleArrayDelete = (index, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName].splice(index, 1)
-    setModifiedNonFormData(newData)
-  }
-
-  const handleObjectInput = (key, value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (newData[fieldName] != undefined) {
-      newData[fieldName][key] = value
-    } else {
-      newData[fieldName] = { [key]: value }
-    }
-    setModifiedNonFormData(newData)
-  }
-
-  const handleObjectDelete = (key, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = Object.keys(newData[fieldName]).reduce(
-      (object, keys) => {
-        if (keys !== key) {
-          object[keys] = newData[fieldName][keys]
-        }
-        return object
-      },
-      {},
-    )
-    setModifiedNonFormData(newData)
-  }
-
-  const onDateChange = (toDate, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const onDateChange = (toDate: string, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
     newData[fieldName] = toDate
     setModifiedNonFormData(newData)
   }
 
-  const onLocationChange = (addressObject, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (!addressObject || !addressObject.location || !addressObject.gmaps) {
-      return
-    }
-    const location = {
-      longitude: addressObject.location.lng,
-      latitude: addressObject.location.lat,
-      address: addressObject.label,
-      placeID: addressObject.placeId,
-      detailedAddress: addressObject.gmaps.address_components,
-    }
-    newData[fieldName] = location
-    setModifiedNonFormData(newData)
-  }
-
-  const onSimpleLocationChange = (addressObject, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (!addressObject || !addressObject.location) {
-      return
-    }
-    const location = {
-      lng: addressObject.location.lng,
-      lat: addressObject.location.lat,
-      // address: addressObject.label,
-    }
-    newData[fieldName] = location
-    setModifiedNonFormData(newData)
-  }
-
-  const onCodeChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value
-    setModifiedNonFormData(newData)
-  }
-
-  const onMarkdownEditorChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value
-    setModifiedNonFormData(newData)
-  }
-
-  const handleImageUpload = (event, fieldName, isMultiple) => {
-    const files = event.target.files
-    const formData = new FormData()
-    for (var i = 0; i < files.length; ++i) {
-      formData.append('photos', files[i])
-    }
-
-    fetch(pluginsAPIURL + '../media/upload', {
-      method: 'POST',
-      body: formData,
-    })
-      .then(response => response.json())
-      .then(response => {
-        var newData = { ...modifiedNonFormData }
-        if (!isMultiple) {
-          const url = response.data && response.data[0] && response.data[0].url
-          newData[fieldName] = url
-        } else {
-          // multiple photos
-          const urls = response.data && response.data.map(item => item.url)
-          if (
-            !modifiedNonFormData[fieldName] ||
-            modifiedNonFormData[fieldName].length <= 0
-          ) {
-            newData[fieldName] = urls
-          } else {
-            newData[fieldName] = [...modifiedNonFormData[fieldName], ...urls]
-          }
-        }
-        setModifiedNonFormData(newData)
-        console.log(response)
-      })
-      .catch(error => {
-        console.error(error)
-      })
-  }
-
-  const handleDeletePhoto = (srcToBeRemoved, fieldName, isMultiple) => {
-    if (isMultiple) {
-      var newData = { ...modifiedNonFormData }
-      var currentURLs = newData[fieldName]
-      if (currentURLs) {
-        const newURLs = currentURLs.filter(src => src != srcToBeRemoved)
-        newData[fieldName] = newURLs
-        setModifiedNonFormData(newData)
-      }
-    } else {
-      var newData = { ...modifiedNonFormData }
-      newData[fieldName] = null
-      setModifiedNonFormData(newData)
-    }
-  }
-
-  const handleMultimediaUpload = (event, fieldName, isMultiple) => {
-    const files = event.target.files
-    const formData = new FormData()
-    for (var i = 0; i < files.length; ++i) {
-      formData.append('multimedias', files[i])
-    }
-    fetch(pluginsAPIURL + '../media/uploadMultimedias', {
-      method: 'POST',
-      body: formData,
-    })
-      .then(response => response.json())
-      .then(response => {
-        var newData = { ...modifiedNonFormData }
-        if (!isMultiple) {
-          const url = response.data && response.data[0] && response.data[0].url
-          newData[fieldName] = url
-        } else {
-          // multiple media
-          const data =
-            response.data &&
-            response.data.map(item => {
-              return { url: item.url, mime: item.mimetype }
-            })
-          if (
-            !modifiedNonFormData[fieldName] ||
-            modifiedNonFormData[fieldName].length <= 0
-          ) {
-            newData[fieldName] = data
-          } else {
-            newData[fieldName] = [...modifiedNonFormData[fieldName], ...data]
-          }
-        }
-        setModifiedNonFormData(newData)
-        console.log(response)
-      })
-      .catch(error => {
-        console.error(error)
-      })
-  }
-
-  const handleMultimediaDelete = (srcToBeRemoved, fieldName, isMultiple) => {
-    if (isMultiple) {
-      var newData = { ...modifiedNonFormData }
-      var currentData = newData[fieldName]
-      if (currentData) {
-        const finalData = currentData.reduce((arrayAcumulator, curVal) => {
-          if (srcToBeRemoved !== curVal.url) {
-            arrayAcumulator.push(curVal)
-          }
-          return arrayAcumulator
-        })
-        newData[fieldName] = finalData
-        setModifiedNonFormData(newData)
-      }
-    } else {
-      var newData = { ...modifiedNonFormData }
-      newData[fieldName] = null
-      setModifiedNonFormData(newData)
-    }
-  }
-
   if (isLoading) {
     return (
-      <div className="sweet-loading card">
-        <div className="spinner-container">
-          <ClipLoader
-            className="spinner"
-            sizeUnit={'px'}
-            size={50}
-            color={'#123abc'}
-            loading={isLoading}
-          />
-        </div>
+      <div style={sc.loadingContainer}>
+        <Loader className="animate-spin" size={32} color={theme.colors.accent.primary} />
+        <p style={sc.loadingText}>Creating ticket tag...</p>
       </div>
     )
   }
 
-  return (
-    <div className={`${styles.FormCard} FormCard`}>
-      <div className={`${styles.CardBody} CardBody`}>
-        <h1>Create New TicketTag</h1>
-        <Formik
-          initialValues={{}}
-          validate={values => {
-            values = { ...values, ...modifiedNonFormData }
-            const errors = {}
-            {
-              /* Insert all form errors here */
-        if (!values.id) {
-            errors.id = 'Field Required!'
-        }
+  // Form field styles
+  const formField = {
+    container: {
+      marginBottom: theme.spacing[6],
+    } as React.CSSProperties,
+    label: {
+      ...sc.formLabel,
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing[2],
+    } as React.CSSProperties,
+    input: {
+      ...sc.formInput,
+    } as React.CSSProperties,
+    error: {
+      ...sc.formError,
+    } as React.CSSProperties,
+    grid2: {
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr',
+      gap: theme.spacing[6],
+    } as React.CSSProperties,
+  }
 
+  return (
+    <div style={sc.formCard}>
+      <div style={sc.formHeader}>
+        <h1 style={sc.formTitle}>
+          <Tag size={24} color={theme.colors.accent.primary} />
+          Create New Ticket Tag
+        </h1>
+      </div>
+      <div style={sc.formContent}>
+        <Formik
+          initialValues={{} as FormValues}
+          validate={(values) => {
+            const combinedValues = { ...values, ...modifiedNonFormData }
+            const errors: Record<string, string> = {}
+
+            if (!combinedValues.id) {
+              errors.id = 'ID is required'
+            }
+
+            if (!combinedValues.name) {
+              errors.name = 'Name is required'
+            }
+
+            if (!combinedValues.slug) {
+              errors.slug = 'Slug is required'
             }
 
             return errors
           }}
-          onSubmit={(values, { setSubmitting }) => {
+          onSubmit={(values: FormValues, { setSubmitting }) => {
             createTicketTag(values, setSubmitting)
-          }}>
-          {({
-            values,
-            errors,
-            touched,
-            handleChange,
-            handleBlur,
-            handleSubmit,
-            isSubmitting,
-            /* and other goodies */
-          }) => (
+          }}
+        >
+          {({ values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
             <form onSubmit={handleSubmit}>
-              {/* Insert all add form fields here */}
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>ID</label>
-                        <input
-                            className={`${styles.FormTextField} FormTextField`}
-                            type="id"
-                            name="id"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.id}
-                        />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.id && touched.id && errors.id}
-                        </p>
-                    </div>
-    
+              {/* Tag Information */}
+              <div style={{ marginBottom: theme.spacing[8] }}>
+                <h2 style={{
+                  fontSize: theme.typography.fontSizes.xl,
+                  fontWeight: theme.typography.fontWeights.semibold,
+                  marginBottom: theme.spacing[4],
+                  color: theme.colors.text.primary,
+                }}>
+                  Tag Details
+                </h2>
 
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Name</label>
-                        <input
-                            className={`${styles.FormTextField} FormTextField`}
-                            type="name"
-                            name="name"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.name}
-                        />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.name && touched.name && errors.name}
-                        </p>
-                    </div>
-    
+                {/* ID */}
+                <div style={formField.container}>
+                  <label htmlFor="id" style={formField.label}>
+                    <Check size={16} color={theme.colors.accent.primary} />
+                    ID <span style={{ color: theme.colors.feedback.error }}>*</span>
+                  </label>
+                  <input
+                    id="id"
+                    name="id"
+                    type="text"
+                    placeholder="Unique tag ID"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.id || ''}
+                    style={{
+                      ...formField.input,
+                      borderColor: errors.id && touched.id ? theme.colors.feedback.error : theme.forms.input.borderColor,
+                    }}
+                  />
+                  {errors.id && touched.id && <p style={formField.error}>{errors.id}</p>}
+                </div>
 
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Slug</label>
-                        <input
-                            className={`${styles.FormTextField} FormTextField`}
-                            type="slug"
-                            name="slug"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.slug}
-                        />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.slug && touched.slug && errors.slug}
-                        </p>
-                    </div>
-    
+                {/* Name */}
+                <div style={formField.container}>
+                  <label htmlFor="name" style={formField.label}>
+                    <Tag size={16} color={theme.colors.accent.primary} />
+                    Name <span style={{ color: theme.colors.feedback.error }}>*</span>
+                  </label>
+                  <input
+                    id="name"
+                    name="name"
+                    type="text"
+                    placeholder="Tag name"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.name || ''}
+                    style={{
+                      ...formField.input,
+                      borderColor: errors.name && touched.name ? theme.colors.feedback.error : theme.forms.input.borderColor,
+                    }}
+                  />
+                  {errors.name && touched.name && <p style={formField.error}>{errors.name}</p>}
+                </div>
 
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Published</label>
-                        <IMToggleSwitchComponent isChecked={modifiedNonFormData.published} onSwitchChange={() => handleSwitchChange(modifiedNonFormData["published"], "published")} />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.published && touched.published && errors.published}
-                        </p>
-                    </div>
-    
+                {/* Slug */}
+                <div style={formField.container}>
+                  <label htmlFor="slug" style={formField.label}>
+                    <Tag size={16} color={theme.colors.accent.primary} />
+                    Slug <span style={{ color: theme.colors.feedback.error }}>*</span>
+                  </label>
+                  <input
+                    id="slug"
+                    name="slug"
+                    type="text"
+                    placeholder="tag-slug"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.slug || ''}
+                    style={{
+                      ...formField.input,
+                      borderColor: errors.slug && touched.slug ? theme.colors.feedback.error : theme.forms.input.borderColor,
+                    }}
+                  />
+                  {errors.slug && touched.slug && <p style={formField.error}>{errors.slug}</p>}
+                </div>
 
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Created At</label>
-                        <IMDatePicker
-                            selected={modifiedNonFormData.created_at}
-                            onChange={(toDate) => onDateChange(toDate, "created_at")}
-                        />
-                    </div>
-    
+                {/* Published */}
+                <div style={formField.container}>
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}>
+                    <label style={formField.label}>
+                      {modifiedNonFormData.published ? (
+                        <ToggleRight size={16} color={theme.colors.accent.primary} />
+                      ) : (
+                        <ToggleLeft size={16} color={theme.colors.text.tertiary} />
+                      )}
+                      Published
+                    </label>
+                    {IMToggleSwitchComponent ? (
+                      <IMToggleSwitchComponent
+                        isChecked={modifiedNonFormData.published}
+                        onSwitchChange={() => handleSwitchChange(modifiedNonFormData["published"], "published")}
+                      />
+                    ) : (
+                      <input
+                        type="checkbox"
+                        checked={modifiedNonFormData.published || false}
+                        onChange={() => handleSwitchChange(modifiedNonFormData["published"], "published")}
+                      />
+                    )}
+                  </div>
+                </div>
+              </div>
 
+              {/* Date Information */}
+              <div style={{ marginBottom: theme.spacing[8] }}>
+                <h2 style={{
+                  fontSize: theme.typography.fontSizes.xl,
+                  fontWeight: theme.typography.fontWeights.semibold,
+                  marginBottom: theme.spacing[4],
+                  color: theme.colors.text.primary,
+                }}>
+                  Date Information
+                </h2>
 
-              <div
-                className={`${styles.FormActionContainer} FormActionContainer`}>
+                {/* Created Date */}
+                <div style={formField.container}>
+                  <label style={formField.label}>
+                    <Calendar size={16} color={theme.colors.accent.primary} />
+                    Created Date
+                  </label>
+                  <IMDatePicker
+                    selected={modifiedNonFormData.created_at}
+                    onChange={(toDate) => onDateChange(toDate, "created_at")}
+                  />
+                </div>
+              </div>
+
+              {/* Form Actions */}
+              <div style={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                marginTop: theme.spacing[6],
+                paddingTop: theme.spacing[4],
+                borderTop: `1px solid ${theme.colors.border.light}`,
+              }}>
                 <button
-                  className={`${styles.PrimaryButton} PrimaryButton`}
+                  type="button"
+                  style={{
+                    ...sc.secondaryButton,
+                    marginRight: theme.spacing[3],
+                  }}
+                  onClick={() => window.history.back()}
+                >
+                  Cancel
+                </button>
+                <button
                   type="submit"
-                  disabled={isSubmitting}>
-                  Create ticket_tag
+                  disabled={isSubmitting}
+                  style={{
+                    ...sc.primaryButton,
+                    opacity: isSubmitting ? 0.7 : 1,
+                    cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  {isSubmitting && (
+                    <Loader className="animate-spin" size={16} style={{ marginRight: theme.spacing[2] }} />
+                  )}
+                  Create Ticket Tag
                 </button>
               </div>
             </form>

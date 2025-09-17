@@ -1,182 +1,245 @@
-// @ts-nocheck
-'use client'
-import React, { useMemo, useEffect, useState } from 'react'
-import { GetStaticProps } from 'next'
-import { useRouter } from 'next/navigation'
+"use client"
+
+import { useMemo, useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import {
   useReactTable,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   flexRender,
-} from '@tanstack/react-table'
+} from "@tanstack/react-table"
 import {
-  IMLocationTableCell,
-  IMSimpleLocationTableCell,
-  IMColorsTableCell,
-  IMMultimediaTableCell,
-  IMObjectTableCell,
-  IMImagesTableCell,
-  IMDateTableCell,
-  IMForeignKeyTableCell,
-  IMAddressTableCell,
-} from '../../../../../admin/components/forms/table'
-import {
-  IMColorBoxComponent,
-  IMPhoto,
-  IMModal,
-  IMToggleSwitchComponent,
-} from '../../../../../admin/components/forms/fields'
-import { pluginsAPIURL } from '../../../../../config/config'
-import useCurrentUser from '../../../../../modules/auth/hooks/useCurrentUser'
-import { authPost } from '../../../../../modules/auth/utils/authFetch'
-import styles from '../../../../../admin/themes/admin.module.css'
-/* Insert extra imports for table cells here */
+  Search,
+  Plus,
+  Eye,
+  Edit,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Filter,
+  SlidersHorizontal,
+  ArrowUpDown,
+  Loader2,
+  ImageIcon,
+  Tag,
+  FileText,
+  Layers,
+  FolderTree,
+} from "lucide-react"
+import { IMImagesTableCell, IMForeignKeyTableCell } from "@/admin/components/forms/table"
+import { pluginsAPIURL } from "@/config/config"
+import useCurrentUser from "@/modules/auth/hooks/useCurrentUser"
+import { authPost } from "@/modules/auth/utils/authFetch"
+import { theme } from "@/lib/theme"
+import type React from "react"
 
 const baseAPIURL = `${pluginsAPIURL}admin/blog/`
 
-export const getStaticProps: GetStaticProps = async () => {
-  return { props: { isAdminRoute: true } }
+interface ArticleCategory {
+  id: string
+  name: string
+  description: string | null
+  slug: string
+  logo_url: string | null
+  published: boolean
+  parent_id: string | null
 }
 
 const ArticleCategoriesColumns = [
-  
-      {
-          id:"name",
-          header: "Name",
-          accessorKey: "name",
-      },
-      {
-          id:"description",
-          header: "Description",
-          accessorKey: "description",
-          cell: data => (
-              <div className='markdownReadOnly'>{data?.value && data.value.substring(0, 100)}...</div>
-          )
-      },
-      {
-          id:"slug",
-          header: "Slug",
-          accessorKey: "slug",
-      },
-      {
-          id:"logo_url",
-          header: "Logo",
-          accessorKey: "logo_url",
-          cell: data => (
-              <IMImagesTableCell singleImageURL={data.value} />
-          )
-      },
-      {
-          id:"seo_title",
-          header: "SEO Title",
-          accessorKey: "seo_title",
-      },
-      {
-          id:"seo_description",
-          header: "SEO Description",
-          accessorKey: "seo_description",
-      },
-      {
-          id:"canonical_url",
-          header: "Canonical URL",
-          accessorKey: "canonical_url",
-      },
-      {
-          id:"seo_image_url",
-          header: "SEO Cover Image",
-          accessorKey: "seo_image_url",
-          cell: data => (
-              <IMImagesTableCell singleImageURL={data.value} />
-          )
-      },
-      {
-          id:"published",
-          header: "Published",
-          accessorKey: "published",
-          cell: data => (
-              <IMToggleSwitchComponent isChecked={data.value} disabled />
-          )
-      },
-      {
-          id:"parent_id",
-          header: "Parent Category",
-          accessorKey: "parent_id",
-          cell: data => (
-              <IMForeignKeyTableCell id={data.value} apiRouteName="admin/blog/article_categories" viewRoute="article_categories"
-          titleKey="name" />
-          )
-      },
-      {
-        id: 'actions',
-        header: 'Actions',
-        accessorKey: 'actions',
-        cell: data => <ActionsItemView data={data} />,
-      },
+  {
+    id: "name",
+    header: "Name",
+    accessorKey: "name",
+    cell: ({ getValue }) => <div style={theme.listView.nameCell}>{getValue()}</div>,
+  },
+  {
+    id: "description",
+    header: "Description",
+    accessorKey: "description",
+    cell: ({ getValue }) => (
+      <div style={theme.listView.descriptionCell}>{getValue() ? `${getValue().substring(0, 60)}...` : "-"}</div>
+    ),
+  },
+  {
+    id: "slug",
+    header: "Slug",
+    accessorKey: "slug",
+    cell: ({ getValue }) => (
+      <div className="flex items-center">
+        <Tag className="mr-2 h-4 w-4 text-gray-400" />
+        <span
+          style={{
+            fontFamily: "monospace",
+            fontSize: "0.75rem",
+            color: theme.colors.text.secondary,
+          }}
+        >
+          {getValue() || "-"}
+        </span>
+      </div>
+    ),
+  },
+  {
+    id: "logo_url",
+    header: "Logo",
+    accessorKey: "logo_url",
+    cell: ({ getValue }) => (
+      <div className="flex justify-center">
+        {getValue() ? (
+          <div
+            className="relative h-10 w-10 rounded-md overflow-hidden border"
+            style={{ borderColor: theme.colors.border.light }}
+          >
+            <IMImagesTableCell singleImageURL={getValue()} />
+          </div>
+        ) : (
+          <div
+            className="flex h-10 w-10 items-center justify-center rounded-md"
+            style={{ backgroundColor: theme.colors.surface.tertiary }}
+          >
+            <ImageIcon className="h-5 w-5" style={{ color: theme.colors.text.tertiary }} />
+          </div>
+        )}
+      </div>
+    ),
+  },
+  {
+    id: "published",
+    header: "Status",
+    accessorKey: "published",
+    cell: ({ getValue }) => (
+      <div className="flex justify-center">
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            padding: "0.25rem 0.75rem",
+            borderRadius: "9999px",
+            fontSize: "0.75rem",
+            fontWeight: 500,
+            backgroundColor: getValue() ? "rgba(16, 185, 129, 0.15)" : "rgba(245, 158, 11, 0.15)",
+            color: getValue() ? theme.colors.feedback.success : theme.colors.feedback.warning,
+          }}
+        >
+          {getValue() ? "Published" : "Draft"}
+        </span>
+      </div>
+    ),
+  },
+  {
+    id: "parent_id",
+    header: "Parent",
+    accessorKey: "parent_id",
+    cell: ({ getValue }) => (
+      <div className="flex justify-center">
+        {getValue() ? (
+          <div className="flex items-center">
+            <Layers className="mr-2 h-4 w-4 text-gray-400" />
+            <IMForeignKeyTableCell
+              id={getValue()}
+              apiRouteName="admin/blog/article_categories"
+              viewRoute="article_categories"
+              titleKey="name"
+            />
+          </div>
+        ) : (
+          <span style={{ fontSize: "0.875rem", color: theme.colors.text.tertiary }}>-</span>
+        )}
+      </div>
+    ),
+  },
+  {
+    id: "actions",
+    header: "Actions",
+    accessorKey: "actions",
+    cell: (data) => <ActionsItemView data={data} />,
+  },
 ]
 
-function ActionsItemView(props) {
-  console.log('>>>> Action Item View')
-  const { data } = props
+function ActionsItemView({ data }: { data: any }) {
   const router = useRouter()
+  const [isDeleting, setIsDeleting] = useState(false)
 
-  const handleView = item => {
-    const viewPath = './view?id=' + item.id
-    router.push(viewPath)
+  const handleView = (item: ArticleCategory) => {
+    router.push(`./article_categories/view?id=${item.id}`)
   }
 
-  const handleEdit = item => {
-    const editPath = './update?id=' + item.id
-    router.push(editPath)
+  const handleEdit = (item: ArticleCategory) => {
+    router.push(`./update?id=${item.id}`)
   }
 
-  const handleDelete = async item => {
-    if (window.confirm('Are you sure you want to delete this item?')) {
-      const path = baseAPIURL + 'article_categories/delete'
-      const response = await authPost(path, { id: item.id })
-      window.location.reload(false)
+  const handleDelete = async (item: ArticleCategory) => {
+    if (window.confirm("Are you sure you want to delete this category?")) {
+      setIsDeleting(true)
+      try {
+        const path = baseAPIURL + "article_categories/delete"
+        await authPost(path, { id: item.id })
+        window.location.reload()
+      } catch (error) {
+        console.error("Error deleting category:", error)
+        alert("Failed to delete category. Please try again.")
+      } finally {
+        setIsDeleting(false)
+      }
     }
   }
 
   return (
-    <div className={`${styles.inlineActionsContainer} inlineActionsContainer bg-red-500`}>
+    <div className="flex items-center justify-end">
       <button
         onClick={() => handleView(data.row.original)}
-        type="button"
-        id="tooltip264453216"
-        className={`${styles.btnSm} btn-icon btn btn-info btn-sm`}>
-        <i className="fa fa-eye"></i>
+        style={{
+          ...theme.listView.iconButton,
+          backgroundColor: theme.colors.state.hover,
+          color: theme.colors.text.primary,
+        }}
+        title="View"
+        disabled={isDeleting}
+      >
+        <Eye size={16} />
       </button>
       <button
         onClick={() => handleEdit(data.row.original)}
-        type="button"
-        id="tooltip366246651"
-        className={`${styles.btnSm} btn-icon btn btn-success btn-sm`}>
-        <i className="fa fa-edit"></i>
+        style={{
+          ...theme.listView.iconButton,
+          backgroundColor: theme.colors.accent.muted,
+          color: theme.colors.accent.primary,
+        }}
+        title="Edit"
+        disabled={isDeleting}
+      >
+        <Edit size={16} />
       </button>
       <button
         onClick={() => handleDelete(data.row.original)}
-        type="button"
-        id="tooltip476609793"
-        className={`${styles.btnSm} btn-icon btn btn-danger btn-sm`}>
-        <i className="fa fa-times"></i>
+        style={{
+          ...theme.listView.iconButton,
+          backgroundColor: "rgba(239, 68, 68, 0.15)",
+          color: theme.colors.feedback.error,
+        }}
+        title="Delete"
+        disabled={isDeleting}
+      >
+        {isDeleting ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
       </button>
     </div>
   )
 }
 
-function ArticleCategoriesListView(props) {
+function ArticleCategoriesListView() {
   const [isLoading, setIsLoading] = useState(true)
-  const [ArticleCategories, setArticleCategories] = useState([])
-  const [data, setData] = useState([])
-  const [globalFilter, setGlobalFilter] = useState('')
-
+  const [articleCategories, setArticleCategories] = useState<ArticleCategory[]>([])
+  const [data, setData] = useState<ArticleCategory[]>([])
+  const [globalFilter, setGlobalFilter] = useState("")
   const [user, token, loading] = useCurrentUser()
 
   const columns = useMemo(() => ArticleCategoriesColumns, [])
 
   const table = useReactTable({
-    data: ArticleCategories,
+    data: articleCategories,
     columns,
     state: {
       globalFilter,
@@ -185,178 +248,339 @@ function ArticleCategoriesListView(props) {
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    initialState: {
+      pagination: {
+        pageSize: 10,
+      },
+    },
   })
 
   useEffect(() => {
     if (loading) {
       return
     }
-    const config = {
-      headers: { Authorization: token },
+
+    const fetchData = async () => {
+      setIsLoading(true)
+      try {
+        const config = {
+          headers: { Authorization: token },
+        }
+
+        const response = await fetch(baseAPIURL + "article_categories/list", config)
+
+        if (!response.ok) {
+          throw new Error("Network response was not ok")
+        }
+
+        const data = await response.json()
+        setData(data)
+      } catch (error) {
+        console.error("Error fetching categories:", error)
+      } finally {
+        setIsLoading(false)
+      }
     }
 
-    const extraQueryParams = null
-    setIsLoading(true)
-
-    fetch(
-      baseAPIURL +
-        'article_categories/list' +
-        (extraQueryParams ? extraQueryParams : ''),
-      config,
-    )
-      .then(response => response.json())
-      .then(data => {
-        console.log(data)
-        const article_categories = data
-        setData(article_categories)
-
-        setIsLoading(false)
-      })
-      .catch(err => {
-        console.log(err)
-      })
-  }, [loading])
+    fetchData()
+  }, [loading, token])
 
   useEffect(() => {
     setArticleCategories(data)
   }, [globalFilter, data])
 
+  const router = useRouter()
+
   return (
-    <>
-      <div className={`${styles.adminContent} adminContent`}>
-        <div className="row">
-          <div className="col col-md-12">
-            <div className="Card">
-              <div className="CardHeader">
-                <a
-                  className={`${styles.Link} ${styles.AddLink} Link AddLink`}
-                  href="./add">
-                  Add New
-                </a>
-                <h1>Article Categories</h1>
-              </div>
-              <div className={`${styles.CardBody} CardBody`}>
-                <div className={`${styles.TableContainer} TableContainer`}>
-                  <input
-                    className={`${styles.SearchInput} SearchInput`}
-                    type="text"
-                    placeholder="Search..."
-                    value={globalFilter || ''}
-                    onChange={e => setGlobalFilter(e.target.value)}
-                  />
-                  <table className={`${styles.Table} Table`}>
-                    <thead>
-                      {table.getHeaderGroups().map(headerGroup => (
-                        <tr key={headerGroup.id}>
-                          {headerGroup.headers.map(header => (
-                            <th key={header.id}>
-                              {flexRender(
-                                header.column.columnDef.header,
-                                header.getContext()
-                              )}
-                            </th>
-                          ))}
-                        </tr>
-                      ))}
-                    </thead>
-                    <tbody>
-                      {table.getRowModel().rows.map(row => (
-                        <tr key={row.id}>
-                          {row.getVisibleCells().map(cell => (
-                            <td key={cell.id}>
-                              {flexRender(
-                                cell.column.columnDef.cell,
-                                cell.getContext()
-                              )}
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
-                      <tr>
-                        {isLoading ? (
-                          <td colSpan={ArticleCategoriesColumns.length - 1}>
-                            <p>Loading...</p>
-                          </td>
-                        ) : (
-                          <td colSpan={ArticleCategoriesColumns.length - 1}>
-                            <p className={`${styles.PaginationDetails} PaginationDetails`}>
-                              Showing {table.getRowModel().rows.length} of {data.length} results
-                            </p>
-                          </td>
-                        )}
-                      </tr>
-                    </tbody>
-                  </table>
-                  <div className={`${styles.Pagination} Pagination`}>
-                    <div className={`${styles.LeftPaginationButtons} LeftPaginationButtons`}>
-                      <button
-                        onClick={() => table.setPageIndex(0)}
-                        className={`${styles.PaginationButton}`}
-                        disabled={!table.getCanPreviousPage()}>
-                        <i className="fa fa-angle-double-left"></i>
-                      </button>
-                      <button
-                        onClick={() => table.previousPage()}
-                        className={`${styles.PaginationButton}`}
-                        disabled={!table.getCanPreviousPage()}>
-                        <i className="fa fa-angle-left"></i>
-                      </button>
-                    </div>
-                    <div className={`${styles.CenterPaginationButtons}`}>
-                      <span>
-                        Page{' '}
-                        <strong>
-                          {table.getState().pagination.pageIndex + 1} of{' '}
-                          {table.getPageCount()}
-                        </strong>
-                      </span>
-                      <span>
-                        | Go to page:{' '}
-                        <input
-                          type="number"
-                          defaultValue={table.getState().pagination.pageIndex + 1}
-                          onChange={e => {
-                            const page = e.target.value ? Number(e.target.value) - 1 : 0
-                            table.setPageIndex(page)
+    <div style={{ maxWidth: theme.content.maxWidth, margin: "0 auto" }}>
+      <div style={theme.listView.card}>
+        <div style={theme.listView.cardHeader}>
+          <h1 style={theme.listView.title}>
+            <FolderTree size={24} style={{ color: theme.colors.accent.primary, marginRight: "0.5rem" }} />
+            Article Categories
+          </h1>
+          <button
+            onClick={() => router.push("./add")}
+            style={{
+              ...theme.listView.actionButton,
+              backgroundColor: theme.colors.accent.primary,
+              color: "#ffffff",
+            }}
+          >
+            <Plus size={18} className="mr-2" />
+            Add New Category
+          </button>
+        </div>
+
+        <div style={theme.listView.cardBody}>
+          <div
+            style={
+              {
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: "1.5rem",
+              } as React.CSSProperties
+            }
+          >
+            <div style={theme.listView.searchContainer}>
+              <input
+                type="text"
+                placeholder="Search categories..."
+                value={globalFilter || ""}
+                onChange={(e) => setGlobalFilter(e.target.value)}
+                style={theme.listView.searchInput}
+              />
+              <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+            </div>
+            <div style={{ display: "flex", gap: "0.5rem" } as React.CSSProperties}>
+              <button
+                style={{
+                  ...theme.listView.actionButton,
+                  backgroundColor: theme.colors.surface.tertiary,
+                  color: theme.colors.text.secondary,
+                  border: `1px solid ${theme.colors.border.light}`,
+                }}
+              >
+                <Filter size={16} className="mr-2" />
+                Filters
+              </button>
+              <button
+                style={{
+                  ...theme.listView.actionButton,
+                  backgroundColor: theme.colors.surface.tertiary,
+                  color: theme.colors.text.secondary,
+                  border: `1px solid ${theme.colors.border.light}`,
+                }}
+              >
+                <SlidersHorizontal size={16} className="mr-2" />
+                Columns
+              </button>
+            </div>
+          </div>
+
+          <div
+            style={
+              {
+                overflow: "hidden",
+                borderRadius: theme.borderRadius.lg,
+                border: `1px solid ${theme.colors.border.light}`,
+              } as React.CSSProperties
+            }
+          >
+            <div style={{ overflowX: "auto" } as React.CSSProperties}>
+              <table style={theme.listView.table}>
+                <thead>
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <tr
+                      key={headerGroup.id}
+                      style={{
+                        backgroundColor: theme.colors.surface.tertiary,
+                      }}
+                    >
+                      {headerGroup.headers.map((header) => (
+                        <th
+                          key={header.id}
+                          style={{
+                            ...theme.listView.tableHeader,
+                            color: theme.colors.text.secondary,
+                            borderBottom: `1px solid ${theme.colors.border.light}`,
                           }}
-                          style={{ width: '100px' }}
-                        />
-                      </span>
-                      <select
-                        value={table.getState().pagination.pageSize}
-                        onChange={e => {
-                          table.setPageSize(Number(e.target.value))
-                        }}>
-                        {[10, 20, 30, 40, 50].map(pageSize => (
-                          <option key={pageSize} value={pageSize}>
-                            Show {pageSize}
-                          </option>
+                        >
+                          <div
+                            style={
+                              {
+                                display: "flex",
+                                alignItems: "center",
+                              } as React.CSSProperties
+                            }
+                          >
+                            {flexRender(header.column.columnDef.header, header.getContext())}
+                            {header.column.getCanSort() && <ArrowUpDown size={14} style={{ marginLeft: "0.5rem" }} />}
+                          </div>
+                        </th>
+                      ))}
+                    </tr>
+                  ))}
+                </thead>
+                <tbody>
+                  {isLoading ? (
+                    <tr>
+                      <td
+                        colSpan={columns.length}
+                        style={{
+                          ...theme.listView.tableCell,
+                          textAlign: "center",
+                          padding: "3rem 1.5rem",
+                        }}
+                      >
+                        <div style={theme.listView.loadingContainer}>
+                          <div className="animate-spin" style={theme.listView.loadingSpinner}></div>
+                          <span>Loading categories...</span>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : table.getRowModel().rows.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={columns.length}
+                        style={{
+                          ...theme.listView.tableCell,
+                          textAlign: "center",
+                          padding: "3rem 1.5rem",
+                        }}
+                      >
+                        <div style={theme.listView.emptyContainer}>
+                          <div style={theme.listView.emptyIconContainer}>
+                            <FileText size={32} style={{ color: theme.colors.text.tertiary }} />
+                          </div>
+                          <div style={theme.listView.emptyTitle}>No categories found</div>
+                          <div style={theme.listView.emptyMessage}>
+                            Try adjusting your search or create a new category
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    table.getRowModel().rows.map((row) => (
+                      <tr
+                        key={row.id}
+                        style={{
+                          transition: theme.transitions.normal,
+                          backgroundColor: theme.colors.surface.secondary,
+                          borderBottom: `1px solid ${theme.colors.border.light}`,
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = theme.colors.state.hover)}
+                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = theme.colors.surface.secondary)}
+                      >
+                        {row.getVisibleCells().map((cell) => (
+                          <td key={cell.id} style={theme.listView.tableCell}>
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </td>
                         ))}
-                      </select>
-                    </div>
-                    <div className={`${styles.RightPaginationButtons}`}>
-                      <button
-                        onClick={() => table.nextPage()}
-                        className={`${styles.PaginationButton}`}
-                        disabled={!table.getCanNextPage()}>
-                        <i className="fa fa-angle-right"></i>
-                      </button>
-                      <button
-                        onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                        className={`${styles.PaginationButton}`}
-                        disabled={!table.getCanNextPage()}>
-                        <i className="fa fa-angle-double-right"></i>
-                      </button>
-                    </div>
-                  </div>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <div
+              style={
+                {
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "1rem 1.5rem",
+                  borderTop: `1px solid ${theme.colors.border.light}`,
+                } as React.CSSProperties
+              }
+            >
+              <div
+                style={
+                  {
+                    fontSize: "0.875rem",
+                    color: theme.colors.text.secondary,
+                  } as React.CSSProperties
+                }
+              >
+                Showing {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} to{" "}
+                {Math.min(
+                  (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
+                  table.getFilteredRowModel().rows.length,
+                )}{" "}
+                of {table.getFilteredRowModel().rows.length} results
+              </div>
+
+              <div
+                style={
+                  {
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                  } as React.CSSProperties
+                }
+              >
+                <select
+                  value={table.getState().pagination.pageSize}
+                  onChange={(e) => table.setPageSize(Number(e.target.value))}
+                  style={{
+                    padding: "0.25rem 0.75rem",
+                    borderRadius: theme.borderRadius.md,
+                    backgroundColor: theme.colors.surface.tertiary,
+                    border: `1px solid ${theme.colors.border.light}`,
+                    color: theme.colors.text.primary,
+                    fontSize: "0.875rem",
+                  }}
+                >
+                  {[10, 20, 30, 50, 100].map((pageSize) => (
+                    <option key={pageSize} value={pageSize}>
+                      {pageSize} rows
+                    </option>
+                  ))}
+                </select>
+
+                <div style={theme.listView.pagination}>
+                  <button
+                    onClick={() => table.setPageIndex(0)}
+                    disabled={!table.getCanPreviousPage()}
+                    style={{
+                      ...theme.listView.paginationButton,
+                      opacity: !table.getCanPreviousPage() ? 0.5 : 1,
+                      cursor: !table.getCanPreviousPage() ? "not-allowed" : "pointer",
+                    }}
+                    title="First page"
+                  >
+                    <ChevronsLeft size={16} />
+                  </button>
+                  <button
+                    onClick={() => table.previousPage()}
+                    disabled={!table.getCanPreviousPage()}
+                    style={{
+                      ...theme.listView.paginationButton,
+                      opacity: !table.getCanPreviousPage() ? 0.5 : 1,
+                      cursor: !table.getCanPreviousPage() ? "not-allowed" : "pointer",
+                    }}
+                    title="Previous page"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+                  <span style={theme.listView.paginationText}>
+                    Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+                  </span>
+                  <button
+                    onClick={() => table.nextPage()}
+                    disabled={!table.getCanNextPage()}
+                    style={{
+                      ...theme.listView.paginationButton,
+                      opacity: !table.getCanNextPage() ? 0.5 : 1,
+                      cursor: !table.getCanNextPage() ? "not-allowed" : "pointer",
+                    }}
+                    title="Next page"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                  <button
+                    onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+                    disabled={!table.getCanNextPage()}
+                    style={{
+                      ...theme.listView.paginationButton,
+                      opacity: !table.getCanNextPage() ? 0.5 : 1,
+                      cursor: !table.getCanNextPage() ? "not-allowed" : "pointer",
+                    }}
+                    title="Last page"
+                  >
+                    <ChevronsRight size={16} />
+                  </button>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </>
+    </div>
   )
 }
 
 export default ArticleCategoriesListView
+

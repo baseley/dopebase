@@ -1,6 +1,8 @@
 import { getAllPlugins, isInstalled } from '../plugins'
 
 class PrivateHookSystem {
+  private hooks: { [key: string]: Function[] };
+
   constructor() {
     console.log('instantiating hook system')
     this.hooks = {}
@@ -73,6 +75,8 @@ class PrivateHookSystem {
   }
 }
 class HookSystem {
+  private static instance: PrivateHookSystem;
+
   constructor() {
     throw new Error('Use Singleton.getInstance()')
   }

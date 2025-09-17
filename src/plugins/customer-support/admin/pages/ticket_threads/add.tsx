@@ -1,529 +1,403 @@
-// @ts-nocheck
-'use client'
-import React, { useEffect, useState } from 'react'
-import { Formik } from 'formik'
-import { ClipLoader } from 'react-spinners'
-import ReactMarkdown from 'react-markdown'
-import dynamic from 'next/dynamic'
-import CodeMirror from '@uiw/react-codemirror'
-import { javascript } from '@codemirror/lang-javascript'
-import { css } from '@codemirror/lang-css'
-import { html } from '@codemirror/lang-html'
-import { markdown } from '@codemirror/lang-markdown'
-import IMDatePicker from '../../../../../admin/components/forms/IMDatePicker'
-import { LocationPicker } from '../../../../../admin/components/forms/locationPicker'
-import {
-  TypeaheadComponent,
-  IMObjectInputComponent,
-  IMMultimediaComponent,
-  IMArrayInputComponent,
-  IMColorPicker,
-  IMColorsContainer,
-  IMColorBoxComponent,
-  IMStaticMultiSelectComponent,
-  IMStaticSelectComponent,
-  IMPhoto,
-  IMModal,
-  IMToggleSwitchComponent,
-} from '../../../../../admin/components/forms/fields'
-import styles from '../../../../../admin/themes/admin.module.css'
+"use client"
+import { useEffect, useState } from "react"
+import type React from "react"
 
-/* Insert extra imports here */
+import { Formik, type FormikHelpers } from "formik"
+import { ClipboardCheck, Loader2, X } from "lucide-react"
+import { toast } from "react-toastify"
+
+import { theme, styledComponents as sc } from "@/lib/theme"
 import TicketThreadUserTypeaheadComponent from '../../components/TicketThreadUserTypeaheadComponent.js'
+import { IMToggleSwitchComponent } from "../../../../../admin/components/forms/fields"
 
+import { pluginsAPIURL } from "../../../../../config/config"
+import { authPost } from "../../../../../modules/auth/utils/authFetch"
 
-import { pluginsAPIURL } from '../../../../../config/config'
-import { authPost } from '../../../../../modules/auth/utils/authFetch'
-
-const beautify_html = require('js-beautify').html
 const baseAPIURL = `${pluginsAPIURL}`
 
-const AddNewTicketThreadView = () => {
-  const [isLoading, setIsLoading] = useState(false)
-  const [modifiedNonFormData, setModifiedNonFormData] = useState({})
-  const [originalData, setOriginalData] = useState(null)
+interface NonFormData {
+  created_at?: string
+  updated_at?: string
+  is_closed?: boolean
+  is_public?: boolean
+  [key: string]: any
+}
+
+interface FormValues {
+  id?: string
+  number?: string
+  author_email?: string
+  author_name?: string
+  message_count?: number
+  subject?: string
+  user_id?: string | number
+  [key: string]: any
+}
+
+interface TicketThreadData extends FormValues, NonFormData {}
+
+const AddNewTicketThreadView: React.FC = () => {
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [modifiedNonFormData, setModifiedNonFormData] = useState<NonFormData>({})
+  const [originalData, setOriginalData] = useState<TicketThreadData | null>(null)
 
   useEffect(() => {
     setModifiedNonFormData({
       created_at: Math.floor(new Date().getTime() / 1000).toString(),
+      is_closed: false,
+      is_public: false,
     })
   }, [])
 
-  const createTicketThread = async (data, setSubmitting) => {
+  const createTicketThread = async (data: TicketThreadData, setSubmitting: (isSubmitting: boolean) => void) => {
     setIsLoading(true)
+    console.log("🔍 Starting ticket thread creation...")
+
     const url = `${baseAPIURL}admin/customer-support/ticket_threads/add`
-    const response = await authPost(
-      url,
-      JSON.stringify({ ...data, ...modifiedNonFormData }),
-    )
-    const resData = response.data
-    if (resData?.error) {
-      alert(resData?.error)
+    console.log("🌐 API URL:", url)
+
+    try {
+      const response = await authPost(url, JSON.stringify({ ...data, ...modifiedNonFormData }))
+      console.log("✅ API response received:", response)
+
+      if (!response) {
+        console.error("❌ No response received from server")
+        toast.error("No response received from server")
+        return
+      }
+
+      const resData = response.data
+      if (resData?.error) {
+        console.error("❌ Server returned error:", resData.error)
+        toast.error(resData.error)
+      } else {
+        console.log("✅ Ticket thread created successfully!")
+        toast.success("Ticket thread created successfully")
+      }
+    } catch (error: any) {
+      console.error("❌ Error during API call:", error)
+      toast.error(`Error creating ticket thread: ${error.message || "Unknown error"}`)
+    } finally {
+      setSubmitting(false)
+      setIsLoading(false)
     }
-    setSubmitting(false)
-    setIsLoading(false)
   }
 
-  const onTypeaheadSelect = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value
+  const handleSwitchChange = (value: boolean, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
+    newData[fieldName] = !value
     setModifiedNonFormData(newData)
   }
 
-  const onMultipleTypeaheadSelect = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (newData[fieldName] != undefined) {
-      newData[fieldName].push(value)
-    } else {
-      newData[fieldName] = [value]
-    }
-    setModifiedNonFormData(newData)
-  }
-
-  const onMultipleTypeaheadDelete = (index, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName].splice(index, 1)
-    setModifiedNonFormData(newData)
-  }
-
-  const handleSwitchChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value ^ true
-    setModifiedNonFormData(newData)
-  }
-
-  const handleSelectChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value
-    setModifiedNonFormData(newData)
-  }
-
-  const handleColorChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value
-    setModifiedNonFormData(newData)
-  }
-
-  const handleColorDelete = fieldName => {
-    var newData = { ...modifiedNonFormData }
-    delete newData[fieldName]
-    setModifiedNonFormData(newData)
-  }
-
-  const handleColorsChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (newData[fieldName] != undefined) {
-      newData[fieldName].push(value)
-    } else {
-      newData[fieldName] = [value]
-    }
-    setModifiedNonFormData(newData)
-  }
-
-  const handleColorsDelete = (index, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName].splice(index, 1)
-    setModifiedNonFormData(newData)
-  }
-
-  const handleArrayInput = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (newData[fieldName] != undefined) {
-      newData[fieldName].push(value)
-    } else {
-      newData[fieldName] = [value]
-    }
-    setModifiedNonFormData(newData)
-  }
-
-  const handleArrayDelete = (index, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName].splice(index, 1)
-    setModifiedNonFormData(newData)
-  }
-
-  const handleObjectInput = (key, value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (newData[fieldName] != undefined) {
-      newData[fieldName][key] = value
-    } else {
-      newData[fieldName] = { [key]: value }
-    }
-    setModifiedNonFormData(newData)
-  }
-
-  const handleObjectDelete = (key, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = Object.keys(newData[fieldName]).reduce(
-      (object, keys) => {
-        if (keys !== key) {
-          object[keys] = newData[fieldName][keys]
-        }
-        return object
-      },
-      {},
-    )
-    setModifiedNonFormData(newData)
-  }
-
-  const onDateChange = (toDate, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const onDateChange = (toDate: string, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
     newData[fieldName] = toDate
     setModifiedNonFormData(newData)
   }
 
-  const onLocationChange = (addressObject, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (!addressObject || !addressObject.location || !addressObject.gmaps) {
-      return
-    }
-    const location = {
-      longitude: addressObject.location.lng,
-      latitude: addressObject.location.lat,
-      address: addressObject.label,
-      placeID: addressObject.placeId,
-      detailedAddress: addressObject.gmaps.address_components,
-    }
-    newData[fieldName] = location
-    setModifiedNonFormData(newData)
-  }
-
-  const onSimpleLocationChange = (addressObject, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (!addressObject || !addressObject.location) {
-      return
-    }
-    const location = {
-      lng: addressObject.location.lng,
-      lat: addressObject.location.lat,
-      // address: addressObject.label,
-    }
-    newData[fieldName] = location
-    setModifiedNonFormData(newData)
-  }
-
-  const onCodeChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const onTypeaheadSelect = (value: any, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
     newData[fieldName] = value
     setModifiedNonFormData(newData)
-  }
-
-  const onMarkdownEditorChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value
-    setModifiedNonFormData(newData)
-  }
-
-  const handleImageUpload = (event, fieldName, isMultiple) => {
-    const files = event.target.files
-    const formData = new FormData()
-    for (var i = 0; i < files.length; ++i) {
-      formData.append('photos', files[i])
-    }
-
-    fetch(pluginsAPIURL + '../media/upload', {
-      method: 'POST',
-      body: formData,
-    })
-      .then(response => response.json())
-      .then(response => {
-        var newData = { ...modifiedNonFormData }
-        if (!isMultiple) {
-          const url = response.data && response.data[0] && response.data[0].url
-          newData[fieldName] = url
-        } else {
-          // multiple photos
-          const urls = response.data && response.data.map(item => item.url)
-          if (
-            !modifiedNonFormData[fieldName] ||
-            modifiedNonFormData[fieldName].length <= 0
-          ) {
-            newData[fieldName] = urls
-          } else {
-            newData[fieldName] = [...modifiedNonFormData[fieldName], ...urls]
-          }
-        }
-        setModifiedNonFormData(newData)
-        console.log(response)
-      })
-      .catch(error => {
-        console.error(error)
-      })
-  }
-
-  const handleDeletePhoto = (srcToBeRemoved, fieldName, isMultiple) => {
-    if (isMultiple) {
-      var newData = { ...modifiedNonFormData }
-      var currentURLs = newData[fieldName]
-      if (currentURLs) {
-        const newURLs = currentURLs.filter(src => src != srcToBeRemoved)
-        newData[fieldName] = newURLs
-        setModifiedNonFormData(newData)
-      }
-    } else {
-      var newData = { ...modifiedNonFormData }
-      newData[fieldName] = null
-      setModifiedNonFormData(newData)
-    }
-  }
-
-  const handleMultimediaUpload = (event, fieldName, isMultiple) => {
-    const files = event.target.files
-    const formData = new FormData()
-    for (var i = 0; i < files.length; ++i) {
-      formData.append('multimedias', files[i])
-    }
-    fetch(pluginsAPIURL + '../media/uploadMultimedias', {
-      method: 'POST',
-      body: formData,
-    })
-      .then(response => response.json())
-      .then(response => {
-        var newData = { ...modifiedNonFormData }
-        if (!isMultiple) {
-          const url = response.data && response.data[0] && response.data[0].url
-          newData[fieldName] = url
-        } else {
-          // multiple media
-          const data =
-            response.data &&
-            response.data.map(item => {
-              return { url: item.url, mime: item.mimetype }
-            })
-          if (
-            !modifiedNonFormData[fieldName] ||
-            modifiedNonFormData[fieldName].length <= 0
-          ) {
-            newData[fieldName] = data
-          } else {
-            newData[fieldName] = [...modifiedNonFormData[fieldName], ...data]
-          }
-        }
-        setModifiedNonFormData(newData)
-        console.log(response)
-      })
-      .catch(error => {
-        console.error(error)
-      })
-  }
-
-  const handleMultimediaDelete = (srcToBeRemoved, fieldName, isMultiple) => {
-    if (isMultiple) {
-      var newData = { ...modifiedNonFormData }
-      var currentData = newData[fieldName]
-      if (currentData) {
-        const finalData = currentData.reduce((arrayAcumulator, curVal) => {
-          if (srcToBeRemoved !== curVal.url) {
-            arrayAcumulator.push(curVal)
-          }
-          return arrayAcumulator
-        })
-        newData[fieldName] = finalData
-        setModifiedNonFormData(newData)
-      }
-    } else {
-      var newData = { ...modifiedNonFormData }
-      newData[fieldName] = null
-      setModifiedNonFormData(newData)
-    }
   }
 
   if (isLoading) {
     return (
-      <div className="sweet-loading card">
-        <div className="spinner-container">
-          <ClipLoader
-            className="spinner"
-            sizeUnit={'px'}
-            size={50}
-            color={'#123abc'}
-            loading={isLoading}
-          />
-        </div>
+      <div style={sc.loadingContainer}>
+        <div style={sc.spinner}></div>
+        <p style={sc.loadingText}>Creating ticket thread...</p>
       </div>
     )
   }
 
   return (
-    <div className={`${styles.FormCard} FormCard`}>
-      <div className={`${styles.CardBody} CardBody`}>
-        <h1>Create New TicketThread</h1>
+    <div style={sc.formCard}>
+      <div style={sc.formHeader}>
+        <h1 style={sc.formTitle}>
+          <ClipboardCheck size={24} color={theme.colors.accent.primary} />
+          Create New Ticket Thread
+        </h1>
+      </div>
+      <div style={sc.formContent}>
         <Formik
-          initialValues={{}}
-          validate={values => {
-            values = { ...values, ...modifiedNonFormData }
-            const errors = {}
-            {
-              /* Insert all form errors here */
-        if (!values.id) {
-            errors.id = 'Field Required!'
-        }
+          initialValues={{} as FormValues}
+          validate={(values) => {
+            const combinedValues = { ...values, ...modifiedNonFormData }
+            const errors: Record<string, string> = {}
 
+            if (!combinedValues.subject) {
+              errors.subject = "Subject is required"
+            }
+
+            if (!combinedValues.author_email) {
+              errors.author_email = "Author email is required"
+            } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(combinedValues.author_email)) {
+              errors.author_email = "Invalid email address"
             }
 
             return errors
           }}
-          onSubmit={(values, { setSubmitting }) => {
-            createTicketThread(values, setSubmitting)
-          }}>
-          {({
-            values,
-            errors,
-            touched,
-            handleChange,
-            handleBlur,
-            handleSubmit,
-            isSubmitting,
-            /* and other goodies */
-          }) => (
+          onSubmit={(values: FormValues, { setSubmitting }: FormikHelpers<FormValues>) => {
+            const combinedData = { ...values, ...modifiedNonFormData } as TicketThreadData
+            createTicketThread(combinedData, setSubmitting)
+          }}
+        >
+          {({ values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
             <form onSubmit={handleSubmit}>
-              {/* Insert all add form fields here */}
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>ID</label>
-                        <input
-                            className={`${styles.FormTextField} FormTextField`}
-                            type="id"
-                            name="id"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.id}
-                        />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.id && touched.id && errors.id}
-                        </p>
-                    </div>
-    
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: theme.spacing[6] }}>
+                <div style={sc.formGroup}>
+                  <label htmlFor="subject" style={sc.formLabel}>
+                    Subject <span style={{ color: theme.colors.feedback.error }}>*</span>
+                  </label>
+                  <input
+                    id="subject"
+                    name="subject"
+                    type="text"
+                    placeholder="Ticket subject"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.subject || ""}
+                    style={{
+                      ...sc.formInput,
+                      borderColor:
+                        errors.subject && touched.subject ? theme.colors.feedback.error : theme.forms.input.borderColor,
+                    }}
+                  />
+                  {errors.subject && touched.subject && <p style={sc.formError}>{errors.subject}</p>}
+                </div>
 
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Number</label>
-                        <input
-                            className={`${styles.FormTextField} FormTextField`}
-                            type="number"
-                            name="number"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.number}
-                        />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.number && touched.number && errors.number}
-                        </p>
-                    </div>
-    
+                <div style={sc.formGroup}>
+                  <label htmlFor="number" style={sc.formLabel}>
+                    Ticket Number
+                  </label>
+                  <input
+                    id="number"
+                    name="number"
+                    type="text"
+                    placeholder="Auto-generated if empty"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.number || ""}
+                    style={sc.formInput}
+                  />
+                </div>
+              </div>
 
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Author Email</label>
-                        <input
-                            className={`${styles.FormTextField} FormTextField`}
-                            type="author_email"
-                            name="author_email"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.author_email}
-                        />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.author_email && touched.author_email && errors.author_email}
-                        </p>
-                    </div>
-    
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: theme.spacing[6] }}>
+                <div style={sc.formGroup}>
+                  <label htmlFor="author_name" style={sc.formLabel}>
+                    Author Name
+                  </label>
+                  <input
+                    id="author_name"
+                    name="author_name"
+                    type="text"
+                    placeholder="Author's name"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.author_name || ""}
+                    style={sc.formInput}
+                  />
+                </div>
 
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Author Name</label>
-                        <input
-                            className={`${styles.FormTextField} FormTextField`}
-                            type="author_name"
-                            name="author_name"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.author_name}
-                        />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.author_name && touched.author_name && errors.author_name}
-                        </p>
-                    </div>
-    
+                <div style={sc.formGroup}>
+                  <label htmlFor="author_email" style={sc.formLabel}>
+                    Author Email <span style={{ color: theme.colors.feedback.error }}>*</span>
+                  </label>
+                  <input
+                    id="author_email"
+                    name="author_email"
+                    type="email"
+                    placeholder="author@example.com"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.author_email || ""}
+                    style={{
+                      ...sc.formInput,
+                      borderColor:
+                        errors.author_email && touched.author_email
+                          ? theme.colors.feedback.error
+                          : theme.forms.input.borderColor,
+                    }}
+                  />
+                  {errors.author_email && touched.author_email && <p style={sc.formError}>{errors.author_email}</p>}
+                </div>
+              </div>
 
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Message Count</label>
-                        <input
-                            className={`${styles.FormTextField} FormTextField`}
-                            type="message_count"
-                            name="message_count"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.message_count}
-                        />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.message_count && touched.message_count && errors.message_count}
-                        </p>
-                    </div>
-    
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: theme.spacing[6] }}>
+                <div style={sc.formGroup}>
+                  <label htmlFor="message_count" style={sc.formLabel}>
+                    Message Count
+                  </label>
+                  <input
+                    id="message_count"
+                    name="message_count"
+                    type="number"
+                    placeholder="0"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.message_count || ""}
+                    style={sc.formInput}
+                  />
+                </div>
 
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Subject</label>
-                        <input
-                            className={`${styles.FormTextField} FormTextField`}
-                            type="subject"
-                            name="subject"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.subject}
-                        />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.subject && touched.subject && errors.subject}
-                        </p>
-                    </div>
-    
-
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Is Closed</label>
-                        <IMToggleSwitchComponent isChecked={modifiedNonFormData.is_closed} onSwitchChange={() => handleSwitchChange(modifiedNonFormData["is_closed"], "is_closed")} />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.is_closed && touched.is_closed && errors.is_closed}
-                        </p>
-                    </div>
-    
-
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Is Public</label>
-                        <IMToggleSwitchComponent isChecked={modifiedNonFormData.is_public} onSwitchChange={() => handleSwitchChange(modifiedNonFormData["is_public"], "is_public")} />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.is_public && touched.is_public && errors.is_public}
-                        </p>
-                    </div>
-    
-
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Created At</label>
-                        <IMDatePicker
-                            selected={modifiedNonFormData.created_at}
-                            onChange={(toDate) => onDateChange(toDate, "created_at")}
-                        />
-                    </div>
-    
-
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Updated At</label>
-                        <IMDatePicker
-                            selected={modifiedNonFormData.updated_at}
-                            onChange={(toDate) => onDateChange(toDate, "updated_at")}
-                        />
-                    </div>
-    
-
-          <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-              <label className={`${styles.FormLabel} FormLabel`}>User ID</label>
-              <TicketThreadUserTypeaheadComponent onSelect={(value) => onTypeaheadSelect(value, "user_id")} id={originalData && originalData.user_id} name={originalData && originalData.user_id} />
-          </div>
-      
-
+                <div style={sc.formGroup}>
+                  <label style={sc.formLabel}>Assigned User</label>
+                  <div
+                    style={{
+                      border: `1px solid ${theme.colors.border.light}`,
+                      borderRadius: theme.borderRadius.md,
+                      padding: theme.spacing[2],
+                      backgroundColor: theme.colors.surface.primary,
+                    }}
+                  >
+                    <TicketThreadUserTypeaheadComponent
+                      onSelect={(value: any) => onTypeaheadSelect(value, "user_id")}
+                      id={originalData && originalData.user_id}
+                      name={originalData && originalData.user_id}
+                    />
+                  </div>
+                </div>
+              </div>
 
               <div
-                className={`${styles.FormActionContainer} FormActionContainer`}>
+                style={{
+                  height: "1px",
+                  backgroundColor: theme.colors.border.light,
+                  margin: `${theme.spacing[6]} 0`,
+                }}
+              ></div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: theme.spacing[6] }}>
+                <div style={sc.formGroup}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: theme.spacing[2],
+                    }}
+                  >
+                    <label htmlFor="is_closed" style={sc.formLabel}>
+                      Closed Status
+                    </label>
+                    <IMToggleSwitchComponent
+                      isChecked={modifiedNonFormData.is_closed}
+                      onSwitchChange={() => handleSwitchChange(modifiedNonFormData["is_closed"] ?? false, "is_closed")}
+                    />
+                  </div>
+                  <p
+                    style={{
+                      fontSize: theme.typography.fontSizes.xs,
+                      color: theme.colors.text.tertiary,
+                    }}
+                  >
+                    When enabled, this ticket will be marked as closed
+                  </p>
+                </div>
+
+                <div style={sc.formGroup}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: theme.spacing[2],
+                    }}
+                  >
+                    <label htmlFor="is_public" style={sc.formLabel}>
+                      Public Visibility
+                    </label>
+                    <IMToggleSwitchComponent
+                      isChecked={modifiedNonFormData.is_public}
+                      onSwitchChange={() => handleSwitchChange(modifiedNonFormData["is_public"] ?? false, "is_public")}
+                    />
+                  </div>
+                  <p
+                    style={{
+                      fontSize: theme.typography.fontSizes.xs,
+                      color: theme.colors.text.tertiary,
+                    }}
+                  >
+                    When enabled, this ticket will be visible to the public
+                  </p>
+                </div>
+              </div>
+
+              <div
+                style={{
+                  height: "1px",
+                  backgroundColor: theme.colors.border.light,
+                  margin: `${theme.spacing[6]} 0`,
+                }}
+              ></div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: theme.spacing[6] }}>
+                <div style={sc.formGroup}>
+                  <label style={sc.formLabel}>Created At</label>
+                  <input
+                    type="text"
+                    value={new Date(Number(modifiedNonFormData.created_at) * 1000).toLocaleString()}
+                    readOnly
+                    style={{
+                      ...sc.formInput,
+                      backgroundColor: theme.colors.surface.secondary,
+                      cursor: "not-allowed",
+                    }}
+                  />
+                </div>
+
+                <div style={sc.formGroup}>
+                  <label style={sc.formLabel}>Updated At</label>
+                  <input
+                    type="text"
+                    value={
+                      modifiedNonFormData.updated_at
+                        ? new Date(Number(modifiedNonFormData.updated_at) * 1000).toLocaleString()
+                        : "Not updated yet"
+                    }
+                    readOnly
+                    style={{
+                      ...sc.formInput,
+                      backgroundColor: theme.colors.surface.secondary,
+                      cursor: "not-allowed",
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  marginTop: theme.spacing[6],
+                  paddingTop: theme.spacing[4],
+                  borderTop: `1px solid ${theme.colors.border.light}`,
+                }}
+              >
                 <button
-                  className={`${styles.PrimaryButton} PrimaryButton`}
+                  type="button"
+                  style={{
+                    ...sc.secondaryButton,
+                    marginRight: theme.spacing[3],
+                  }}
+                  onClick={() => window.history.back()}
+                >
+                  Cancel
+                </button>
+                <button
                   type="submit"
-                  disabled={isSubmitting}>
-                  Create ticket_thread
+                  disabled={isSubmitting}
+                  style={{
+                    ...sc.primaryButton,
+                    opacity: isSubmitting ? 0.7 : 1,
+                    cursor: isSubmitting ? "not-allowed" : "pointer",
+                  }}
+                >
+                  {isSubmitting && (
+                    <Loader2 size={16} className="animate-spin" style={{ marginRight: theme.spacing[2] }} />
+                  )}
+                  Create Ticket Thread
                 </button>
               </div>
             </form>

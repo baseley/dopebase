@@ -1,57 +1,55 @@
-// @ts-nocheck
-'use client'
-import React, { useEffect, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
-import { Formik } from 'formik'
-import { ClipLoader } from 'react-spinners'
-import IMDatePicker from '@/admin/components/forms/IMDatePicker'
-import { LocationPicker } from '@/admin/components/forms/locationPicker'
-import {
-  TypeaheadComponent,
-  IMColorPicker,
-  IMMultimediaComponent,
-  IMObjectInputComponent,
-  IMArrayInputComponent,
-  IMColorsContainer,
-  IMColorBoxComponent,
-  IMStaticMultiSelectComponent,
-  IMStaticSelectComponent,
-  IMPhoto,
-  IMModal,
-  IMToggleSwitchComponent,
-} from '@/admin/components/forms/fields'
-import ReactMarkdown from 'react-markdown'
-import dynamic from 'next/dynamic'
-const CodeMirror = dynamic(
-  () => import('@uiw/react-codemirror'),
-  { ssr: false }
-)
-import styles from '@/admin/themes/admin.module.css'
+"use client"
+import { useEffect, useState } from "react"
+import type React from "react"
+import { useSearchParams } from "next/navigation"
 
-/* Insert extra imports here */
+import { Formik, type FormikHelpers } from "formik"
+import { Loader2, FileText, MessageSquare, Lightbulb, Share2, Calendar, Tag } from "lucide-react"
+import { toast } from "react-toastify"
 
-const beautify_html = require('js-beautify').html
-import { pluginsAPIURL } from '@/config/config'
-import {
-  authFetch,
-  authPost,
-} from '@/modules/auth/utils/authFetch'
+import { theme, styledComponents as sc } from "@/lib/theme"
+import IMDatePicker from "@/admin/components/forms/IMDatePicker"
+
+import { pluginsAPIURL } from "@/config/config"
+import { authFetch, authPost } from "@/modules/auth/utils/authFetch"
+
 const baseAPIURL = `${pluginsAPIURL}admin/blog/`
 
-const UpdateArticleIdeaView = props => {
-  const [isLoading, setIsLoading] = useState(true)
-  const [originalData, setOriginalData] = useState(null)
-  const [modifiedNonFormData, setModifiedNonFormData] = useState({})
+// Define TypeScript interfaces
+interface NonFormData {
+  created_at?: string
+  updated_at?: string
+  [key: string]: any
+}
+
+interface FormValues {
+  title?: string
+  sections?: string
+  tags?: string
+  status?: string
+  extra_prompt?: string
+  social_media_post?: string
+  seo_description?: string
+  summary?: string
+  topic?: string
+  category?: string
+  [key: string]: any
+}
+
+interface ArticleIdeaData extends FormValues, NonFormData {}
+
+const UpdateArticleIdeaView: React.FC = () => {
+  const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [originalData, setOriginalData] = useState<ArticleIdeaData | null>(null)
+  const [modifiedNonFormData, setModifiedNonFormData] = useState<NonFormData>({})
 
   const searchParams = useSearchParams()
-  const id = searchParams.get('id')
+  const id = searchParams.get("id")
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await authFetch(
-          baseAPIURL + 'article_ideas/view?id=' + id,
-        )
+        const response = await authFetch(baseAPIURL + "article_ideas/view?id=" + id)
         if (response?.data) {
           setOriginalData(response.data)
           initializeModifieableNonFormData(response.data)
@@ -59,53 +57,61 @@ const UpdateArticleIdeaView = props => {
         }
       } catch (err) {
         console.log(err)
+        toast.error("Error loading article idea data")
         setIsLoading(false)
       }
     }
     fetchData()
   }, [id])
 
-  const initializeModifieableNonFormData = originalData => {
-    var nonFormData = {}
+  const initializeModifieableNonFormData = (originalData: ArticleIdeaData) => {
+    const nonFormData: NonFormData = {}
 
     /* Insert non modifiable initialization data here */
     if (originalData.created_at) {
-      nonFormData['created_at'] = originalData.created_at
+      nonFormData["created_at"] = originalData.created_at
     }
 
     if (originalData.updated_at) {
-      nonFormData['updated_at'] = originalData.updated_at
+      nonFormData["updated_at"] = originalData.updated_at
     }
 
     console.log(nonFormData)
     setModifiedNonFormData(nonFormData)
   }
 
-  const saveChanges = async (modifiedData, setSubmitting) => {
-    const response = await authPost(
-      baseAPIURL + 'article_ideas/update?id=' + id,
-      JSON.stringify({
-        ...modifiedData,
-        ...modifiedNonFormData,
-      }),
-    )
-    const { data } = response
-    if (data.success == true) {
-      window.location.reload()
-    } else {
-      alert(data.error)
+  const saveChanges = async (modifiedData: FormValues, setSubmitting: (isSubmitting: boolean) => void) => {
+    try {
+      const response = await authPost(
+        baseAPIURL + "article_ideas/update?id=" + id,
+        JSON.stringify({
+          ...modifiedData,
+          ...modifiedNonFormData,
+        }),
+      )
+      const { data } = response
+      if (data.success == true) {
+        toast.success("Article idea updated successfully")
+        window.location.reload()
+      } else {
+        toast.error(data.error || "Error updating article idea")
+      }
+    } catch (error) {
+      console.error("Error updating article idea:", error)
+      toast.error("Error updating article idea")
+    } finally {
+      setSubmitting(false)
     }
-    setSubmitting(false)
   }
 
-  const onTypeaheadSelect = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const onTypeaheadSelect = (value: any, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
     newData[fieldName] = value
     setModifiedNonFormData(newData)
   }
 
-  const onMultipleTypeaheadSelect = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const onMultipleTypeaheadSelect = (value: any, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
     if (newData[fieldName] != undefined) {
       newData[fieldName].push(value)
     } else {
@@ -114,38 +120,38 @@ const UpdateArticleIdeaView = props => {
     setModifiedNonFormData(newData)
   }
 
-  const onMultipleTypeaheadDelete = (index, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const onMultipleTypeaheadDelete = (index: number, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
     newData[fieldName].splice(index, 1)
     setModifiedNonFormData(newData)
   }
 
-  const handleSwitchChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value ^ true
+  const handleSwitchChange = (value: boolean, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
+    newData[fieldName] = !value
     setModifiedNonFormData(newData)
   }
 
-  const handleSelectChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const handleSelectChange = (value: any, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
     newData[fieldName] = value
     setModifiedNonFormData(newData)
   }
 
-  const handleColorChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const handleColorChange = (value: string, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
     newData[fieldName] = value
     setModifiedNonFormData(newData)
   }
 
-  const handleColorDelete = fieldName => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = null
+  const handleColorDelete = (fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
+    delete newData[fieldName]
     setModifiedNonFormData(newData)
   }
 
-  const handleColorsChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const handleColorsChange = (value: string, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
     if (newData[fieldName] != undefined) {
       newData[fieldName].push(value)
     } else {
@@ -154,14 +160,14 @@ const UpdateArticleIdeaView = props => {
     setModifiedNonFormData(newData)
   }
 
-  const handleColorsDelete = (index, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const handleColorsDelete = (index: number, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
     newData[fieldName].splice(index, 1)
     setModifiedNonFormData(newData)
   }
 
-  const handleArrayInput = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const handleArrayInput = (value: any, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
     if (newData[fieldName] != undefined) {
       newData[fieldName].push(value)
     } else {
@@ -170,14 +176,14 @@ const UpdateArticleIdeaView = props => {
     setModifiedNonFormData(newData)
   }
 
-  const handleArrayDelete = (index, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const handleArrayDelete = (index: number, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
     newData[fieldName].splice(index, 1)
     setModifiedNonFormData(newData)
   }
 
-  const handleObjectInput = (key, value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const handleObjectInput = (key: string, value: any, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
     if (newData[fieldName] != undefined) {
       newData[fieldName][key] = value
     } else {
@@ -186,28 +192,28 @@ const UpdateArticleIdeaView = props => {
     setModifiedNonFormData(newData)
   }
 
-  const handleObjectDelete = (key, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = Object.keys(newData[fieldName]).reduce(
-      (object, keys) => {
-        if (keys !== key) {
-          object[keys] = newData[fieldName][keys]
-        }
-        return object
-      },
-      {},
-    )
+  const handleObjectDelete = (key: string, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
+    newData[fieldName] = Object.keys(newData[fieldName]).reduce((object: Record<string, any>, keys) => {
+      if (keys !== key) {
+        object[keys] = newData[fieldName][keys]
+      }
+      return object
+    }, {})
     setModifiedNonFormData(newData)
   }
 
-  const onDateChange = (toDate, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const onDateChange = (toDate: string, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
     newData[fieldName] = toDate
     setModifiedNonFormData(newData)
   }
 
-  const onLocationChange = (addressObject, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const onLocationChange = (addressObject: any, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
+    if (!addressObject || !addressObject.location || !addressObject.gmaps) {
+      return
+    }
     const location = {
       longitude: addressObject.location.lng,
       latitude: addressObject.location.lat,
@@ -219,8 +225,8 @@ const UpdateArticleIdeaView = props => {
     setModifiedNonFormData(newData)
   }
 
-  const onSimpleLocationChange = (addressObject, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const onSimpleLocationChange = (addressObject: any, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
     if (!addressObject || !addressObject.location) {
       return
     }
@@ -233,42 +239,41 @@ const UpdateArticleIdeaView = props => {
     setModifiedNonFormData(newData)
   }
 
-  const onCodeChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const onCodeChange = (value: string, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
     newData[fieldName] = value
     setModifiedNonFormData(newData)
   }
 
-  const onMarkdownEditorChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const onMarkdownEditorChange = (value: string, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
     newData[fieldName] = value
     setModifiedNonFormData(newData)
   }
 
-  const handleImageUpload = (event, fieldName, isMultiple) => {
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>, fieldName: string, isMultiple: boolean) => {
     const files = event.target.files
+    if (!files || files.length === 0) return
+
     const formData = new FormData()
-    for (var i = 0; i < files.length; ++i) {
-      formData.append('photos', files[i])
+    for (let i = 0; i < files.length; ++i) {
+      formData.append("photos", files[i])
     }
 
-    fetch(pluginsAPIURL + '../media/upload', {
-      method: 'POST',
+    fetch(pluginsAPIURL + "../media/upload", {
+      method: "POST",
       body: formData,
     })
-      .then(response => response.json())
-      .then(response => {
-        var newData = { ...modifiedNonFormData }
+      .then((response) => response.json())
+      .then((response) => {
+        const newData = { ...modifiedNonFormData }
         if (!isMultiple) {
           const url = response.data && response.data[0] && response.data[0].url
           newData[fieldName] = url
         } else {
           // multiple photos
-          const urls = response.data && response.data.map(item => item.url)
-          if (
-            !modifiedNonFormData[fieldName] ||
-            modifiedNonFormData[fieldName].length <= 0
-          ) {
+          const urls = response.data && response.data.map((item: any) => item.url)
+          if (!modifiedNonFormData[fieldName] || modifiedNonFormData[fieldName].length <= 0) {
             newData[fieldName] = urls
           } else {
             newData[fieldName] = [...modifiedNonFormData[fieldName], ...urls]
@@ -277,41 +282,47 @@ const UpdateArticleIdeaView = props => {
         setModifiedNonFormData(newData)
         console.log(response)
       })
-      .catch(error => {
+      .catch((error) => {
         console.error(error)
+        toast.error("Failed to upload image")
       })
   }
 
-  const handleDeletePhoto = (srcToBeRemoved, fieldName, isMultiple) => {
+  const handleDeletePhoto = (srcToBeRemoved: string, fieldName: string, isMultiple: boolean) => {
     if (isMultiple) {
-      var newData = { ...modifiedNonFormData }
-      var currentURLs = newData[fieldName]
+      const newData = { ...modifiedNonFormData }
+      const currentURLs = newData[fieldName]
       if (currentURLs) {
-        const newURLs = currentURLs.filter(src => src != srcToBeRemoved)
+        const newURLs = currentURLs.filter((src: string) => src != srcToBeRemoved)
         newData[fieldName] = newURLs
         setModifiedNonFormData(newData)
       }
     } else {
-      var newData = { ...modifiedNonFormData }
+      const newData = { ...modifiedNonFormData }
       newData[fieldName] = null
       setModifiedNonFormData(newData)
     }
   }
 
-  const handleMultimediaUpload = (event, fieldName, isMultiple) => {
+  const handleMultimediaUpload = (
+    event: React.ChangeEvent<HTMLInputElement>,
+    fieldName: string,
+    isMultiple: boolean,
+  ) => {
     const files = event.target.files
-    const formData = new FormData()
-    for (var i = 0; i < files.length; ++i) {
-      formData.append('multimedias', files[i])
-    }
+    if (!files || files.length === 0) return
 
-    fetch(pluginsAPIURL + '../media/uploadMultimedias', {
-      method: 'POST',
+    const formData = new FormData()
+    for (let i = 0; i < files.length; ++i) {
+      formData.append("multimedias", files[i])
+    }
+    fetch(pluginsAPIURL + "../media/uploadMultimedias", {
+      method: "POST",
       body: formData,
     })
-      .then(response => response.json())
-      .then(response => {
-        var newData = { ...modifiedNonFormData }
+      .then((response) => response.json())
+      .then((response) => {
+        const newData = { ...modifiedNonFormData }
         if (!isMultiple) {
           const url = response.data && response.data[0] && response.data[0].url
           newData[fieldName] = url
@@ -319,13 +330,10 @@ const UpdateArticleIdeaView = props => {
           // multiple media
           const data =
             response.data &&
-            response.data.map(item => {
+            response.data.map((item: any) => {
               return { url: item.url, mime: item.mimetype }
             })
-          if (
-            !modifiedNonFormData[fieldName] ||
-            modifiedNonFormData[fieldName].length <= 0
-          ) {
+          if (!modifiedNonFormData[fieldName] || modifiedNonFormData[fieldName].length <= 0) {
             newData[fieldName] = data
           } else {
             newData[fieldName] = [...modifiedNonFormData[fieldName], ...data]
@@ -334,27 +342,28 @@ const UpdateArticleIdeaView = props => {
         setModifiedNonFormData(newData)
         console.log(response)
       })
-      .catch(error => {
+      .catch((error) => {
         console.error(error)
+        toast.error("Failed to upload multimedia")
       })
   }
 
-  const handleMultimediaDelete = (srcToBeRemoved, fieldName, isMultiple) => {
+  const handleMultimediaDelete = (srcToBeRemoved: string, fieldName: string, isMultiple: boolean) => {
     if (isMultiple) {
-      var newData = { ...modifiedNonFormData }
-      var currentData = newData[fieldName]
+      const newData = { ...modifiedNonFormData }
+      const currentData = newData[fieldName]
       if (currentData) {
-        const finalData = currentData.reduce((arrayAcumulator, curVal) => {
+        const finalData = currentData.reduce((arrayAcumulator: any[], curVal: any) => {
           if (srcToBeRemoved !== curVal.url) {
             arrayAcumulator.push(curVal)
           }
           return arrayAcumulator
-        })
+        }, [])
         newData[fieldName] = finalData
         setModifiedNonFormData(newData)
       }
     } else {
-      var newData = { ...modifiedNonFormData }
+      const newData = { ...modifiedNonFormData }
       newData[fieldName] = null
       setModifiedNonFormData(newData)
     }
@@ -362,270 +371,434 @@ const UpdateArticleIdeaView = props => {
 
   if (isLoading) {
     return (
-      <div className="sweet-loading card">
-        <div className="spinner-container">
-          <ClipLoader
-            className="spinner"
-            sizeUnit={'px'}
-            size={50}
-            color={'#123abc'}
-            loading={isLoading}
-          />
-        </div>
+      <div style={sc.loadingContainer}>
+        <div style={sc.spinner}></div>
+        <p style={sc.loadingText}>Loading article idea data...</p>
       </div>
     )
   }
 
+  // Define form field styles
+  const formField = {
+    container: {
+      marginBottom: theme.spacing[6],
+    } as React.CSSProperties,
+    label: {
+      ...sc.formLabel,
+      display: "flex",
+      alignItems: "center",
+      gap: theme.spacing[2],
+    } as React.CSSProperties,
+    input: {
+      ...sc.formInput,
+    } as React.CSSProperties,
+    textarea: {
+      ...sc.formTextarea,
+      minHeight: "120px",
+    } as React.CSSProperties,
+    error: {
+      ...sc.formError,
+    } as React.CSSProperties,
+    hint: {
+      fontSize: theme.typography.fontSizes.xs,
+      color: theme.colors.text.tertiary,
+      marginTop: theme.spacing[1],
+    } as React.CSSProperties,
+    select: {
+      ...sc.formInput,
+      appearance: "none",
+      backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`,
+      backgroundRepeat: "no-repeat",
+      backgroundPosition: "right 1rem center",
+      backgroundSize: "1em",
+    } as React.CSSProperties,
+  }
+
   return (
-    <div className={`${styles.Card} ${styles.FormCard} Card FormCard`}>
-      <div className={`${styles.CardBody} CardBody`}>
-        <h1>{originalData && originalData.name}</h1>
+    <div style={sc.formCard}>
+      <div style={sc.formHeader}>
+        <h1 style={sc.formTitle}>
+          <Lightbulb size={24} color={theme.colors.accent.primary} />
+          {originalData && originalData.title ? `Edit: ${originalData.title}` : "Update Article Idea"}
+        </h1>
+      </div>
+      <div style={sc.formContent}>
         <Formik
-          initialValues={originalData}
-          validate={values => {
-            values = { ...values, ...modifiedNonFormData }
-            const errors = {}
-            {
-              /* Insert all form errors here */
-              if (!values.title) {
-                errors.title = 'Field Required!'
-              }
+          initialValues={originalData || ({} as ArticleIdeaData)}
+          validate={(values) => {
+            const combinedValues = { ...values, ...modifiedNonFormData }
+            const errors: Record<string, string> = {}
 
-              if (!values.created_at) {
-                errors.created_at = 'Field Required!'
-              }
+            // Add validation rules
+            if (!combinedValues.title) {
+              errors.title = "Title is required"
+            }
 
-              if (!values.updated_at) {
-                errors.updated_at = 'Field Required!'
-              }
+            if (!combinedValues.created_at) {
+              errors.created_at = "Created date is required"
+            }
+
+            if (!combinedValues.updated_at) {
+              errors.updated_at = "Updated date is required"
             }
 
             return errors
           }}
-          onSubmit={(values, { setSubmitting }) => {
+          onSubmit={(values: FormValues, { setSubmitting }: FormikHelpers<FormValues>) => {
             saveChanges(values, setSubmitting)
-          }}>
-          {({
-            values,
-            errors,
-            touched,
-            handleChange,
-            handleBlur,
-            handleSubmit,
-            isSubmitting,
-            /* and other goodies */
-          }) => (
+          }}
+        >
+          {({ values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
             <form onSubmit={handleSubmit}>
-              {/* Insert all edit form fields here */}
-              <div
-                className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                <label className={`${styles.FormLabel} FormLabel`}>Title</label>
-                <input
-                  className={`${styles.FormTextField} FormTextField`}
-                  type="title"
-                  name="title"
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  value={values.title}
-                />
-                <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                  {errors.title && touched.title && errors.title}
-                </p>
+              {/* Main content section */}
+              <div style={{ marginBottom: theme.spacing[8] }}>
+                <h2
+                  style={{
+                    fontSize: theme.typography.fontSizes.xl,
+                    fontWeight: theme.typography.fontWeights.semibold,
+                    marginBottom: theme.spacing[4],
+                    color: theme.colors.text.primary,
+                  }}
+                >
+                  Basic Information
+                </h2>
+
+                {/* Title field */}
+                <div style={formField.container}>
+                  <label htmlFor="title" style={formField.label}>
+                    <FileText size={16} color={theme.colors.accent.primary} />
+                    Title <span style={{ color: theme.colors.feedback.error }}>*</span>
+                  </label>
+                  <input
+                    id="title"
+                    name="title"
+                    type="text"
+                    placeholder="Enter article idea title"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.title || ""}
+                    style={{
+                      ...formField.input,
+                      borderColor:
+                        errors.title && touched.title ? theme.colors.feedback.error : theme.forms.input.borderColor,
+                    }}
+                  />
+                  {errors.title && touched.title && <p style={formField.error}>{errors.title}</p>}
+                </div>
+
+                {/* Topic field */}
+                <div style={formField.container}>
+                  <label htmlFor="topic" style={formField.label}>
+                    <MessageSquare size={16} color={theme.colors.accent.primary} />
+                    Topic
+                  </label>
+                  <input
+                    id="topic"
+                    name="topic"
+                    type="text"
+                    placeholder="Main topic of the article"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.topic || ""}
+                    style={formField.input}
+                  />
+                  <p style={formField.hint}>The main subject or focus of your article idea</p>
+                </div>
+
+                {/* Category field */}
+                <div style={formField.container}>
+                  <label htmlFor="category" style={formField.label}>
+                    <Tag size={16} color={theme.colors.accent.primary} />
+                    Category
+                  </label>
+                  <input
+                    id="category"
+                    name="category"
+                    type="text"
+                    placeholder="Article category"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.category || ""}
+                    style={formField.input}
+                  />
+                </div>
+
+                {/* Summary field */}
+                <div style={formField.container}>
+                  <label htmlFor="summary" style={formField.label}>
+                    <FileText size={16} color={theme.colors.accent.primary} />
+                    Summary
+                  </label>
+                  <textarea
+                    id="summary"
+                    name="summary"
+                    placeholder="Brief summary of the article idea"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.summary || ""}
+                    style={formField.textarea}
+                  />
+                </div>
               </div>
 
+              {/* Content planning section */}
               <div
-                className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                <label className={`${styles.FormLabel} FormLabel`}>
-                  Sections
-                </label>
-                <input
-                  className={`${styles.FormTextField} FormTextField`}
-                  type="sections"
-                  name="sections"
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  value={values.sections}
-                />
-                <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                  {errors.sections && touched.sections && errors.sections}
-                </p>
+                style={{
+                  height: "1px",
+                  backgroundColor: theme.colors.border.light,
+                  margin: `${theme.spacing[6]} 0`,
+                }}
+              ></div>
+
+              <div style={{ marginBottom: theme.spacing[8] }}>
+                <h2
+                  style={{
+                    fontSize: theme.typography.fontSizes.xl,
+                    fontWeight: theme.typography.fontWeights.semibold,
+                    marginBottom: theme.spacing[4],
+                    color: theme.colors.text.primary,
+                  }}
+                >
+                  Content Planning
+                </h2>
+
+                {/* Sections field */}
+                <div style={formField.container}>
+                  <label htmlFor="sections" style={formField.label}>
+                    <FileText size={16} color={theme.colors.accent.primary} />
+                    Sections
+                  </label>
+                  <textarea
+                    id="sections"
+                    name="sections"
+                    placeholder="List the main sections of your article"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.sections || ""}
+                    style={formField.textarea}
+                  />
+                  <p style={formField.hint}>Outline the main sections or headings for your article</p>
+                </div>
+
+                {/* Tags field */}
+                <div style={formField.container}>
+                  <label htmlFor="tags" style={formField.label}>
+                    <Tag size={16} color={theme.colors.accent.primary} />
+                    Tags
+                  </label>
+                  <input
+                    id="tags"
+                    name="tags"
+                    type="text"
+                    placeholder="Comma-separated tags"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.tags || ""}
+                    style={formField.input}
+                  />
+                  <p style={formField.hint}>Add relevant tags separated by commas</p>
+                </div>
+
+                {/* Extra Prompt field */}
+                <div style={formField.container}>
+                  <label htmlFor="extra_prompt" style={formField.label}>
+                    <MessageSquare size={16} color={theme.colors.accent.primary} />
+                    Extra Prompt
+                  </label>
+                  <textarea
+                    id="extra_prompt"
+                    name="extra_prompt"
+                    placeholder="Additional notes or prompts for the writer"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.extra_prompt || ""}
+                    style={formField.textarea}
+                  />
+                </div>
               </div>
 
+              {/* SEO & Social section */}
               <div
-                className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                <label className={`${styles.FormLabel} FormLabel`}>Tags</label>
-                <input
-                  className={`${styles.FormTextField} FormTextField`}
-                  type="tags"
-                  name="tags"
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  value={values.tags}
-                />
-                <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                  {errors.tags && touched.tags && errors.tags}
-                </p>
+                style={{
+                  height: "1px",
+                  backgroundColor: theme.colors.border.light,
+                  margin: `${theme.spacing[6]} 0`,
+                }}
+              ></div>
+
+              <div style={{ marginBottom: theme.spacing[8] }}>
+                <h2
+                  style={{
+                    fontSize: theme.typography.fontSizes.xl,
+                    fontWeight: theme.typography.fontWeights.semibold,
+                    marginBottom: theme.spacing[4],
+                    color: theme.colors.text.primary,
+                  }}
+                >
+                  SEO & Social Media
+                </h2>
+
+                {/* SEO Description field */}
+                <div style={formField.container}>
+                  <label htmlFor="seo_description" style={formField.label}>
+                    <FileText size={16} color={theme.colors.accent.primary} />
+                    SEO Description
+                  </label>
+                  <textarea
+                    id="seo_description"
+                    name="seo_description"
+                    placeholder="SEO meta description"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.seo_description || ""}
+                    style={formField.textarea}
+                  />
+                  <p style={formField.hint}>
+                    A concise description for search engines (recommended: 150-160 characters)
+                  </p>
+                </div>
+
+                {/* Social Media Post field */}
+                <div style={formField.container}>
+                  <label htmlFor="social_media_post" style={formField.label}>
+                    <Share2 size={16} color={theme.colors.accent.primary} />
+                    Social Media Post
+                  </label>
+                  <textarea
+                    id="social_media_post"
+                    name="social_media_post"
+                    placeholder="Draft social media post to promote this article"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.social_media_post || ""}
+                    style={formField.textarea}
+                  />
+                </div>
               </div>
 
+              {/* Status & Dates section */}
               <div
-                className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                <label className={`${styles.FormLabel} FormLabel`}>
-                  Status
-                </label>
-                <input
-                  className={`${styles.FormTextField} FormTextField`}
-                  type="status"
-                  name="status"
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  value={values.status}
-                />
-                <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                  {errors.status && touched.status && errors.status}
-                </p>
+                style={{
+                  height: "1px",
+                  backgroundColor: theme.colors.border.light,
+                  margin: `${theme.spacing[6]} 0`,
+                }}
+              ></div>
+
+              <div style={{ marginBottom: theme.spacing[8] }}>
+                <h2
+                  style={{
+                    fontSize: theme.typography.fontSizes.xl,
+                    fontWeight: theme.typography.fontWeights.semibold,
+                    marginBottom: theme.spacing[4],
+                    color: theme.colors.text.primary,
+                  }}
+                >
+                  Status & Dates
+                </h2>
+
+                {/* Status field */}
+                <div style={formField.container}>
+                  <label htmlFor="status" style={formField.label}>
+                    <FileText size={16} color={theme.colors.accent.primary} />
+                    Status
+                  </label>
+                  <select
+                    id="status"
+                    name="status"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.status || ""}
+                    style={formField.select}
+                  >
+                    <option value="">Select status</option>
+                    <option value="draft">Draft</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="review">Review</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                  </select>
+                </div>
+
+                {/* Date fields */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: theme.spacing[6] }}>
+                  <div style={formField.container}>
+                    <label style={formField.label}>
+                      <Calendar size={16} color={theme.colors.accent.primary} />
+                      Created Date <span style={{ color: theme.colors.feedback.error }}>*</span>
+                    </label>
+                    <div
+                      style={{
+                        border: `1px solid ${theme.colors.border.light}`,
+                        borderRadius: theme.borderRadius.md,
+                        padding: theme.spacing[2],
+                        backgroundColor: theme.colors.surface.primary,
+                      }}
+                    >
+                      <IMDatePicker
+                        selected={modifiedNonFormData.created_at || ""}
+                        onChange={(toDate) => onDateChange(toDate, "created_at")}
+                      />
+                    </div>
+                    {typeof errors.created_at === "string" && <p style={formField.error}>{errors.created_at}</p>}
+                  </div>
+
+                  <div style={formField.container}>
+                    <label style={formField.label}>
+                      <Calendar size={16} color={theme.colors.accent.primary} />
+                      Updated Date <span style={{ color: theme.colors.feedback.error }}>*</span>
+                    </label>
+                    <div
+                      style={{
+                        border: `1px solid ${theme.colors.border.light}`,
+                        borderRadius: theme.borderRadius.md,
+                        padding: theme.spacing[2],
+                        backgroundColor: theme.colors.surface.primary,
+                      }}
+                    >
+                      <IMDatePicker
+                        selected={modifiedNonFormData.updated_at || ""}
+                        onChange={(toDate) => onDateChange(toDate, "updated_at")}
+                      />
+                    </div>
+                    {typeof errors.updated_at === "string" && <p style={formField.error}>{errors.updated_at}</p>}
+                  </div>
+                </div>
               </div>
 
+              {/* Form actions */}
               <div
-                className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                <label className={`${styles.FormLabel} FormLabel`}>
-                  Extra Prompt
-                </label>
-                <input
-                  className={`${styles.FormTextField} FormTextField`}
-                  type="extra_prompt"
-                  name="extra_prompt"
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  value={values.extra_prompt}
-                />
-                <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                  {errors.extra_prompt &&
-                    touched.extra_prompt &&
-                    errors.extra_prompt}
-                </p>
-              </div>
-
-              <div
-                className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                <label className={`${styles.FormLabel} FormLabel`}>
-                  Social Media
-                </label>
-                <input
-                  className={`${styles.FormTextField} FormTextField`}
-                  type="social_media_post"
-                  name="social_media_post"
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  value={values.social_media_post}
-                />
-                <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                  {errors.social_media_post &&
-                    touched.social_media_post &&
-                    errors.social_media_post}
-                </p>
-              </div>
-
-              <div
-                className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                <label className={`${styles.FormLabel} FormLabel`}>
-                  SEO Description
-                </label>
-                <input
-                  className={`${styles.FormTextField} FormTextField`}
-                  type="seo_description"
-                  name="seo_description"
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  value={values.seo_description}
-                />
-                <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                  {errors.seo_description &&
-                    touched.seo_description &&
-                    errors.seo_description}
-                </p>
-              </div>
-
-              <div
-                className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                <label className={`${styles.FormLabel} FormLabel`}>
-                  Summary
-                </label>
-                <input
-                  className={`${styles.FormTextField} FormTextField`}
-                  type="summary"
-                  name="summary"
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  value={values.summary}
-                />
-                <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                  {errors.summary && touched.summary && errors.summary}
-                </p>
-              </div>
-
-              <div
-                className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                <label className={`${styles.FormLabel} FormLabel`}>Topic</label>
-                <input
-                  className={`${styles.FormTextField} FormTextField`}
-                  type="topic"
-                  name="topic"
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  value={values.topic}
-                />
-                <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                  {errors.topic && touched.topic && errors.topic}
-                </p>
-              </div>
-
-              <div
-                className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                <label className={`${styles.FormLabel} FormLabel`}>
-                  Category
-                </label>
-                <input
-                  className={`${styles.FormTextField} FormTextField`}
-                  type="category"
-                  name="category"
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  value={values.category}
-                />
-                <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                  {errors.category && touched.category && errors.category}
-                </p>
-              </div>
-
-              <div
-                className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                <label className={`${styles.FormLabel} FormLabel`}>
-                  Created Date
-                </label>
-                <IMDatePicker
-                  selected={modifiedNonFormData.created_at}
-                  onChange={toDate => onDateChange(toDate, 'created_at')}
-                />
-              </div>
-
-              <div
-                className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                <label className={`${styles.FormLabel} FormLabel`}>
-                  Updated Date
-                </label>
-                <IMDatePicker
-                  selected={modifiedNonFormData.updated_at}
-                  onChange={toDate => onDateChange(toDate, 'updated_at')}
-                />
-              </div>
-
-              <div
-                className={`${styles.FormActionContainer} FormActionContainer`}>
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  marginTop: theme.spacing[6],
+                  paddingTop: theme.spacing[4],
+                  borderTop: `1px solid ${theme.colors.border.light}`,
+                }}
+              >
                 <button
-                  className={`${styles.PrimaryButton} PrimaryButton`}
+                  type="button"
+                  style={{
+                    ...sc.secondaryButton,
+                    marginRight: theme.spacing[3],
+                  }}
+                  onClick={() => window.history.back()}
+                >
+                  Cancel
+                </button>
+                <button
                   type="submit"
-                  disabled={isSubmitting}>
-                  Save article_idea
+                  disabled={isSubmitting}
+                  style={{
+                    ...sc.primaryButton,
+                    opacity: isSubmitting ? 0.7 : 1,
+                    cursor: isSubmitting ? "not-allowed" : "pointer",
+                  }}
+                >
+                  {isSubmitting && (
+                    <Loader2 size={16} className="animate-spin" style={{ marginRight: theme.spacing[2] }} />
+                  )}
+                  Save Article Idea
                 </button>
               </div>
             </form>

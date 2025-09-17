@@ -4,7 +4,7 @@ import { getArticleBySlug, getCategoryBySlug, getTagBySlug } from '../db'
 import { getHomeModules } from './getHomeModules'
 
 export const getComponentForRoutes = async routes => {
-  console.log(`Finding component for routes 123 ${JSON.stringify(routes)}`)
+  console.log(`Finding component for routes in blog lib getComponentForRoutes ${JSON.stringify(routes)}`)
 
   const installedTheme = await getCurrentTheme()
   const slug = routes.join('/')

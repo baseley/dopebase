@@ -7,7 +7,7 @@ export const getAdminMenuForRoutes = async (routes = []) => {
     return [];
   }
 
-  console.log(`Finding component for routes ${JSON.stringify(routes)}`);
+  console.log(`Finding component for routes in blog lib getAdminMenuForRoutes ${JSON.stringify(routes)}`);
 
   const slug = routes.join('/');
   const blogURL = await getSettingsValue('blog_url');

@@ -9,16 +9,17 @@ const secretOrKey = process.env.JWT_SECRET;
 
 const validateLoginInput = (data) => {
   const errors = {};
-  data.email = !isEmpty(data.email) ? data.email : '';
-  data.password = !isEmpty(data.password) ? data.password : '';
 
-  if (Validator.isEmpty(data.email)) {
+  const email = !isEmpty(data.email) ? data.email : '';
+  const password = !isEmpty(data.password) ? data.password : '';
+
+  if (Validator.isEmpty(email)) {
     errors.email = 'Email field is required';
-  } else if (!Validator.isEmail(data.email)) {
+  } else if (!Validator.isEmail(email)) {
     errors.email = 'Email is invalid';
   }
 
-  if (Validator.isEmpty(data.password)) {
+  if (Validator.isEmpty(password)) {
     errors.password = 'Password field is required';
   }
 
@@ -29,45 +30,52 @@ const validateLoginInput = (data) => {
 };
 
 export async function POST(req) {
-  const json = await req.json();
-  if (!json) {
-    return NextResponse.json({}, { status: 500 });
-  }
+  try {
+    if (!secretOrKey) {
+      throw new Error('JWT_SECRET is not defined in environment variables.');
+    }
 
-  const { errors, isValid } = validateLoginInput(json);
-  if (!isValid) {
-    return NextResponse.json(errors, { status: 400 });
-  }
+    const json = await req.json();
 
-  const { email, password } = json;
-  const result = await loginWithEmailAndPassword(email, password);
-  if (result.error) {
-    return NextResponse.json(result.error, { status: 400 });
-  }
+    const { errors, isValid } = validateLoginInput(json);
+    if (!isValid) {
+      return NextResponse.json({ errors }, { status: 400 });
+    }
 
-  const userData = result.payload;
+    const { email, password } = json;
+    const result = await loginWithEmailAndPassword(email, password);
 
-  const token = jwt.sign(
-    { id: userData.id },
-    secretOrKey,
-    { expiresIn: 31556926 } // 1 an în secunde
-  );
+    if (result.error) {
+      return NextResponse.json({ error: result.error }, { status: 400 });
+    }
 
-  const cookieStore = await cookies();
-  cookieStore.set('dopebase.session-token', token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    path: '/',
-    maxAge: 31556926, // 1 an în secunde
-  });
+    const userData = result.payload;
 
-  return NextResponse.json(
-    {
+    const token = jwt.sign(
+      { id: userData.id },
+      secretOrKey,
+      { expiresIn: 31556926 } // 1 year
+    );
+
+    const cookieStore = cookies(); // no await here
+    cookieStore.set('dopebase.session-token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+      maxAge: 31556926, // 1 year
+    });
+
+    return NextResponse.json({
       success: true,
       token: `Bearer ${token}`,
       userData,
-      errors: null,
-    },
-    { status: 200 }
-  );
+    }, { status: 200 });
+
+  } catch (err) {
+    console.error('Login Error:', err);
+    return NextResponse.json(
+      { error: 'Internal Server Error' },
+      { status: 500 }
+    );
+  }
 }

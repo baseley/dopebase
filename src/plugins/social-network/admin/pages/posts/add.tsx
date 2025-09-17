@@ -2,509 +2,434 @@
 'use client'
 import React, { useEffect, useState } from 'react'
 import { Formik } from 'formik'
-import { ClipLoader } from 'react-spinners'
-import ReactMarkdown from 'react-markdown'
+import { Loader, Edit, User, MessageSquare, Image, MapPin, Calendar, Heart } from 'lucide-react'
 import dynamic from 'next/dynamic'
-import CodeMirror from '@uiw/react-codemirror'
-import { javascript } from '@codemirror/lang-javascript'
-import { css } from '@codemirror/lang-css'
-import { html } from '@codemirror/lang-html'
-import { markdown } from '@codemirror/lang-markdown'
-import Editor from 'rich-markdown-editor'
-import IMDatePicker from '../../../../../admin/components/forms/IMDatePicker'
-import { LocationPicker } from '../../../../../admin/components/forms/locationPicker'
-import {
-  TypeaheadComponent,
-  IMObjectInputComponent,
-  IMMultimediaComponent,
-  IMArrayInputComponent,
-  IMColorPicker,
-  IMColorsContainer,
-  IMColorBoxComponent,
-  IMStaticMultiSelectComponent,
-  IMStaticSelectComponent,
-  IMPhoto,
-  IMModal,
-  IMToggleSwitchComponent,
-} from '../../../../../admin/components/forms/fields'
-import styles from '../../../../../admin/themes/admin.module.css'
+import { toast } from 'react-toastify'
+import { theme, styledComponents as sc } from '@/lib/theme'
 
-/* Insert extra imports here */
-import PostAuthorTypeaheadComponent from '../../components/PostAuthorTypeaheadComponent.js'
+// Dynamic imports for components
+const IMDatePicker = dynamic(() => import('@/admin/components/forms/IMDatePicker'), {
+  ssr: false,
+  loading: () => <div style={{ height: '44px', display: 'flex', alignItems: 'center' }}>Loading date picker...</div>
+})
 
+const IMMultimediaComponent = dynamic(() => import('@/admin/components/forms/fields/IMMultimediaComponent/IMMultimediaComponent'))
+const PostAuthorTypeaheadComponent = dynamic(() => import('../../components/PostAuthorTypeaheadComponent'))
 
 import { pluginsAPIURL } from '../../../../../config/config'
 import { authPost } from '../../../../../modules/auth/utils/authFetch'
 
-const beautify_html = require('js-beautify').html
 const baseAPIURL = `${pluginsAPIURL}`
+
+interface NonFormData {
+  createdAt?: string
+  postMedia?: Array<{ url: string; mime: string }>
+  [key: string]: any
+}
+
+interface FormValues {
+  title: string // Added required title field
+  authorID?: string
+  commentCount?: number
+  postText?: string
+  location?: string
+  reactionsCount?: number
+  [key: string]: any
+}
+
+interface PostData extends FormValues, NonFormData {}
 
 const AddNewPostView = () => {
   const [isLoading, setIsLoading] = useState(false)
-  const [modifiedNonFormData, setModifiedNonFormData] = useState({})
-  const [originalData, setOriginalData] = useState(null)
+  const [modifiedNonFormData, setModifiedNonFormData] = useState<NonFormData>({})
+  const [originalData, setOriginalData] = useState<PostData | null>(null)
 
   useEffect(() => {
+    const now = Math.floor(new Date().getTime() / 1000).toString()
     setModifiedNonFormData({
-      created_at: Math.floor(new Date().getTime() / 1000).toString(),
+      createdAt: now,
+      postMedia: []
     })
   }, [])
 
-  const createPost = async (data, setSubmitting) => {
+  const createPost = async (data: PostData, setSubmitting: (isSubmitting: boolean) => void) => {
     setIsLoading(true)
     const url = `${baseAPIURL}admin/social-network/posts/add`
-    const response = await authPost(
-      url,
-      JSON.stringify({ ...data, ...modifiedNonFormData }),
-    )
-    const resData = response.data
-    if (resData?.error) {
-      alert(resData?.error)
+    
+    // Prepare complete post data with all required fields
+    const postData = {
+      ...data,
+      ...modifiedNonFormData,
+      content: null, // Set explicitly as per schema
+      updated_at: null // Set explicitly as per schema
     }
-    setSubmitting(false)
-    setIsLoading(false)
+
+    try {
+      const response = await authPost(url, JSON.stringify(postData))
+      const resData = response.data
+
+      if (resData?.error) {
+        toast.error(resData.error)
+      } else {
+        toast.success("Post created successfully")
+      }
+    } catch (error: any) {
+      toast.error(`Error creating post: ${error.message || "Unknown error"}`)
+      console.error(error)
+    } finally {
+      setSubmitting(false)
+      setIsLoading(false)
+    }
   }
 
-  const onTypeaheadSelect = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const onTypeaheadSelect = (value: any, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
     newData[fieldName] = value
     setModifiedNonFormData(newData)
   }
 
-  const onMultipleTypeaheadSelect = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (newData[fieldName] != undefined) {
-      newData[fieldName].push(value)
-    } else {
-      newData[fieldName] = [value]
-    }
-    setModifiedNonFormData(newData)
-  }
-
-  const onMultipleTypeaheadDelete = (index, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName].splice(index, 1)
-    setModifiedNonFormData(newData)
-  }
-
-  const handleSwitchChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value ^ true
-    setModifiedNonFormData(newData)
-  }
-
-  const handleSelectChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value
-    setModifiedNonFormData(newData)
-  }
-
-  const handleColorChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value
-    setModifiedNonFormData(newData)
-  }
-
-  const handleColorDelete = fieldName => {
-    var newData = { ...modifiedNonFormData }
-    delete newData[fieldName]
-    setModifiedNonFormData(newData)
-  }
-
-  const handleColorsChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (newData[fieldName] != undefined) {
-      newData[fieldName].push(value)
-    } else {
-      newData[fieldName] = [value]
-    }
-    setModifiedNonFormData(newData)
-  }
-
-  const handleColorsDelete = (index, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName].splice(index, 1)
-    setModifiedNonFormData(newData)
-  }
-
-  const handleArrayInput = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (newData[fieldName] != undefined) {
-      newData[fieldName].push(value)
-    } else {
-      newData[fieldName] = [value]
-    }
-    setModifiedNonFormData(newData)
-  }
-
-  const handleArrayDelete = (index, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName].splice(index, 1)
-    setModifiedNonFormData(newData)
-  }
-
-  const handleObjectInput = (key, value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (newData[fieldName] != undefined) {
-      newData[fieldName][key] = value
-    } else {
-      newData[fieldName] = { [key]: value }
-    }
-    setModifiedNonFormData(newData)
-  }
-
-  const handleObjectDelete = (key, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = Object.keys(newData[fieldName]).reduce(
-      (object, keys) => {
-        if (keys !== key) {
-          object[keys] = newData[fieldName][keys]
-        }
-        return object
-      },
-      {},
-    )
-    setModifiedNonFormData(newData)
-  }
-
-  const onDateChange = (toDate, fieldName) => {
-    var newData = { ...modifiedNonFormData }
+  const onDateChange = (toDate: string, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
     newData[fieldName] = toDate
     setModifiedNonFormData(newData)
   }
 
-  const onLocationChange = (addressObject, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (!addressObject || !addressObject.location || !addressObject.gmaps) {
-      return
-    }
-    const location = {
-      longitude: addressObject.location.lng,
-      latitude: addressObject.location.lat,
-      address: addressObject.label,
-      placeID: addressObject.placeId,
-      detailedAddress: addressObject.gmaps.address_components,
-    }
-    newData[fieldName] = location
-    setModifiedNonFormData(newData)
-  }
-
-  const onSimpleLocationChange = (addressObject, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (!addressObject || !addressObject.location) {
-      return
-    }
-    const location = {
-      lng: addressObject.location.lng,
-      lat: addressObject.location.lat,
-      // address: addressObject.label,
-    }
-    newData[fieldName] = location
-    setModifiedNonFormData(newData)
-  }
-
-  const onCodeChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value
-    setModifiedNonFormData(newData)
-  }
-
-  const onMarkdownEditorChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value
-    setModifiedNonFormData(newData)
-  }
-
-  const handleImageUpload = (event, fieldName, isMultiple) => {
+  const handleMultimediaUpload = (event: React.ChangeEvent<HTMLInputElement>, fieldName: string, isMultiple: boolean) => {
     const files = event.target.files
+    if (!files || files.length === 0) return
+
     const formData = new FormData()
-    for (var i = 0; i < files.length; ++i) {
-      formData.append('photos', files[i])
-    }
-
-    fetch(pluginsAPIURL + '../media/upload', {
-      method: 'POST',
-      body: formData,
-    })
-      .then(response => response.json())
-      .then(response => {
-        var newData = { ...modifiedNonFormData }
-        if (!isMultiple) {
-          const url = response.data && response.data[0] && response.data[0].url
-          newData[fieldName] = url
-        } else {
-          // multiple photos
-          const urls = response.data && response.data.map(item => item.url)
-          if (
-            !modifiedNonFormData[fieldName] ||
-            modifiedNonFormData[fieldName].length <= 0
-          ) {
-            newData[fieldName] = urls
-          } else {
-            newData[fieldName] = [...modifiedNonFormData[fieldName], ...urls]
-          }
-        }
-        setModifiedNonFormData(newData)
-        console.log(response)
-      })
-      .catch(error => {
-        console.error(error)
-      })
-  }
-
-  const handleDeletePhoto = (srcToBeRemoved, fieldName, isMultiple) => {
-    if (isMultiple) {
-      var newData = { ...modifiedNonFormData }
-      var currentURLs = newData[fieldName]
-      if (currentURLs) {
-        const newURLs = currentURLs.filter(src => src != srcToBeRemoved)
-        newData[fieldName] = newURLs
-        setModifiedNonFormData(newData)
-      }
-    } else {
-      var newData = { ...modifiedNonFormData }
-      newData[fieldName] = null
-      setModifiedNonFormData(newData)
-    }
-  }
-
-  const handleMultimediaUpload = (event, fieldName, isMultiple) => {
-    const files = event.target.files
-    const formData = new FormData()
-    for (var i = 0; i < files.length; ++i) {
+    for (let i = 0; i < files.length; ++i) {
       formData.append('multimedias', files[i])
     }
+
     fetch(pluginsAPIURL + '../media/uploadMultimedias', {
       method: 'POST',
       body: formData,
     })
       .then(response => response.json())
       .then(response => {
-        var newData = { ...modifiedNonFormData }
-        if (!isMultiple) {
-          const url = response.data && response.data[0] && response.data[0].url
-          newData[fieldName] = url
+        const newData = { ...modifiedNonFormData }
+        const mediaData = response.data?.map((item: any) => ({
+          url: item.url,
+          mime: item.mimetype
+        })) || []
+
+        if (isMultiple) {
+          newData[fieldName] = [...(newData[fieldName] || []), ...mediaData]
         } else {
-          // multiple media
-          const data =
-            response.data &&
-            response.data.map(item => {
-              return { url: item.url, mime: item.mimetype }
-            })
-          if (
-            !modifiedNonFormData[fieldName] ||
-            modifiedNonFormData[fieldName].length <= 0
-          ) {
-            newData[fieldName] = data
-          } else {
-            newData[fieldName] = [...modifiedNonFormData[fieldName], ...data]
-          }
+          newData[fieldName] = mediaData[0] || null
         }
         setModifiedNonFormData(newData)
-        console.log(response)
       })
       .catch(error => {
         console.error(error)
+        toast.error('Failed to upload media')
       })
   }
 
-  const handleMultimediaDelete = (srcToBeRemoved, fieldName, isMultiple) => {
+  const handleMultimediaDelete = (srcToBeRemoved: string, fieldName: string, isMultiple: boolean) => {
+    const newData = { ...modifiedNonFormData }
     if (isMultiple) {
-      var newData = { ...modifiedNonFormData }
-      var currentData = newData[fieldName]
-      if (currentData) {
-        const finalData = currentData.reduce((arrayAcumulator, curVal) => {
-          if (srcToBeRemoved !== curVal.url) {
-            arrayAcumulator.push(curVal)
-          }
-          return arrayAcumulator
-        })
-        newData[fieldName] = finalData
-        setModifiedNonFormData(newData)
-      }
+      newData[fieldName] = (newData[fieldName] || []).filter((item: any) => item.url !== srcToBeRemoved)
     } else {
-      var newData = { ...modifiedNonFormData }
       newData[fieldName] = null
-      setModifiedNonFormData(newData)
     }
+    setModifiedNonFormData(newData)
   }
 
   if (isLoading) {
     return (
-      <div className="sweet-loading card">
-        <div className="spinner-container">
-          <ClipLoader
-            className="spinner"
-            sizeUnit={'px'}
-            size={50}
-            color={'#123abc'}
-            loading={isLoading}
-          />
-        </div>
+      <div style={sc.loadingContainer}>
+        <Loader className="animate-spin" size={32} color={theme.colors.accent.primary} />
+        <p style={sc.loadingText}>Creating post...</p>
       </div>
     )
   }
 
+  // Form field styles
+  const formField = {
+    container: {
+      marginBottom: theme.spacing[6],
+    } as React.CSSProperties,
+    label: {
+      ...sc.formLabel,
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing[2],
+    } as React.CSSProperties,
+    input: {
+      ...sc.formInput,
+    } as React.CSSProperties,
+    textarea: {
+      ...sc.formInput,
+      minHeight: '120px',
+    } as React.CSSProperties,
+    error: {
+      ...sc.formError,
+    } as React.CSSProperties,
+    grid2: {
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr',
+      gap: theme.spacing[6],
+    } as React.CSSProperties,
+  }
+
   return (
-    <div className={`${styles.FormCard} FormCard`}>
-      <div className={`${styles.CardBody} CardBody`}>
-        <h1>Create New Post</h1>
+    <div style={sc.formCard}>
+      <div style={sc.formHeader}>
+        <h1 style={sc.formTitle}>
+          <Edit size={24} color={theme.colors.accent.primary} />
+          Create New Post
+        </h1>
+      </div>
+      <div style={sc.formContent}>
         <Formik
-          initialValues={{}}
-          validate={values => {
-            values = { ...values, ...modifiedNonFormData }
-            const errors = {}
-            {
-              /* Insert all form errors here */
-        if (!values.authorID) {
-            errors.authorID = 'Field Required!'
-        }
+          initialValues={{
+            title: '', // Initialize title
+          } as FormValues}
+          validate={(values) => {
+            const combinedValues = { ...values, ...modifiedNonFormData }
+            const errors: Record<string, string> = {}
 
-        if (!values.commentCount) {
-            errors.commentCount = 'Field Required!'
-        }
+            if (!combinedValues.title) {
+              errors.title = 'Title is required'
+            }
 
-        if (!values.postText) {
-            errors.postText = 'Field Required!'
-        }
+            if (!combinedValues.authorID) {
+              errors.authorID = 'Author is required'
+            }
 
-        if (!values.postMedia) {
-            errors.postMedia = 'Field Required!'
-        }
+            if (!combinedValues.postText) {
+              errors.postText = 'Content is required'
+            }
 
-        if (!values.createdAt) {
-            errors.createdAt = 'Field Required!'
-        }
-
-        if (!values.reactionsCount) {
-            errors.reactionsCount = 'Field Required!'
-        }
-
+            if (!combinedValues.createdAt) {
+              errors.createdAt = 'Date is required'
             }
 
             return errors
           }}
-          onSubmit={(values, { setSubmitting }) => {
+          onSubmit={(values: FormValues, { setSubmitting }) => {
             createPost(values, setSubmitting)
-          }}>
-          {({
-            values,
-            errors,
-            touched,
-            handleChange,
-            handleBlur,
-            handleSubmit,
-            isSubmitting,
-            /* and other goodies */
-          }) => (
+          }}
+        >
+          {({ values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
             <form onSubmit={handleSubmit}>
-              {/* Insert all add form fields here */}
+              {/* Post Information */}
+              <div style={{ marginBottom: theme.spacing[8] }}>
+                <h2 style={{
+                  fontSize: theme.typography.fontSizes.xl,
+                  fontWeight: theme.typography.fontWeights.semibold,
+                  marginBottom: theme.spacing[4],
+                  color: theme.colors.text.primary,
+                }}>
+                  Post Details
+                </h2>
 
-          <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-              <label className={`${styles.FormLabel} FormLabel`}>Author</label>
-              <PostAuthorTypeaheadComponent onSelect={(value) => onTypeaheadSelect(value, "authorID")} id={originalData && originalData.authorID} name={originalData && originalData.authorID} />
-          </div>
-      
+                {/* Title Field */}
+                <div style={formField.container}>
+                  <label htmlFor="title" style={formField.label}>
+                    <Edit size={16} color={theme.colors.accent.primary} />
+                    Title <span style={{ color: theme.colors.feedback.error }}>*</span>
+                  </label>
+                  <input
+                    id="title"
+                    name="title"
+                    type="text"
+                    placeholder="Post title"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.title}
+                    style={{
+                      ...formField.input,
+                      borderColor: errors.title && touched.title ? theme.colors.feedback.error : theme.forms.input.borderColor,
+                    }}
+                  />
+                  {errors.title && touched.title && <p style={formField.error}>{errors.title}</p>}
+                </div>
 
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Number of Comments</label>
-                        <input
-                            className={`${styles.FormTextField} FormTextField`}
-                            type="commentCount"
-                            name="commentCount"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.commentCount}
-                        />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.commentCount && touched.commentCount && errors.commentCount}
-                        </p>
-                    </div>
-    
+                {/* Author */}
+                <div style={formField.container}>
+                  <label style={formField.label}>
+                    <User size={16} color={theme.colors.accent.primary} />
+                    Author <span style={{ color: theme.colors.feedback.error }}>*</span>
+                  </label>
+                  <PostAuthorTypeaheadComponent 
+                    onSelect={(value) => onTypeaheadSelect(value, "authorID")} 
+                    id={originalData?.authorID} 
+                    name={originalData?.authorID || ''} 
+                  />
+                  {errors.authorID && <p style={formField.error}>{errors.authorID}</p>}
+                </div>
 
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Content</label>
-                        <input
-                            className={`${styles.FormTextField} FormTextField`}
-                            type="postText"
-                            name="postText"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.postText}
-                        />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.postText && touched.postText && errors.postText}
-                        </p>
-                    </div>
-    
+                {/* Content */}
+                <div style={formField.container}>
+                  <label htmlFor="postText" style={formField.label}>
+                    <MessageSquare size={16} color={theme.colors.accent.primary} />
+                    Content <span style={{ color: theme.colors.feedback.error }}>*</span>
+                  </label>
+                  <textarea
+                    id="postText"
+                    name="postText"
+                    placeholder="What's on your mind?"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.postText || ''}
+                    style={{
+                      ...formField.textarea,
+                      borderColor: errors.postText && touched.postText ? theme.colors.feedback.error : theme.forms.input.borderColor,
+                    }}
+                  />
+                  {errors.postText && touched.postText && <p style={formField.error}>{errors.postText}</p>}
+                </div>
 
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Media</label>
-                        {modifiedNonFormData.postMedia && modifiedNonFormData.postMedia.map( (data) => 
-                            <IMMultimediaComponent 
-                                openable 
-                                dismissable 
-                                className="multimedia" 
-                                src={data.url} 
-                                type={data.mime} 
-                                onDelete={(src) => handleMultimediaDelete(src, "postMedia", true) } 
-                            />
+                {/* Media */}
+                <div style={formField.container}>
+                  <label style={formField.label}>
+                    <Image size={16} color={theme.colors.accent.primary} />
+                    Media
+                  </label>
+                  <div style={{ marginTop: theme.spacing[2] }}>
+                    {modifiedNonFormData.postMedia?.map((data, index) => (
+                      <div key={index} style={{ marginBottom: theme.spacing[2] }}>
+                        {IMMultimediaComponent && (
+                          <IMMultimediaComponent
+                            openable
+                            dismissable
+                            src={data.url}
+                            type={data.mime}
+                            onDelete={() => handleMultimediaDelete(data.url, "postMedia", true)}
+                          />
                         )}
-                        <input className="FormFileField" multiple id="postMedia" name="postMedia" type="file" onChange={(event) => {
-                            handleMultimediaUpload(event, "postMedia", true);
-                        }} />
-                    </div>
-    
+                      </div>
+                    ))}
+                  </div>
+                  <input
+                    id="postMedia"
+                    name="postMedia"
+                    type="file"
+                    multiple
+                    onChange={(event) => handleMultimediaUpload(event, "postMedia", true)}
+                    style={{ marginTop: theme.spacing[2] }}
+                  />
+                </div>
+              </div>
 
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Location</label>
-                        <input
-                            className={`${styles.FormTextField} FormTextField`}
-                            type="location"
-                            name="location"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.location}
-                        />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.location && touched.location && errors.location}
-                        </p>
-                    </div>
-    
+              {/* Additional Information */}
+              <div style={{ marginBottom: theme.spacing[8] }}>
+                <h2 style={{
+                  fontSize: theme.typography.fontSizes.xl,
+                  fontWeight: theme.typography.fontWeights.semibold,
+                  marginBottom: theme.spacing[4],
+                  color: theme.colors.text.primary,
+                }}>
+                  Additional Information
+                </h2>
 
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Date</label>
-                        <IMDatePicker
-                            selected={modifiedNonFormData.createdAt}
-                            onChange={(toDate) => onDateChange(toDate, "createdAt")}
-                        />
-                    </div>
-    
+                <div style={formField.grid2}>
+                  {/* Location */}
+                  <div style={formField.container}>
+                    <label htmlFor="location" style={formField.label}>
+                      <MapPin size={16} color={theme.colors.accent.primary} />
+                      Location
+                    </label>
+                    <input
+                      id="location"
+                      name="location"
+                      type="text"
+                      placeholder="Where was this posted?"
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      value={values.location || ''}
+                      style={formField.input}
+                    />
+                  </div>
 
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Number of Reactions</label>
-                        <input
-                            className={`${styles.FormTextField} FormTextField`}
-                            type="reactionsCount"
-                            name="reactionsCount"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.reactionsCount}
-                        />
-                        <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                            {errors.reactionsCount && touched.reactionsCount && errors.reactionsCount}
-                        </p>
-                    </div>
-    
+                  {/* Date */}
+                  <div style={formField.container}>
+                    <label style={formField.label}>
+                      <Calendar size={16} color={theme.colors.accent.primary} />
+                      Date <span style={{ color: theme.colors.feedback.error }}>*</span>
+                    </label>
+                    <IMDatePicker
+                      selected={modifiedNonFormData.createdAt}
+                      onChange={(toDate) => onDateChange(toDate, "createdAt")}
+                    />
+                    {errors.createdAt && <p style={formField.error}>{errors.createdAt}</p>}
+                  </div>
+                </div>
 
+                <div style={formField.grid2}>
+                  {/* Comment Count */}
+                  <div style={formField.container}>
+                    <label htmlFor="commentCount" style={formField.label}>
+                      <MessageSquare size={16} color={theme.colors.accent.primary} />
+                      Comment Count
+                    </label>
+                    <input
+                      id="commentCount"
+                      name="commentCount"
+                      type="number"
+                      min="0"
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      value={values.commentCount || ''}
+                      style={formField.input}
+                    />
+                  </div>
 
-              <div
-                className={`${styles.FormActionContainer} FormActionContainer`}>
+                  {/* Reactions Count */}
+                  <div style={formField.container}>
+                    <label htmlFor="reactionsCount" style={formField.label}>
+                      <Heart size={16} color={theme.colors.accent.primary} />
+                      Reactions Count
+                    </label>
+                    <input
+                      id="reactionsCount"
+                      name="reactionsCount"
+                      type="number"
+                      min="0"
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      value={values.reactionsCount || ''}
+                      style={formField.input}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Form Actions */}
+              <div style={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                marginTop: theme.spacing[6],
+                paddingTop: theme.spacing[4],
+                borderTop: `1px solid ${theme.colors.border.light}`,
+              }}>
                 <button
-                  className={`${styles.PrimaryButton} PrimaryButton`}
+                  type="button"
+                  style={{
+                    ...sc.secondaryButton,
+                    marginRight: theme.spacing[3],
+                  }}
+                  onClick={() => window.history.back()}
+                >
+                  Cancel
+                </button>
+                <button
                   type="submit"
-                  disabled={isSubmitting}>
-                  Create post
+                  disabled={isSubmitting}
+                  style={{
+                    ...sc.primaryButton,
+                    opacity: isSubmitting ? 0.7 : 1,
+                    cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  {isSubmitting && (
+                    <Loader className="animate-spin" size={16} style={{ marginRight: theme.spacing[2] }} />
+                  )}
+                  Create Post
                 </button>
               </div>
             </form>

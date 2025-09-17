@@ -1,182 +1,254 @@
-// @ts-nocheck
-'use client'
-import React, { useMemo, useEffect, useState } from 'react'
-import { GetStaticProps } from 'next'
-import { useRouter } from 'next/navigation'
+"use client"
+
+import { useMemo, useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import {
   useReactTable,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   flexRender,
-  createColumnHelper,
-} from '@tanstack/react-table'
+} from "@tanstack/react-table"
+import { IMImagesTableCell, IMForeignKeyTableCell } from "../../../../../admin/components/forms/table"
+import { IMToggleSwitchComponent } from "../../../../../admin/components/forms/fields"
+import { pluginsAPIURL } from "../../../../../config/config"
+import useCurrentUser from "../../../../../modules/auth/hooks/useCurrentUser"
+import { authPost } from "../../../../../modules/auth/utils/authFetch"
 import {
-  IMLocationTableCell,
-  IMSimpleLocationTableCell,
-  IMColorsTableCell,
-  IMMultimediaTableCell,
-  IMObjectTableCell,
-  IMImagesTableCell,
-  IMDateTableCell,
-  IMForeignKeyTableCell,
-  IMAddressTableCell,
-} from '../../../../../admin/components/forms/table'
-import {
-  IMColorBoxComponent,
-  IMPhoto,
-  IMModal,
-  IMToggleSwitchComponent,
-} from '../../../../../admin/components/forms/fields'
-import { pluginsAPIURL } from '../../../../../config/config'
-import useCurrentUser from '../../../../../modules/auth/hooks/useCurrentUser'
-import { authPost } from '../../../../../modules/auth/utils/authFetch'
-import styles from '../../../../../admin/themes/admin.module.css'
-/* Insert extra imports for table cells here */
+  Eye,
+  Edit,
+  Trash2,
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  FileText,
+} from "lucide-react"
+import { theme } from "../../../../../lib/theme"
 
 const baseAPIURL = `${pluginsAPIURL}admin/blog/`
 
-export const getStaticProps: GetStaticProps = async () => {
-  return { props: { isAdminRoute: true } }
-}
-
-const ArticleCategoriesColumns = [
-  
-      {
-          id:"name",
-          header: "Name",
-          accessorKey: "name",
-      },
-      {
-          id:"description",
-          header: "Description",
-          accessorKey: "description",
-          cell: data => (
-              <div className='markdownReadOnly'>{data?.value && data.value.substring(0, 100)}...</div>
-          )
-      },
-      {
-          id:"slug",
-          header: "Slug",
-          accessorKey: "slug",
-      },
-      {
-          id:"logo_url",
-          header: "Logo",
-          accessorKey: "logo_url",
-          cell: data => (
-              <IMImagesTableCell singleImageURL={data.value} />
-          )
-      },
-      {
-          id:"seo_title",
-          header: "SEO Title",
-          accessorKey: "seo_title",
-      },
-      {
-          id:"seo_description",
-          header: "SEO Description",
-          accessorKey: "seo_description",
-      },
-      {
-          id:"canonical_url",
-          header: "Canonical URL",
-          accessorKey: "canonical_url",
-      },
-      {
-          id:"seo_image_url",
-          header: "SEO Cover Image",
-          accessorKey: "seo_image_url",
-          cell: data => (
-              <IMImagesTableCell singleImageURL={data.value} />
-          )
-      },
-      {
-          id:"published",
-          header: "Published",
-          accessorKey: "published",
-          cell: data => (
-              <IMToggleSwitchComponent isChecked={data.value} disabled />
-          )
-      },
-      {
-          id:"parent_id",
-          header: "Parent Category",
-          accessorKey: "parent_id",
-          cell: data => (
-              <IMForeignKeyTableCell id={data.value} apiRouteName="admin/blog/categories" viewRoute="categories"
-          titleKey="title" />
-          )
-      },,
-      {
-          id:"actions",
-          header: 'Actions',
-          accessorKey: 'actions',
-          cell: data => <ActionsItemView data={data} />,
-      },
-]
-
-function ActionsItemView(props) {
-  const { data } = props
+function ActionsItemView({ data }) {
+  const [isProcessing, setIsProcessing] = useState(false)
   const router = useRouter()
 
-  const handleView = item => {
-    const viewPath = './view?id=' + item.id
+  const handleView = () => {
+    const viewPath = "./view?id=" + data.row.original.id
     router.push(viewPath)
   }
 
-  const handleEdit = item => {
-    const editPath = './update?id=' + item.id
+  const handleEdit = () => {
+    const editPath = "./update?id=" + data.row.original.id
     router.push(editPath)
   }
 
-  const handleDelete = async item => {
-    if (window.confirm('Are you sure you want to delete this item?')) {
-      const path = baseAPIURL + 'categories/delete'
-      const response = await authPost(path, { id: item.id })
-      window.location.reload(false)
+  const handleDelete = async () => {
+    if (window.confirm("Are you sure you want to delete this category?")) {
+      setIsProcessing(true)
+      try {
+        const path = baseAPIURL + "categories/delete"
+        await authPost(path, { id: data.row.original.id })
+        window.location.reload()
+      } catch (error) {
+        console.error("Error deleting category:", error)
+        alert("Failed to delete category. Please try again.")
+        setIsProcessing(false)
+      }
     }
   }
 
   return (
-    <div className={`${styles.inlineActionsContainer} inlineActionsContainer`}>
+    <div style={{ display: "flex", gap: "8px" }}>
       <button
-        onClick={() => handleView(data.row.original)}
-        type="button"
-        id="tooltip264453216"
-        className={`${styles.btnSm} btn-icon btn btn-info btn-sm`}>
-        <i className="fa fa-eye"></i>
+        onClick={handleView}
+        disabled={isProcessing}
+        style={{
+          backgroundColor: "rgba(13, 148, 255, 0.15)",
+          color: theme.colors.accent.primary,
+          opacity: isProcessing ? 0.7 : 1,
+          cursor: isProcessing ? "not-allowed" : "pointer",
+          border: "none",
+          borderRadius: "4px",
+          width: "28px",
+          height: "28px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+        title="View category"
+      >
+        <Eye size={14} />
       </button>
       <button
-        onClick={() => handleEdit(data.row.original)}
-        type="button"
-        id="tooltip366246651"
-        className={`${styles.btnSm} btn-icon btn btn-success btn-sm`}>
-        <i className="fa fa-edit"></i>
+        onClick={handleEdit}
+        disabled={isProcessing}
+        style={{
+          backgroundColor: "rgba(34, 197, 94, 0.15)",
+          color: theme.colors.feedback.success,
+          opacity: isProcessing ? 0.7 : 1,
+          cursor: isProcessing ? "not-allowed" : "pointer",
+          border: "none",
+          borderRadius: "4px",
+          width: "28px",
+          height: "28px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+        title="Edit category"
+      >
+        <Edit size={14} />
       </button>
       <button
-        onClick={() => handleDelete(data.row.original)}
-        type="button"
-        id="tooltip476609793"
-        className={`${styles.btnSm} btn-icon btn btn-danger btn-sm`}>
-        <i className="fa fa-times"></i>
+        onClick={handleDelete}
+        disabled={isProcessing}
+        style={{
+          backgroundColor: "rgba(239, 68, 68, 0.15)",
+          color: theme.colors.feedback.error,
+          opacity: isProcessing ? 0.7 : 1,
+          cursor: isProcessing ? "not-allowed" : "pointer",
+          border: "none",
+          borderRadius: "4px",
+          width: "28px",
+          height: "28px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+        title="Delete category"
+      >
+        <Trash2 size={14} />
       </button>
     </div>
   )
 }
 
-function ArticleCategoriesListView(props) {
+function ArticleCategoriesListView() {
   const [isLoading, setIsLoading] = useState(true)
-  const [ArticleCategories, setArticleCategories] = useState([])
+  const [articleCategories, setArticleCategories] = useState([])
   const [data, setData] = useState([])
-  const [globalFilter, setGlobalFilter] = useState('')
+  const [globalFilter, setGlobalFilter] = useState("")
 
   const [user, token, loading] = useCurrentUser()
 
-  const columns = useMemo(() => ArticleCategoriesColumns, [])
+  const columns = useMemo(
+    () => [
+      {
+        id: "name",
+        header: "Name",
+        accessorKey: "name",
+        cell: (info) => <div style={{ fontWeight: "500", color: theme.colors.text.primary }}>{info.getValue()}</div>,
+      },
+      {
+        id: "description",
+        header: "Description",
+        accessorKey: "description",
+        cell: (info) => (
+          <div
+            style={{
+              maxWidth: "200px",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              color: theme.colors.text.primary,
+            }}
+          >
+            {info.getValue() ? `${info.getValue().substring(0, 100)}...` : "-"}
+          </div>
+        ),
+      },
+      {
+        id: "slug",
+        header: "Slug",
+        accessorKey: "slug",
+        cell: (info) => <div style={{ color: theme.colors.text.secondary }}>{info.getValue()}</div>,
+      },
+      {
+        id: "logo_url",
+        header: "Logo",
+        accessorKey: "logo_url",
+        cell: (info) => <IMImagesTableCell singleImageURL={info.getValue()} />,
+      },
+      {
+        id: "seo_title",
+        header: "SEO Title",
+        accessorKey: "seo_title",
+        cell: (info) => <div style={{ color: theme.colors.text.primary }}>{info.getValue() || "-"}</div>,
+      },
+      {
+        id: "seo_description",
+        header: "SEO Description",
+        accessorKey: "seo_description",
+        cell: (info) => (
+          <div
+            style={{
+              maxWidth: "200px",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              color: theme.colors.text.secondary,
+            }}
+          >
+            {info.getValue() ? `${info.getValue().substring(0, 100)}...` : "-"}
+          </div>
+        ),
+      },
+      {
+        id: "canonical_url",
+        header: "Canonical URL",
+        accessorKey: "canonical_url",
+        cell: (info) => (
+          <div
+            style={{
+              maxWidth: "150px",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              color: theme.colors.text.secondary,
+            }}
+          >
+            {info.getValue() || "-"}
+          </div>
+        ),
+      },
+      {
+        id: "seo_image_url",
+        header: "SEO Cover Image",
+        accessorKey: "seo_image_url",
+        cell: (info) => <IMImagesTableCell singleImageURL={info.getValue()} />,
+      },
+      {
+        id: "published",
+        header: "Published",
+        accessorKey: "published",
+        cell: (info) => <IMToggleSwitchComponent isChecked={info.getValue()} disabled />,
+      },
+      {
+        id: "parent_id",
+        header: "Parent Category",
+        accessorKey: "parent_id",
+        cell: (info) => (
+          <IMForeignKeyTableCell
+            id={info.getValue()}
+            apiRouteName="admin/blog/categories"
+            viewRoute="categories"
+            titleKey="title"
+          />
+        ),
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        accessorKey: "actions",
+        cell: (info) => <ActionsItemView data={info} />,
+      },
+    ],
+    [],
+  )
 
   const table = useReactTable({
-    data: ArticleCategories,
+    data: articleCategories,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
@@ -185,6 +257,11 @@ function ArticleCategoriesListView(props) {
       globalFilter,
     },
     onGlobalFilterChange: setGlobalFilter,
+    initialState: {
+      pagination: {
+        pageSize: 10,
+      },
+    },
   })
 
   useEffect(() => {
@@ -195,27 +272,19 @@ function ArticleCategoriesListView(props) {
       headers: { Authorization: token },
     }
 
-    const extraQueryParams = null
     setIsLoading(true)
 
-    fetch(
-      baseAPIURL +
-        'categories/list' +
-        (extraQueryParams ? extraQueryParams : ''),
-      config,
-    )
-      .then(response => response.json())
-      .then(data => {
-        console.log(data)
-        const categories = data
-        setData(categories)
-
+    fetch(baseAPIURL + "categories/list", config)
+      .then((response) => response.json())
+      .then((data) => {
+        setData(data)
         setIsLoading(false)
       })
-      .catch(err => {
-        console.log(err)
+      .catch((err) => {
+        console.error(err)
+        setIsLoading(false)
       })
-  }, [loading])
+  }, [loading, token])
 
   useEffect(() => {
     const startRow = table.getState().pagination.pageSize * table.getState().pagination.pageIndex
@@ -225,137 +294,322 @@ function ArticleCategoriesListView(props) {
   }, [table.getState().pagination.pageIndex, table.getState().pagination.pageSize, data])
 
   return (
-    <>
-      <div className={`${styles.adminContent} adminContent`}>
-        <div className="row">
-          <div className="col col-md-12">
-            <div className="Card">
-              <div className="CardHeader">
-                <a
-                  className={`${styles.Link} ${styles.AddLink} Link AddLink`}
-                  href="./add">
-                  Add New
-                </a>
-                <h1>Article Categories</h1>
-              </div>
-              <div className={`${styles.CardBody} CardBody`}>
-                <div className={`${styles.TableContainer} TableContainer`}>
-                  <input
-                    className={`${styles.SearchInput} SearchInput`}
-                    type="text"
-                    placeholder="Search..."
-                    value={globalFilter ?? ''}
-                    onChange={e => setGlobalFilter(e.target.value)}
-                  />
-                  <table className={`${styles.Table} Table`}>
-                    <thead>
-                      {table.getHeaderGroups().map(headerGroup => (
-                        <tr key={headerGroup.id}>
-                          {headerGroup.headers.map(header => (
-                            <th key={header.id}>
-                              {flexRender(
-                                header.column.columnDef.header,
-                                header.getContext()
-                              )}
-                            </th>
-                          ))}
-                        </tr>
-                      ))}
-                    </thead>
-                    <tbody>
-                      {table.getRowModel().rows.map(row => (
-                        <tr key={row.id}>
-                          {row.getVisibleCells().map(cell => (
-                            <td key={cell.id}>
-                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
-                      <tr>
-                        {isLoading ? (
-                          <td colSpan={ArticleCategoriesColumns.length - 1}>
-                            <p>Loading...</p>
-                          </td>
-                        ) : (
-                          <td colSpan={ArticleCategoriesColumns.length - 1}>
-                            <p className={`${styles.PaginationDetails} PaginationDetails`}>
-                              Showing {table.getRowModel().rows.length} of {data.length} results
-                            </p>
-                          </td>
-                        )}
-                      </tr>
-                    </tbody>
-                  </table>
-                  <div className={`${styles.Pagination} Pagination`}>
-                    <div className={`${styles.LeftPaginationButtons} LeftPaginationButtons`}>
-                      <button
-                        onClick={() => table.setPageIndex(0)}
-                        className={`${styles.PaginationButton}`}
-                        disabled={!table.getCanPreviousPage()}>
-                        <i className="fa fa-angle-double-left"></i>
-                      </button>
-                      <button
-                        onClick={() => table.previousPage()}
-                        className={`${styles.PaginationButton}`}
-                        disabled={!table.getCanPreviousPage()}>
-                        <i className="fa fa-angle-left"></i>
-                      </button>
-                    </div>
-                    <div className={`${styles.CenterPaginationButtons}`}>
-                      <span>
-                        Page{' '}
-                        <strong>
-                          {table.getState().pagination.pageIndex + 1} of{' '}
-                          {table.getPageCount()}
-                        </strong>
-                      </span>
-                      <span>
-                        | Go to page:{' '}
-                        <input
-                          type="number"
-                          defaultValue={table.getState().pagination.pageIndex + 1}
-                          onChange={e => {
-                            const page = e.target.value ? Number(e.target.value) - 1 : 0
-                            table.setPageIndex(page)
-                          }}
-                          style={{ width: '100px' }}
-                        />
-                      </span>
-                      <select
-                        value={table.getState().pagination.pageSize}
-                        onChange={e => {
-                          table.setPageSize(Number(e.target.value))
-                        }}>
-                        {[10, 20, 30, 40, 50].map(pageSize => (
-                          <option key={pageSize} value={pageSize}>
-                            Show {pageSize}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className={`${styles.RightPaginationButtons}`}>
-                      <button
-                        onClick={() => table.nextPage()}
-                        className={`${styles.PaginationButton}`}
-                        disabled={!table.getCanNextPage()}>
-                        <i className="fa fa-angle-right"></i>
-                      </button>
-                      <button
-                        onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                        className={`${styles.PaginationButton}`}
-                        disabled={!table.getCanNextPage()}>
-                        <i className="fa fa-angle-double-right"></i>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+    <div
+      style={{
+        width: "100%",
+        maxWidth: "100%",
+        boxSizing: "border-box",
+        backgroundColor: "white",
+        borderRadius: "8px",
+        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+        padding: "24px",
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "24px",
+          paddingBottom: "16px",
+          borderBottom: `1px solid ${theme.colors.border.default}`,
+          width: "100%",
+        }}
+      >
+        <h1
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            color: theme.colors.text.primary,
+            fontSize: "20px",
+            fontWeight: "600",
+            margin: 0,
+          }}
+        >
+          <FileText size={24} style={{ color: theme.colors.accent.primary }} />
+          Article Categories
+        </h1>
+        <a
+          href="./add"
+          style={{
+            backgroundColor: theme.colors.accent.primary,
+            color: "white",
+            padding: "8px 16px",
+            textDecoration: "none",
+            borderRadius: "4px",
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontWeight: "500",
+          }}
+        >
+          Add New
+        </a>
+      </div>
+
+      <div style={{ width: "100%" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "16px",
+            gap: "16px",
+            width: "100%",
+          }}
+        >
+          <div style={{ position: "relative", flex: "1" }}>
+            <input
+              type="text"
+              placeholder="Search categories..."
+              value={globalFilter}
+              onChange={(e) => setGlobalFilter(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "10px 16px 10px 40px",
+                borderRadius: "6px",
+                border: `1px solid ${theme.colors.border.default}`,
+                fontSize: "14px",
+                color: theme.colors.text.primary,
+                backgroundColor: "white",
+                boxSizing: "border-box",
+              }}
+            />
+            <div style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)" }}>
+              <Search size={16} color="#6B7280" />
             </div>
           </div>
         </div>
+
+        <div
+          style={{
+            width: "100%",
+            borderRadius: "6px",
+            border: `1px solid ${theme.colors.border.default}`,
+            boxSizing: "border-box",
+          }}
+        >
+          <table
+            style={{
+              borderCollapse: "collapse",
+              width: "100%",
+              tableLayout: "fixed",
+            }}
+          >
+            <thead>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <th
+                      key={header.id}
+                      style={{
+                        backgroundColor: "#f9fafb",
+                        padding: "12px 16px",
+                        textAlign: "left",
+                        fontSize: "14px",
+                        fontWeight: "600",
+                        color: theme.colors.text.primary,
+                        borderBottom: `1px solid ${theme.colors.border.default}`,
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      {flexRender(header.column.columnDef.header, header.getContext())}
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody>
+              {isLoading ? (
+                <tr>
+                  <td
+                    colSpan={columns.length}
+                    style={{ textAlign: "center", padding: "24px", color: theme.colors.text.primary }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "12px" }}>
+                      <div
+                        className="spinner"
+                        style={{
+                          width: "24px",
+                          height: "24px",
+                          border: "3px solid rgba(0, 0, 0, 0.1)",
+                          borderRadius: "50%",
+                          borderTop: `3px solid ${theme.colors.accent.primary}`,
+                          animation: "spin 1s linear infinite",
+                        }}
+                      />
+                      Loading categories...
+                    </div>
+                    <style jsx>{`
+                      @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                      }
+                    `}</style>
+                  </td>
+                </tr>
+              ) : table.getRowModel().rows.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={columns.length}
+                    style={{ textAlign: "center", padding: "24px", color: theme.colors.text.primary }}
+                  >
+                    <div>
+                      <div style={{ marginBottom: "12px" }}>
+                        <FileText size={32} style={{ color: theme.colors.text.secondary }} />
+                      </div>
+                      <div style={{ fontWeight: 500, marginBottom: "4px" }}>No categories found</div>
+                      <div style={{ color: theme.colors.text.secondary }}>
+                        Try adjusting your search or add new categories to your collection.
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                table.getRowModel().rows.map((row, rowIndex) => (
+                  <tr
+                    key={row.id}
+                    style={{
+                      backgroundColor: rowIndex % 2 === 0 ? "white" : "#f9fafb",
+                      transition: "background-color 0.2s",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f3f4f6")}
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.backgroundColor = rowIndex % 2 === 0 ? "white" : "#f9fafb")
+                    }
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <td
+                        key={cell.id}
+                        style={{
+                          padding: "12px 16px",
+                          fontSize: "14px",
+                          color: theme.colors.text.primary,
+                          borderBottom: `1px solid ${theme.colors.border.default}`,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginTop: "16px",
+            padding: "12px 0",
+            color: theme.colors.text.primary,
+            width: "100%",
+          }}
+        >
+          <div style={{ fontSize: "14px", color: theme.colors.text.secondary }}>
+            Showing {table.getRowModel().rows.length} of {data.length} results
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <button
+              onClick={() => table.setPageIndex(0)}
+              disabled={!table.getCanPreviousPage()}
+              style={{
+                padding: "6px 10px",
+                border: `1px solid ${theme.colors.border.default}`,
+                borderRadius: "4px",
+                backgroundColor: "white",
+                color: theme.colors.text.primary,
+                cursor: table.getCanPreviousPage() ? "pointer" : "not-allowed",
+                opacity: table.getCanPreviousPage() ? 1 : 0.5,
+              }}
+            >
+              <ChevronsLeft size={16} />
+            </button>
+            <button
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+              style={{
+                padding: "6px 10px",
+                border: `1px solid ${theme.colors.border.default}`,
+                borderRadius: "4px",
+                backgroundColor: "white",
+                color: theme.colors.text.primary,
+                cursor: table.getCanPreviousPage() ? "pointer" : "not-allowed",
+                opacity: table.getCanPreviousPage() ? 1 : 0.5,
+              }}
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <span style={{ fontSize: "14px" }}>
+              Page <strong>{table.getState().pagination.pageIndex + 1}</strong> of{" "}
+              <strong>{table.getPageCount()}</strong>
+            </span>
+            <button
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+              style={{
+                padding: "6px 10px",
+                border: `1px solid ${theme.colors.border.default}`,
+                borderRadius: "4px",
+                backgroundColor: "white",
+                color: theme.colors.text.primary,
+                cursor: table.getCanNextPage() ? "pointer" : "not-allowed",
+                opacity: table.getCanNextPage() ? 1 : 0.5,
+              }}
+            >
+              <ChevronRight size={16} />
+            </button>
+            <button
+              onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+              disabled={!table.getCanNextPage()}
+              style={{
+                padding: "6px 10px",
+                border: `1px solid ${theme.colors.border.default}`,
+                borderRadius: "4px",
+                backgroundColor: "white",
+                color: theme.colors.text.primary,
+                cursor: table.getCanNextPage() ? "pointer" : "not-allowed",
+                opacity: table.getCanNextPage() ? 1 : 0.5,
+              }}
+            >
+              <ChevronsRight size={16} />
+            </button>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span style={{ fontSize: "14px", color: theme.colors.text.secondary }}>Rows per page:</span>
+            <select
+              value={table.getState().pagination.pageSize}
+              onChange={(e) => table.setPageSize(Number(e.target.value))}
+              style={{
+                padding: "6px 10px",
+                borderRadius: "4px",
+                border: `1px solid ${theme.colors.border.default}`,
+                backgroundColor: "white",
+                color: theme.colors.text.primary,
+                fontSize: "14px",
+              }}
+            >
+              {[10, 20, 30, 50, 100].map((pageSize) => (
+                <option key={pageSize} value={pageSize}>
+                  {pageSize}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
       </div>
-    </>
+    </div>
   )
 }
 

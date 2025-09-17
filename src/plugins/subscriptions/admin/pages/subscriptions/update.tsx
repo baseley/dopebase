@@ -1,62 +1,69 @@
-// @ts-nocheck
-'use client'
-import React, { useEffect, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
-import { Formik } from 'formik'
-import { ClipLoader } from 'react-spinners'
-import IMDatePicker from '../../../../../admin/components/forms/IMDatePicker'
-import { LocationPicker } from '../../../../../admin/components/forms/locationPicker'
+"use client"
+import { useEffect, useState } from "react"
+import { useSearchParams } from "next/navigation"
+import { Formik } from "formik"
+import * as Yup from "yup"
 import {
-  TypeaheadComponent,
-  IMColorPicker,
-  IMMultimediaComponent,
-  IMObjectInputComponent,
-  IMArrayInputComponent,
-  IMColorsContainer,
-  IMColorBoxComponent,
-  IMStaticMultiSelectComponent,
-  IMStaticSelectComponent,
-  IMPhoto,
-  IMModal,
-  IMToggleSwitchComponent,
-} from '../../../../../admin/components/forms/fields'
-import ReactMarkdown from 'react-markdown'
-import dynamic from 'next/dynamic'
-import CodeMirror from '@uiw/react-codemirror'
-import { javascript } from '@codemirror/lang-javascript'
-import { css } from '@codemirror/lang-css'
-import { html } from '@codemirror/lang-html'
-import { markdown } from '@codemirror/lang-markdown'
-import styles from '../../../../../admin/themes/admin.module.css'
+  CalendarIcon,
+  UserIcon,
+  CreditCardIcon,
+  ClockIcon,
+  CalendarDaysIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  PauseCircleIcon,
+} from "lucide-react"
+import IMDatePicker from "../../../../../admin/components/forms/IMDatePicker"
+import { IMStaticSelectComponent } from "../../../../../admin/components/forms/fields"
 
-/* Insert extra imports here */
-import SubscriptionPlanTypeaheadComponent from '../../components/SubscriptionPlanTypeaheadComponent.js'
+/* Import typeahead components */
+import SubscriptionPlanTypeaheadComponent from "../../components/SubscriptionPlanTypeaheadComponent.js"
+import SubscriptionUserTypeaheadComponent from "../../components/SubscriptionUserTypeaheadComponent.js"
 
-import SubscriptionUserTypeaheadComponent from '../../components/SubscriptionUserTypeaheadComponent.js'
-
-
-const beautify_html = require('js-beautify').html
-import { pluginsAPIURL } from '../../../../../config/config'
-import {
-  authFetch,
-  authPost,
-} from '../../../../../modules/auth/utils/authFetch'
+import { pluginsAPIURL } from "../../../../../config/config"
+import { authFetch, authPost } from "../../../../../modules/auth/utils/authFetch"
+import theme, { styledComponents } from "../../../../../lib/theme"
 const baseAPIURL = `${pluginsAPIURL}admin/subscriptions/`
 
-const UpdateSubscriptionView = props => {
+interface SubscriptionData {
+  user_id: string
+  plan_id: string
+  start_date: Date | null
+  end_date: Date | null
+  status: string
+  name?: string
+}
+
+interface NonFormData {
+  start_date?: Date | string
+  end_date?: Date | string
+  status?: string
+  last_payment_date?: Date | string
+  next_billing_date?: Date | string
+  created_at?: Date | string
+  updated_at?: Date | string
+}
+
+const UpdateSubscriptionView = () => {
   const [isLoading, setIsLoading] = useState(true)
-  const [originalData, setOriginalData] = useState(null)
-  const [modifiedNonFormData, setModifiedNonFormData] = useState({})
+  const [originalData, setOriginalData] = useState<SubscriptionData>({
+    user_id: "",
+    plan_id: "",
+    start_date: null,
+    end_date: null,
+    status: "",
+  })
+  const [modifiedNonFormData, setModifiedNonFormData] = useState<NonFormData>({})
+  const [error, setError] = useState("")
+  const [success, setSuccess] = useState(false)
 
   const searchParams = useSearchParams()
-  const id = searchParams.get('id')
+  const id = searchParams.get("id")
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await authFetch(
-          baseAPIURL + 'subscriptions/view?id=' + id,
-        )
+        const response = await authFetch(baseAPIURL + "subscriptions/view?id=" + id)
         if (response?.data) {
           setOriginalData(response.data)
           initializeModifieableNonFormData(response.data)
@@ -64,486 +71,758 @@ const UpdateSubscriptionView = props => {
         }
       } catch (err) {
         console.log(err)
+        setError("Failed to load subscription data")
         setIsLoading(false)
       }
     }
     fetchData()
   }, [id])
 
-  const initializeModifieableNonFormData = originalData => {
-    var nonFormData = {}
+  const initializeModifieableNonFormData = (originalData: any) => {
+    const nonFormData: NonFormData = {}
 
-    /* Insert non modifiable initialization data here */
-          if (originalData.start_date) {
-              nonFormData['start_date'] = originalData.start_date
-          }
-          
-          if (originalData.end_date) {
-              nonFormData['end_date'] = originalData.end_date
-          }
-          
-          if (originalData.status) {
-              nonFormData['status'] = originalData.status
-          }
-          
-          if (originalData.last_payment_date) {
-              nonFormData['last_payment_date'] = originalData.last_payment_date
-          }
-          
-          if (originalData.next_billing_date) {
-              nonFormData['next_billing_date'] = originalData.next_billing_date
-          }
-          
-          if (originalData.created_at) {
-              nonFormData['created_at'] = originalData.created_at
-          }
-          
-          if (originalData.updated_at) {
-              nonFormData['updated_at'] = originalData.updated_at
-          }
-          
+    /* Initialize non-form data */
+    if (originalData.start_date) {
+      nonFormData.start_date = new Date(originalData.start_date)
+    }
 
-    console.log(nonFormData)
+    if (originalData.end_date) {
+      nonFormData.end_date = new Date(originalData.end_date)
+    }
+
+    if (originalData.status) {
+      nonFormData.status = originalData.status
+    }
+
+    if (originalData.last_payment_date) {
+      nonFormData.last_payment_date = new Date(originalData.last_payment_date)
+    }
+
+    if (originalData.next_billing_date) {
+      nonFormData.next_billing_date = new Date(originalData.next_billing_date)
+    }
+
+    if (originalData.created_at) {
+      nonFormData.created_at = new Date(originalData.created_at)
+    }
+
+    if (originalData.updated_at) {
+      nonFormData.updated_at = new Date(originalData.updated_at)
+    }
+
     setModifiedNonFormData(nonFormData)
   }
 
-  const saveChanges = async (modifiedData, setSubmitting) => {
-    const response = await authPost(
-      baseAPIURL + 'subscriptions/update?id=' + id,
-      JSON.stringify({
-        ...modifiedData,
-        ...modifiedNonFormData,
-      }),
-    )
-    const { data } = response
-    if (data.success == true) {
-      window.location.reload()
-    } else {
-      alert(data.error)
+  const saveChanges = async (modifiedData: any, setSubmitting: (isSubmitting: boolean) => void) => {
+    try {
+      setError("")
+      const response = await authPost(
+        baseAPIURL + "subscriptions/update?id=" + id,
+        JSON.stringify({
+          ...modifiedData,
+          ...modifiedNonFormData,
+        }),
+      )
+      const { data } = response
+      if (data.success === true) {
+        setSuccess(true)
+        setTimeout(() => {
+          window.location.reload()
+        }, 1000)
+      } else {
+        setError(data.error || "Failed to update subscription")
+      }
+    } catch (err) {
+      setError("An error occurred while saving changes")
+      console.error(err)
     }
     setSubmitting(false)
   }
 
-  const onTypeaheadSelect = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value
+  const onTypeaheadSelect = (value: string, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
+    newData[fieldName as keyof NonFormData] = value as any
     setModifiedNonFormData(newData)
   }
 
-  const onMultipleTypeaheadSelect = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (newData[fieldName] != undefined) {
-      newData[fieldName].push(value)
-    } else {
-      newData[fieldName] = [value]
-    }
+  const handleSelectChange = (value: string, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
+    newData[fieldName as keyof NonFormData] = value as any
     setModifiedNonFormData(newData)
   }
 
-  const onMultipleTypeaheadDelete = (index, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName].splice(index, 1)
+  const onDateChange = (toDate: Date, fieldName: string) => {
+    const newData = { ...modifiedNonFormData }
+    newData[fieldName as keyof NonFormData] = toDate.toISOString()
     setModifiedNonFormData(newData)
   }
 
-  const handleSwitchChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value ^ true
-    setModifiedNonFormData(newData)
-  }
-
-  const handleSelectChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value
-    setModifiedNonFormData(newData)
-  }
-
-  const handleColorChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value
-    setModifiedNonFormData(newData)
-  }
-
-  const handleColorDelete = fieldName => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = null
-    setModifiedNonFormData(newData)
-  }
-
-  const handleColorsChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (newData[fieldName] != undefined) {
-      newData[fieldName].push(value)
-    } else {
-      newData[fieldName] = [value]
-    }
-    setModifiedNonFormData(newData)
-  }
-
-  const handleColorsDelete = (index, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName].splice(index, 1)
-    setModifiedNonFormData(newData)
-  }
-
-  const handleArrayInput = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (newData[fieldName] != undefined) {
-      newData[fieldName].push(value)
-    } else {
-      newData[fieldName] = [value]
-    }
-    setModifiedNonFormData(newData)
-  }
-
-  const handleArrayDelete = (index, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName].splice(index, 1)
-    setModifiedNonFormData(newData)
-  }
-
-  const handleObjectInput = (key, value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (newData[fieldName] != undefined) {
-      newData[fieldName][key] = value
-    } else {
-      newData[fieldName] = { [key]: value }
-    }
-    setModifiedNonFormData(newData)
-  }
-
-  const handleObjectDelete = (key, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = Object.keys(newData[fieldName]).reduce(
-      (object, keys) => {
-        if (keys !== key) {
-          object[keys] = newData[fieldName][keys]
-        }
-        return object
-      },
-      {},
-    )
-    setModifiedNonFormData(newData)
-  }
-
-  const onDateChange = (toDate, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = toDate
-    setModifiedNonFormData(newData)
-  }
-
-  const onLocationChange = (addressObject, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    const location = {
-      longitude: addressObject.location.lng,
-      latitude: addressObject.location.lat,
-      address: addressObject.label,
-      placeID: addressObject.placeId,
-      detailedAddress: addressObject.gmaps.address_components,
-    }
-    newData[fieldName] = location
-    setModifiedNonFormData(newData)
-  }
-
-  const onSimpleLocationChange = (addressObject, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    if (!addressObject || !addressObject.location) {
-      return
-    }
-    const location = {
-      lng: addressObject.location.lng,
-      lat: addressObject.location.lat,
-      // address: addressObject.label,
-    }
-    newData[fieldName] = location
-    setModifiedNonFormData(newData)
-  }
-
-  const onCodeChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value
-    setModifiedNonFormData(newData)
-  }
-
-  const onMarkdownEditorChange = (value, fieldName) => {
-    var newData = { ...modifiedNonFormData }
-    newData[fieldName] = value
-    setModifiedNonFormData(newData)
-  }
-
-  const handleImageUpload = (event, fieldName, isMultiple) => {
-    const files = event.target.files
-    const formData = new FormData()
-    for (var i = 0; i < files.length; ++i) {
-      formData.append('photos', files[i])
+  const getStatusIcon = (status: string | object) => {
+    if (typeof status === "object") {
+      console.error("Invalid status object:", status)
+      return null
     }
 
-    fetch(pluginsAPIURL + '../media/upload', {
-      method: 'POST',
-      body: formData,
-    })
-      .then(response => response.json())
-      .then(response => {
-        var newData = { ...modifiedNonFormData }
-        if (!isMultiple) {
-          const url = response.data && response.data[0] && response.data[0].url
-          newData[fieldName] = url
-        } else {
-          // multiple photos
-          const urls = response.data && response.data.map(item => item.url)
-          if (
-            !modifiedNonFormData[fieldName] ||
-            modifiedNonFormData[fieldName].length <= 0
-          ) {
-            newData[fieldName] = urls
-          } else {
-            newData[fieldName] = [...modifiedNonFormData[fieldName], ...urls]
-          }
-        }
-        setModifiedNonFormData(newData)
-        console.log(response)
-      })
-      .catch(error => {
-        console.error(error)
-      })
-  }
-
-  const handleDeletePhoto = (srcToBeRemoved, fieldName, isMultiple) => {
-    if (isMultiple) {
-      var newData = { ...modifiedNonFormData }
-      var currentURLs = newData[fieldName]
-      if (currentURLs) {
-        const newURLs = currentURLs.filter(src => src != srcToBeRemoved)
-        newData[fieldName] = newURLs
-        setModifiedNonFormData(newData)
-      }
-    } else {
-      var newData = { ...modifiedNonFormData }
-      newData[fieldName] = null
-      setModifiedNonFormData(newData)
+    switch (status) {
+      case "active":
+        return <CheckCircleIcon className="w-5 h-5 text-green-500" />
+      case "paused":
+        return <PauseCircleIcon className="w-5 h-5 text-amber-500" />
+      case "cancelled":
+        return <XCircleIcon className="w-5 h-5 text-red-500" />
+      default:
+        return null
     }
   }
 
-  const handleMultimediaUpload = (event, fieldName, isMultiple) => {
-    const files = event.target.files
-    const formData = new FormData()
-    for (var i = 0; i < files.length; ++i) {
-      formData.append('multimedias', files[i])
-    }
-
-    fetch(pluginsAPIURL + '../media/uploadMultimedias', {
-      method: 'POST',
-      body: formData,
-    })
-      .then(response => response.json())
-      .then(response => {
-        var newData = { ...modifiedNonFormData }
-        if (!isMultiple) {
-          const url = response.data && response.data[0] && response.data[0].url
-          newData[fieldName] = url
-        } else {
-          // multiple media
-          const data =
-            response.data &&
-            response.data.map(item => {
-              return { url: item.url, mime: item.mimetype }
-            })
-          if (
-            !modifiedNonFormData[fieldName] ||
-            modifiedNonFormData[fieldName].length <= 0
-          ) {
-            newData[fieldName] = data
-          } else {
-            newData[fieldName] = [...modifiedNonFormData[fieldName], ...data]
-          }
-        }
-        setModifiedNonFormData(newData)
-        console.log(response)
-      })
-      .catch(error => {
-        console.error(error)
-      })
-  }
-
-  const handleMultimediaDelete = (srcToBeRemoved, fieldName, isMultiple) => {
-    if (isMultiple) {
-      var newData = { ...modifiedNonFormData }
-      var currentData = newData[fieldName]
-      if (currentData) {
-        const finalData = currentData.reduce((arrayAcumulator, curVal) => {
-          if (srcToBeRemoved !== curVal.url) {
-            arrayAcumulator.push(curVal)
-          }
-          return arrayAcumulator
-        })
-        newData[fieldName] = finalData
-        setModifiedNonFormData(newData)
-      }
-    } else {
-      var newData = { ...modifiedNonFormData }
-      newData[fieldName] = null
-      setModifiedNonFormData(newData)
-    }
-  }
+  const validationSchema = Yup.object().shape({
+    user_id: Yup.string().required("User is required"),
+    plan_id: Yup.string().required("Subscription plan is required"),
+  })
 
   if (isLoading) {
     return (
-      <div className="sweet-loading card">
-        <div className="spinner-container">
-          <ClipLoader
-            className="spinner"
-            sizeUnit={'px'}
-            size={50}
-            color={'#123abc'}
-            loading={isLoading}
-          />
+      <div style={styledComponents.formCard}>
+        <div style={styledComponents.loadingContainer}>
+          <div style={styledComponents.spinner}></div>
+          <p style={styledComponents.loadingText}>Loading subscription data...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className={`${styles.Card} ${styles.FormCard} Card FormCard`}>
-      <div className={`${styles.CardBody} CardBody`}>
-        <h1>{originalData && originalData.name}</h1>
+    <div style={styledComponents.formCard}>
+      <div style={{ padding: theme.spacing[6] }}>
+        <h1 style={styledComponents.formTitle}>{originalData?.name || "Update Subscription"}</h1>
+
+        {error && (
+          <div style={{ marginBottom: theme.spacing[6] }}>
+            <div
+              style={{
+                padding: theme.spacing[4],
+                backgroundColor: "#FEF2F2",
+                borderLeft: `4px solid ${theme.colors.feedback.error}`,
+                borderRadius: theme.borderRadius.md,
+                color: theme.colors.feedback.error,
+              }}
+            >
+              <p style={{ fontWeight: theme.typography.fontWeights.medium }}>Error</p>
+              <p>{error}</p>
+            </div>
+          </div>
+        )}
+
+        {success && (
+          <div style={{ marginBottom: theme.spacing[6] }}>
+            <div
+              style={{
+                padding: theme.spacing[4],
+                backgroundColor: "#F0FDF4",
+                borderLeft: `4px solid ${theme.colors.feedback.success}`,
+                borderRadius: theme.borderRadius.md,
+                color: theme.colors.feedback.success,
+              }}
+            >
+              <p style={{ fontWeight: theme.typography.fontWeights.medium }}>Success</p>
+              <p>Subscription updated successfully!</p>
+            </div>
+          </div>
+        )}
+
         <Formik
           initialValues={originalData}
-          validate={values => {
-            values = { ...values, ...modifiedNonFormData }
-            const errors = {}
-            {
-              /* Insert all form errors here */
-        if (!values.user_id) {
-            errors.user_id = 'Field Required!'
-        }
+          validationSchema={validationSchema}
+          validate={(values) => {
+            values = {
+              ...values,
+              ...modifiedNonFormData,
+              start_date: modifiedNonFormData.start_date ? new Date(modifiedNonFormData.start_date) : null,
+              end_date: modifiedNonFormData.end_date ? new Date(modifiedNonFormData.end_date) : null,
+            }
+            const errors: { user_id?: string; plan_id?: string; start_date?: string; status?: string } = {}
 
-        if (!values.plan_id) {
-            errors.plan_id = 'Field Required!'
-        }
+            if (!values.user_id) {
+              errors.user_id = "User is required"
+            }
 
-        if (!values.start_date) {
-            errors.start_date = 'Field Required!'
-        }
+            if (!values.plan_id) {
+              errors.plan_id = "Subscription plan is required"
+            }
 
-        if (!values.status) {
-            errors.status = 'Field Required!'
-        }
+            if (!values.start_date) {
+              errors.start_date = "Start date is required"
+            }
 
-        if (!values.created_at) {
-            errors.created_at = 'Field Required!'
-        }
-
-        if (!values.updated_at) {
-            errors.updated_at = 'Field Required!'
-        }
-
+            if (!values.status) {
+              errors.status = "Status is required"
             }
 
             return errors
           }}
           onSubmit={(values, { setSubmitting }) => {
             saveChanges(values, setSubmitting)
-          }}>
-          {({
-            values,
-            errors,
-            touched,
-            handleChange,
-            handleBlur,
-            handleSubmit,
-            isSubmitting,
-            /* and other goodies */
-          }) => (
+          }}
+        >
+          {({ values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
             <form onSubmit={handleSubmit}>
-              {/* Insert all edit form fields here */}
-          <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-              <label className={`${styles.FormLabel} FormLabel`}>User ID</label>
-              <SubscriptionUserTypeaheadComponent onSelect={(value) => onTypeaheadSelect(value, "user_id")} id={originalData && originalData.user_id} name={originalData && originalData.user_id} />
-          </div>
-      
-
-          <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-              <label className={`${styles.FormLabel} FormLabel`}>Plan ID</label>
-              <SubscriptionPlanTypeaheadComponent onSelect={(value) => onTypeaheadSelect(value, "plan_id")} id={originalData && originalData.plan_id} name={originalData && originalData.plan_id} />
-          </div>
-      
-
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Start Date</label>
-                        <IMDatePicker
-                            selected={modifiedNonFormData.start_date}
-                            onChange={(toDate) => onDateChange(toDate, "start_date")}
-                        />
-                    </div>
-    
-
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>End Date</label>
-                        <IMDatePicker
-                            selected={modifiedNonFormData.end_date}
-                            onChange={(toDate) => onDateChange(toDate, "end_date")}
-                        />
-                    </div>
-    
-
-              <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                  <label className={`${styles.FormLabel} FormLabel`}>Status</label>
-                  <IMStaticSelectComponent
-                      options={["active","paused","cancelled"]}
-                      name="status"
-                      onChange={handleSelectChange}
-                      selectedOption={modifiedNonFormData.status}
+              <div style={styledComponents.formGroup}>
+                <div
+                  style={{
+                    ...styledComponents.formHeader,
+                    display: "flex",
+                    alignItems: "center",
+                    marginBottom: theme.spacing[4],
+                  }}
+                >
+                  <UserIcon
+                    style={{
+                      width: "20px",
+                      height: "20px",
+                      marginRight: theme.spacing[2],
+                      color: theme.colors.accent.primary,
+                    }}
                   />
-                  <p className={`${styles.ErrorMessage} ErrorMessage`}>
-                      {errors.status && touched.status && errors.status}
-                  </p>
+                  <h2
+                    style={{
+                      fontSize: theme.typography.fontSizes.xl,
+                      fontWeight: theme.typography.fontWeights.semibold,
+                      color: theme.colors.text.primary,
+                    }}
+                  >
+                    Subscription Details
+                  </h2>
+                </div>
+
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: theme.spacing[6],
+                    marginBottom: theme.spacing[4],
+                  }}
+                >
+                  {/* User ID Field */}
+                  <div style={styledComponents.formGroup}>
+                    <label
+                      style={{
+                        ...styledComponents.formLabel,
+                        display: "flex",
+                        alignItems: "center",
+                      }}
+                    >
+                      <UserIcon
+                        style={{
+                          width: "16px",
+                          height: "16px",
+                          marginRight: theme.spacing[2],
+                          color: theme.colors.accent.primary,
+                        }}
+                      />
+                      User
+                      <span style={{ color: theme.colors.feedback.error, marginLeft: "4px" }}>*</span>
+                    </label>
+                    <div>
+                      <SubscriptionUserTypeaheadComponent
+                        onSelect={(value) => onTypeaheadSelect(value, "user_id")}
+                        id={originalData && originalData.user_id}
+                        name={originalData && originalData.user_id}
+                      />
+                    </div>
+                    <p
+                      style={{
+                        fontSize: theme.typography.fontSizes.xs,
+                        color: theme.colors.text.tertiary,
+                        marginTop: theme.spacing[1],
+                      }}
+                    >
+                      Select the user for this subscription
+                    </p>
+                    {errors.user_id && touched.user_id && <p style={styledComponents.formError}>{errors.user_id}</p>}
+                  </div>
+
+                  {/* Plan ID Field */}
+                  <div style={styledComponents.formGroup}>
+                    <label
+                      style={{
+                        ...styledComponents.formLabel,
+                        display: "flex",
+                        alignItems: "center",
+                      }}
+                    >
+                      <CreditCardIcon
+                        style={{
+                          width: "16px",
+                          height: "16px",
+                          marginRight: theme.spacing[2],
+                          color: theme.colors.accent.primary,
+                        }}
+                      />
+                      Subscription Plan
+                      <span style={{ color: theme.colors.feedback.error, marginLeft: "4px" }}>*</span>
+                    </label>
+                    <div>
+                      <SubscriptionPlanTypeaheadComponent
+                        onSelect={(value) => onTypeaheadSelect(value, "plan_id")}
+                        id={originalData && originalData.plan_id}
+                        name={originalData && originalData.plan_id}
+                      />
+                    </div>
+                    <p
+                      style={{
+                        fontSize: theme.typography.fontSizes.xs,
+                        color: theme.colors.text.tertiary,
+                        marginTop: theme.spacing[1],
+                      }}
+                    >
+                      Select the subscription plan
+                    </p>
+                    {errors.plan_id && touched.plan_id && <p style={styledComponents.formError}>{errors.plan_id}</p>}
+                  </div>
+                </div>
               </div>
-              
 
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Last Payment Date</label>
-                        <IMDatePicker
-                            selected={modifiedNonFormData.last_payment_date}
-                            onChange={(toDate) => onDateChange(toDate, "last_payment_date")}
-                        />
+              <div style={styledComponents.formGroup}>
+                <div
+                  style={{
+                    ...styledComponents.formHeader,
+                    display: "flex",
+                    alignItems: "center",
+                    marginBottom: theme.spacing[4],
+                  }}
+                >
+                  <CalendarDaysIcon
+                    style={{
+                      width: "20px",
+                      height: "20px",
+                      marginRight: theme.spacing[2],
+                      color: theme.colors.accent.primary,
+                    }}
+                  />
+                  <h2
+                    style={{
+                      fontSize: theme.typography.fontSizes.xl,
+                      fontWeight: theme.typography.fontWeights.semibold,
+                      color: theme.colors.text.primary,
+                    }}
+                  >
+                    Subscription Period
+                  </h2>
+                </div>
+
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: theme.spacing[6],
+                    marginBottom: theme.spacing[4],
+                  }}
+                >
+                  {/* Start Date Field */}
+                  <div style={styledComponents.formGroup}>
+                    <label
+                      style={{
+                        ...styledComponents.formLabel,
+                        display: "flex",
+                        alignItems: "center",
+                      }}
+                    >
+                      <CalendarIcon
+                        style={{
+                          width: "16px",
+                          height: "16px",
+                          marginRight: theme.spacing[2],
+                          color: theme.colors.accent.primary,
+                        }}
+                      />
+                      Start Date
+                      <span style={{ color: theme.colors.feedback.error, marginLeft: "4px" }}>*</span>
+                    </label>
+                    <div>
+                      <IMDatePicker
+                        selected={
+                          modifiedNonFormData.start_date instanceof Date && !isNaN(modifiedNonFormData.start_date.getTime())
+                            ? modifiedNonFormData.start_date.toISOString()
+                            : ""
+                        }
+                        onChange={(toDate) => onDateChange(new Date(toDate), "start_date")}
+                      />
                     </div>
-    
+                    <p
+                      style={{
+                        fontSize: theme.typography.fontSizes.xs,
+                        color: theme.colors.text.tertiary,
+                        marginTop: theme.spacing[1],
+                      }}
+                    >
+                      When the subscription begins
+                    </p>
+                    {errors.start_date && touched.start_date && (
+                      <p style={styledComponents.formError}>
+                        {typeof errors.start_date === "string" ? errors.start_date : ""}
+                      </p>
+                    )}
+                  </div>
 
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Next Billing Date</label>
-                        <IMDatePicker
-                            selected={modifiedNonFormData.next_billing_date}
-                            onChange={(toDate) => onDateChange(toDate, "next_billing_date")}
-                        />
+                  {/* End Date Field */}
+                  <div style={styledComponents.formGroup}>
+                    <label
+                      style={{
+                        ...styledComponents.formLabel,
+                        display: "flex",
+                        alignItems: "center",
+                      }}
+                    >
+                      <CalendarIcon
+                        style={{
+                          width: "16px",
+                          height: "16px",
+                          marginRight: theme.spacing[2],
+                          color: theme.colors.accent.primary,
+                        }}
+                      />
+                      End Date
+                    </label>
+                    <div>
+                      <IMDatePicker
+                        selected={
+                          modifiedNonFormData.end_date instanceof Date && !isNaN(modifiedNonFormData.end_date.getTime())
+                            ? modifiedNonFormData.end_date.toISOString()
+                            : ""
+                        }
+                        onChange={(toDate) => onDateChange(new Date(toDate), "end_date")}
+                      />
                     </div>
-    
+                    <p
+                      style={{
+                        fontSize: theme.typography.fontSizes.xs,
+                        color: theme.colors.text.tertiary,
+                        marginTop: theme.spacing[1],
+                      }}
+                    >
+                      When the subscription ends (leave empty for ongoing)
+                    </p>
+                  </div>
+                </div>
+              </div>
 
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Created At</label>
-                        <IMDatePicker
-                            selected={modifiedNonFormData.created_at}
-                            onChange={(toDate) => onDateChange(toDate, "created_at")}
+              <div style={styledComponents.formGroup}>
+                <div
+                  style={{
+                    ...styledComponents.formHeader,
+                    display: "flex",
+                    alignItems: "center",
+                    marginBottom: theme.spacing[4],
+                  }}
+                >
+                  <ClockIcon
+                    style={{
+                      width: "20px",
+                      height: "20px",
+                      marginRight: theme.spacing[2],
+                      color: theme.colors.accent.primary,
+                    }}
+                  />
+                  <h2
+                    style={{
+                      fontSize: theme.typography.fontSizes.xl,
+                      fontWeight: theme.typography.fontWeights.semibold,
+                      color: theme.colors.text.primary,
+                    }}
+                  >
+                    Subscription Status & Billing
+                  </h2>
+                </div>
+
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr 1fr",
+                    gap: theme.spacing[6],
+                    marginBottom: theme.spacing[4],
+                  }}
+                >
+                  {/* Status Field */}
+                  <div style={styledComponents.formGroup}>
+                    <label
+                      style={{
+                        ...styledComponents.formLabel,
+                        display: "flex",
+                        alignItems: "center",
+                      }}
+                    >
+                      {modifiedNonFormData.status && getStatusIcon(modifiedNonFormData.status as string)}
+                      {!modifiedNonFormData.status && (
+                        <CheckCircleIcon
+                          style={{
+                            width: "16px",
+                            height: "16px",
+                            marginRight: theme.spacing[2],
+                            color: theme.colors.accent.primary,
+                          }}
                         />
+                      )}
+                      <span style={{ marginLeft: "8px" }}>Status</span>
+                      <span style={{ color: theme.colors.feedback.error, marginLeft: "4px" }}>*</span>
+                    </label>
+                    <div>
+                      <IMStaticSelectComponent
+                        options={["active", "paused", "cancelled"]}
+                        name="status"
+                        onChange={handleSelectChange}
+                        selectedOption={modifiedNonFormData.status as string}
+                      />
                     </div>
-    
+                    <p
+                      style={{
+                        fontSize: theme.typography.fontSizes.xs,
+                        color: theme.colors.text.tertiary,
+                        marginTop: theme.spacing[1],
+                      }}
+                    >
+                      Current subscription status
+                    </p>
+                    {errors.status && touched.status && <p style={styledComponents.formError}>{errors.status}</p>}
+                  </div>
 
-                    <div className={`${styles.FormFieldContainer} FormFieldContainer`}>
-                        <label className={`${styles.FormLabel} FormLabel`}>Updated At</label>
-                        <IMDatePicker
-                            selected={modifiedNonFormData.updated_at}
-                            onChange={(toDate) => onDateChange(toDate, "updated_at")}
-                        />
+                  {/* Last Payment Date Field */}
+                  <div style={styledComponents.formGroup}>
+                    <label
+                      style={{
+                        ...styledComponents.formLabel,
+                        display: "flex",
+                        alignItems: "center",
+                      }}
+                    >
+                      <CalendarIcon
+                        style={{
+                          width: "16px",
+                          height: "16px",
+                          marginRight: theme.spacing[2],
+                          color: theme.colors.accent.primary,
+                        }}
+                      />
+                      Last Payment Date
+                    </label>
+                    <div>
+                      <IMDatePicker
+                        selected={
+                          modifiedNonFormData.last_payment_date instanceof Date && !isNaN(modifiedNonFormData.last_payment_date.getTime())
+                            ? modifiedNonFormData.last_payment_date.toISOString()
+                            : ""
+                        }
+                        onChange={(toDate) => onDateChange(new Date(toDate), "last_payment_date")}
+                      />
                     </div>
-    
+                    <p
+                      style={{
+                        fontSize: theme.typography.fontSizes.xs,
+                        color: theme.colors.text.tertiary,
+                        marginTop: theme.spacing[1],
+                      }}
+                    >
+                      When the last payment was processed
+                    </p>
+                  </div>
 
+                  {/* Next Billing Date Field */}
+                  <div style={styledComponents.formGroup}>
+                    <label
+                      style={{
+                        ...styledComponents.formLabel,
+                        display: "flex",
+                        alignItems: "center",
+                      }}
+                    >
+                      <CalendarIcon
+                        style={{
+                          width: "16px",
+                          height: "16px",
+                          marginRight: theme.spacing[2],
+                          color: theme.colors.accent.primary,
+                        }}
+                      />
+                      Next Billing Date
+                    </label>
+                    <div>
+                      <IMDatePicker
+                        selected={
+                          modifiedNonFormData.next_billing_date instanceof Date && !isNaN(modifiedNonFormData.next_billing_date.getTime())
+                            ? modifiedNonFormData.next_billing_date.toISOString()
+                            : ""
+                        }
+                        onChange={(toDate) => onDateChange(new Date(toDate), "next_billing_date")}
+                      />
+                    </div>
+                    <p
+                      style={{
+                        fontSize: theme.typography.fontSizes.xs,
+                        color: theme.colors.text.tertiary,
+                        marginTop: theme.spacing[1],
+                      }}
+                    >
+                      When the next payment will be processed
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div style={styledComponents.formGroup}>
+                <div
+                  style={{
+                    ...styledComponents.formHeader,
+                    display: "flex",
+                    alignItems: "center",
+                    marginBottom: theme.spacing[4],
+                  }}
+                >
+                  <ClockIcon
+                    style={{
+                      width: "20px",
+                      height: "20px",
+                      marginRight: theme.spacing[2],
+                      color: theme.colors.accent.primary,
+                    }}
+                  />
+                  <h2
+                    style={{
+                      fontSize: theme.typography.fontSizes.xl,
+                      fontWeight: theme.typography.fontWeights.semibold,
+                      color: theme.colors.text.primary,
+                    }}
+                  >
+                    System Information
+                  </h2>
+                </div>
+
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: theme.spacing[6],
+                    marginBottom: theme.spacing[4],
+                  }}
+                >
+                  {/* Created At Field */}
+                  <div style={styledComponents.formGroup}>
+                    <label
+                      style={{
+                        ...styledComponents.formLabel,
+                        display: "flex",
+                        alignItems: "center",
+                      }}
+                    >
+                      <CalendarIcon
+                        style={{
+                          width: "16px",
+                          height: "16px",
+                          marginRight: theme.spacing[2],
+                          color: theme.colors.accent.primary,
+                        }}
+                      />
+                      Created At
+                    </label>
+                    <div>
+                      <IMDatePicker
+                        selected={
+                          modifiedNonFormData.created_at instanceof Date && !isNaN(modifiedNonFormData.created_at.getTime())
+                            ? modifiedNonFormData.created_at.toISOString()
+                            : ""
+                        }
+                        onChange={(toDate) => onDateChange(new Date(toDate), "created_at")}
+                      />
+                    </div>
+                    <p
+                      style={{
+                        fontSize: theme.typography.fontSizes.xs,
+                        color: theme.colors.text.tertiary,
+                        marginTop: theme.spacing[1],
+                      }}
+                    >
+                      When this subscription was created
+                    </p>
+                  </div>
+
+                  {/* Updated At Field */}
+                  <div style={styledComponents.formGroup}>
+                    <label
+                      style={{
+                        ...styledComponents.formLabel,
+                        display: "flex",
+                        alignItems: "center",
+                      }}
+                    >
+                      <CalendarIcon
+                        style={{
+                          width: "16px",
+                          height: "16px",
+                          marginRight: theme.spacing[2],
+                          color: theme.colors.accent.primary,
+                        }}
+                      />
+                      Updated At
+                    </label>
+                    <div>
+                      <IMDatePicker
+                        selected={
+                          modifiedNonFormData.updated_at instanceof Date && !isNaN(modifiedNonFormData.updated_at.getTime())
+                            ? modifiedNonFormData.updated_at.toISOString()
+                            : ""
+                        }
+                        onChange={(toDate) => onDateChange(new Date(toDate), "updated_at")}
+                      />
+                    </div>
+                    <p
+                      style={{
+                        fontSize: theme.typography.fontSizes.xs,
+                        color: theme.colors.text.tertiary,
+                        marginTop: theme.spacing[1],
+                      }}
+                    >
+                      When this subscription was last updated
+                    </p>
+                  </div>
+                </div>
+              </div>
 
               <div
-                className={`${styles.FormActionContainer} FormActionContainer`}>
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginTop: theme.spacing[8],
+                }}
+              >
+                <button style={styledComponents.secondaryButton} type="button" onClick={() => window.history.back()}>
+                  Cancel
+                </button>
+
                 <button
-                  className={`${styles.PrimaryButton} PrimaryButton`}
+                  style={{
+                    ...styledComponents.primaryButton,
+                    opacity: isSubmitting ? 0.7 : 1,
+                    cursor: isSubmitting ? "not-allowed" : "pointer",
+                  }}
                   type="submit"
-                  disabled={isSubmitting}>
-                  Save subscription
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <div style={{ display: "flex", alignItems: "center" }}>
+                      <div
+                        style={{
+                          width: "20px",
+                          height: "20px",
+                          borderRadius: "50%",
+                          border: "2px solid white",
+                          borderTopColor: "transparent",
+                          animation: "spin 1s linear infinite",
+                          marginRight: theme.spacing[2],
+                        }}
+                      ></div>
+                      Saving...
+                    </div>
+                  ) : (
+                    "Save Subscription"
+                  )}
                 </button>
               </div>
             </form>
